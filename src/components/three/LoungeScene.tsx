@@ -285,85 +285,6 @@ function useLiveScreenTexture() {
   return tex;
 }
 
-function MacKeyboardOverlay({ texture }: { texture: THREE.CanvasTexture }) {
-  const keys = useMemo(() => {
-    const rows = [
-      { cols: 14, z: 0 },
-      { cols: 14, z: 1 },
-      { cols: 14, z: 2 },
-      { cols: 13, z: 3, wideCol: 11, wide: 1.55 },
-      { cols: 12, z: 4, wideStart: 0, wide: 1.45, wideEnd: 11, wideEndW: 1.65 },
-      { cols: 10, z: 5, units: [1.1, 1, 1, 1, 4.6, 1, 1, 1, 1, 1.1] },
-    ];
-    const kbW = 0.92;
-    const kbH = 0.36;
-    const unitW = kbW / 14;
-    const unitH = kbH / 6;
-    const startX = -kbW * 0.5;
-    const startY = kbH * 0.5;
-    const placements: { x: number; y: number; sx: number }[] = [];
-
-    rows.forEach((row) => {
-      const units =
-        row.units ??
-        Array.from({ length: row.cols }, (_, i) => {
-          if (row.wideCol === i) return row.wide ?? 1.55;
-          if (row.wideStart === i) return row.wide ?? 1.45;
-          if (row.wideEnd === i) return row.wideEndW ?? 1.65;
-          return 1;
-        });
-
-      let x = startX;
-      const y = startY - row.z * unitH - unitH * 0.5;
-      units.forEach((unit) => {
-        const w = unitW * unit;
-        placements.push({ x: x + w * 0.5, y, sx: unit * 0.88 });
-        x += w;
-      });
-    });
-
-    return { placements, unitW, unitH };
-  }, []);
-
-  const keyGeo = useMemo(
-    () => new THREE.BoxGeometry(keys.unitW * 0.86, keys.unitH * 0.72, 0.012),
-    [keys.unitH, keys.unitW],
-  );
-
-  return (
-    <group position={[0, 0.012, 0.165]} rotation={[-0.56, 0.015, 0]}>
-      <mesh renderOrder={6}>
-        <planeGeometry args={[1.02, 0.64]} />
-        <meshStandardMaterial
-          map={texture}
-          roughness={0.46}
-          metalness={0.04}
-          envMapIntensity={0.35}
-          polygonOffset
-          polygonOffsetFactor={-4}
-          polygonOffsetUnits={-4}
-        />
-      </mesh>
-      {keys.placements.map((key, i) => (
-        <mesh
-          key={i}
-          position={[key.x, key.y, 0.008]}
-          scale={[key.sx, 1, 1]}
-          geometry={keyGeo}
-          renderOrder={7}
-        >
-          <meshStandardMaterial
-            color="#3d3d44"
-            roughness={0.38}
-            metalness={0.14}
-            envMapIntensity={0.45}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
 function tuneMacMaterials(
   object: THREE.Object3D,
   screenTex: THREE.CanvasTexture,
@@ -385,24 +306,35 @@ function tuneMacMaterials(
       return;
     }
 
-    if (child.name === "body" || child.name === "back") {
+    if (child.name === "body") {
       const mats = Array.isArray(child.material) ? child.material : [child.material];
-      mats.forEach((mat) => {
-        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
-        if (mat.name === "blackmatte" && child.name === "body") {
-          mat.map = keyboardTex;
-          mat.color.set("#ffffff");
-          mat.metalness = 0.04;
-          mat.roughness = 0.5;
-          mat.envMapIntensity = 0.3;
-          return;
+      child.material = mats.map((mat) => {
+        if (!(mat instanceof THREE.MeshStandardMaterial)) return mat;
+        if (mat.name === "blackmatte") {
+          return new THREE.MeshStandardMaterial({
+            map: keyboardTex,
+            roughness: 0.52,
+            metalness: 0.04,
+            envMapIntensity: 0.35,
+          });
         }
         mat.metalness = 1;
         mat.roughness = 0.2;
         mat.envMapIntensity = 1.5;
-        if (mat.name === "aluminium") {
-          mat.color.set("#c5c8cc");
-        }
+        mat.color.set("#c5c8cc");
+        return mat;
+      });
+      return;
+    }
+
+    if (child.name === "back") {
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      mats.forEach((mat) => {
+        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
+        mat.metalness = 1;
+        mat.roughness = 0.2;
+        mat.envMapIntensity = 1.5;
+        if (mat.name === "aluminium") mat.color.set("#c5c8cc");
       });
     }
   });
@@ -474,7 +406,6 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
         scale={0.051}
         position={[0, 0.04, 0]}
       />
-      <MacKeyboardOverlay texture={keyboardTex} />
     </group>
   );
 }
