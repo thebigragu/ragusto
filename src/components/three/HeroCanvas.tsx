@@ -16,11 +16,7 @@ const LoungeScene = dynamic(
   { ssr: false },
 );
 
-/**
- * Full original hero world (room, city, table, slat wall, holos) —
- * chair removed from the plate so the matching 3D chair can pop out.
- */
-function HeroPlate({ animateHolos = true }: { animateHolos?: boolean }) {
+function HeroPlate() {
   return (
     <div className="absolute inset-0">
       <Image
@@ -31,12 +27,9 @@ function HeroPlate({ animateHolos = true }: { animateHolos?: boolean }) {
         sizes="100vw"
         className="object-cover object-[55%_center]"
       />
-      {/* Keep original still's holographic energy alive on the plate screens */}
-      {animateHolos ? (
-        <div className="absolute inset-0 mix-blend-screen opacity-90">
-          <HeroHoloOverlay />
-        </div>
-      ) : null}
+      <div className="absolute inset-0 mix-blend-screen opacity-85">
+        <HeroHoloOverlay />
+      </div>
     </div>
   );
 }
@@ -61,17 +54,16 @@ export function HeroCanvas() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Reduced motion: show the original complete still (with chair)
   if (reduced) {
     return (
       <div className="absolute inset-0">
         <Image
-          src="/images/hero-studio.jpg"
+          src="/images/hero-studio-plate.jpg"
           alt="Arcform luxury design studio"
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[62%_center]"
+          className="object-cover object-[55%_center]"
         />
       </div>
     );
@@ -83,21 +75,10 @@ export function HeroCanvas() {
 
       {mounted ? (
         <div className="pointer-events-none absolute inset-0">
-          <WebGLErrorBoundary
-            fallback={
-              // If WebGL fails, fall back to the original still with the chair in place
-              <Image
-                src="/images/hero-studio.jpg"
-                alt=""
-                fill
-                sizes="100vw"
-                className="object-cover object-[62%_center]"
-              />
-            }
-          >
+          <WebGLErrorBoundary fallback={null}>
             <SceneCanvas
               className="h-full w-full"
-              camera={{ position: [0.05, 0.35, 3.4], fov: 40 }}
+              camera={{ position: [0.15, 0.55, 3.2], fov: 38 }}
             >
               <LoungeScene scrollProgress={progress} />
             </SceneCanvas>

@@ -1,38 +1,202 @@
 "use client";
 
-import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
+import { ContactShadows, Environment, RoundedBox } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type ComponentProps } from "react";
 import * as THREE from "three";
 
-useGLTF.preload("/models/hero-chair.glb");
+function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
+  ctx.fillStyle = "#0a0b0f";
+  ctx.fillRect(0, 0, w, h);
 
-/**
- * The chair from the hero still — matching black leather wingback on chrome star base.
- * "Pops" out of the flat image: lifts toward camera, swivels with the mouse.
- */
-function PopChair({ scrollProgress }: { scrollProgress: number }) {
-  const { scene } = useGLTF("/models/hero-chair.glb");
+  // Chrome
+  ctx.fillStyle = "#12141a";
+  ctx.fillRect(0, 0, w, 44);
+  ["#ff5f57", "#febc2e", "#28c840"].forEach((c, i) => {
+    ctx.beginPath();
+    ctx.fillStyle = c;
+    ctx.arc(20 + i * 16, 22, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.fillStyle = "#1c1f28";
+  roundRect(ctx, 86, 12, 240, 20, 6);
+  ctx.fill();
+  ctx.fillStyle = "#8b919c";
+  ctx.font = "11px system-ui,sans-serif";
+  ctx.fillText("arcform.app / northwind-ops", 96, 26);
+
+  // Sidebar
+  ctx.fillStyle = "#0e1016";
+  ctx.fillRect(0, 44, 150, h - 44);
+  ["Overview", "Workflows", "Agents", "Analytics", "Settings"].forEach((label, i) => {
+    const y = 78 + i * 38;
+    const active = i === Math.floor(t * 0.4) % 5;
+    if (active) {
+      ctx.fillStyle = "rgba(59,130,246,0.2)";
+      roundRect(ctx, 10, y - 14, 130, 30, 8);
+      ctx.fill();
+    }
+    ctx.fillStyle = active ? "#f3f4f6" : "#9ca3af";
+    ctx.font = "13px system-ui,sans-serif";
+    ctx.fillText(label, 26, y + 4);
+  });
+
+  const mx = 170;
+  ctx.fillStyle = "#f9fafb";
+  ctx.font = "600 22px system-ui,sans-serif";
+  ctx.fillText("Operations Console", mx, 82);
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "12px system-ui,sans-serif";
+  ctx.fillText("Live systems · AI triage · role-based access", mx, 102);
+
+  const stats = [
+    { l: "Active jobs", v: String(14 + Math.floor((Math.sin(t) + 1) * 3)) },
+    { l: "Latency", v: `${11 + Math.floor(Math.abs(Math.sin(t * 1.6)) * 7)}ms` },
+    { l: "Uptime", v: "99.98%" },
+  ];
+  stats.forEach((s, i) => {
+    const x = mx + i * 168;
+    ctx.fillStyle = "#141821";
+    roundRect(ctx, x, 120, 152, 72, 12);
+    ctx.fill();
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "11px system-ui,sans-serif";
+    ctx.fillText(s.l, x + 14, 142);
+    ctx.fillStyle = "#f9fafb";
+    ctx.font = "600 24px system-ui,sans-serif";
+    ctx.fillText(s.v, x + 14, 172);
+  });
+
+  // Chart
+  ctx.fillStyle = "#141821";
+  roundRect(ctx, mx, 210, 510, 190, 14);
+  ctx.fill();
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "12px system-ui,sans-serif";
+  ctx.fillText("Throughput", mx + 16, 232);
+
+  ctx.strokeStyle = "#3b82f6";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let i = 0; i < 50; i++) {
+    const x = mx + 20 + i * 9.5;
+    const y = 320 - Math.sin(i * 0.32 + t * 1.7) * 40 - Math.cos(i * 0.12 + t) * 14;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = "#14b8a6";
+  ctx.lineWidth = 1.75;
+  ctx.beginPath();
+  for (let i = 0; i < 50; i++) {
+    const x = mx + 20 + i * 9.5;
+    const y = 330 - Math.sin(i * 0.25 - t * 1.3) * 26;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Feed
+  ctx.fillStyle = "#141821";
+  roundRect(ctx, mx, 420, 510, 155, 14);
+  ctx.fill();
+  const rows = [
+    "Agent routed invoice batch · Northwind",
+    "RAG index refreshed · 1.2k docs",
+    "Deploy green · portal.lumen",
+    "Escalation closed · Harbor desk",
+    "Webhook delivered · stripe.events",
+  ];
+  const off = Math.floor(t * 1.15) % rows.length;
+  rows.forEach((_, i) => {
+    const line = rows[(off + i) % rows.length];
+    const y = 448 + i * 26;
+    if (i === 0) {
+      ctx.fillStyle = "rgba(59,130,246,0.12)";
+      roundRect(ctx, mx + 8, y - 14, 494, 24, 6);
+      ctx.fill();
+    }
+    ctx.fillStyle = "#34d399";
+    ctx.font = "11px ui-monospace,monospace";
+    ctx.fillText("●", mx + 18, y);
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "12px system-ui,sans-serif";
+    ctx.fillText(line, mx + 36, y);
+  });
+}
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function ScreenDisplay() {
+  const { ctx, tex } = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 640;
+    const context = canvas.getContext("2d")!;
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    return { ctx: context, tex: texture };
+  }, []);
+
+  useEffect(() => () => tex.dispose(), [tex]);
+
+  useFrame((state) => {
+    paintAppUI(ctx, 1024, 640, state.clock.elapsedTime);
+    tex.needsUpdate = true;
+  });
+
+  return (
+    <mesh>
+      <planeGeometry args={[1.36, 0.84]} />
+      <meshStandardMaterial
+        map={tex}
+        emissiveMap={tex}
+        emissive="#ffffff"
+        emissiveIntensity={1.2}
+        roughness={0.35}
+        metalness={0}
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
+function Aluminum(props: ComponentProps<typeof RoundedBox>) {
+  return (
+    <RoundedBox castShadow receiveShadow smoothness={8} {...props}>
+      <meshPhysicalMaterial
+        color="#c5c8cc"
+        metalness={1}
+        roughness={0.22}
+        clearcoat={0.4}
+        clearcoatRoughness={0.2}
+        envMapIntensity={1.4}
+      />
+    </RoundedBox>
+  );
+}
+
+/** Photoreal open laptop — aluminum + live product UI on screen */
+function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   const group = useRef<THREE.Group>(null);
   const pointer = useRef({ x: 0, y: 0 });
-  const clone = useMemo(() => scene.clone(true), [scene]);
-
-  useMemo(() => {
-    clone.traverse((c) => {
-      if ((c as THREE.Mesh).isMesh) {
-        const m = c as THREE.Mesh;
-        m.castShadow = true;
-        m.receiveShadow = true;
-        const mat = m.material as THREE.MeshStandardMaterial;
-        if (mat?.isMeshStandardMaterial) {
-          mat.envMapIntensity = 1.15;
-          if (mat.metalness > 0.5) {
-            mat.roughness = Math.min(mat.roughness ?? 0.15, 0.18);
-          }
-        }
-      }
-    });
-  }, [clone]);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -49,31 +213,54 @@ function PopChair({ scrollProgress }: { scrollProgress: number }) {
     const px = pointer.current.x;
     const py = pointer.current.y;
 
-    // Rest pose matches photo: 3/4 view facing the window (left)
-    const restY = Math.PI * 0.72;
-    const hoverY = restY + px * 0.35 + Math.sin(t * 0.45) * 0.03;
-    group.current.rotation.y += (hoverY - group.current.rotation.y) * 0.06;
-    group.current.rotation.x += (py * 0.05 - group.current.rotation.x) * 0.06;
+    const targetY = 0.28 + px * 0.38;
+    const targetX = 0.18 + py * 0.08;
+    group.current.rotation.y += (targetY - group.current.rotation.y) * 0.07;
+    group.current.rotation.x += (targetX - group.current.rotation.x) * 0.07;
 
-    // Pop depth: sits in the image plane, lifts toward camera on interaction + scroll
-    const pop = 0.08 + Math.abs(px) * 0.18 + scrollProgress * 0.22;
-    const breathe = Math.sin(t * 0.9) * 0.015;
-    const targetZ = pop + breathe;
-    const targetY = -0.95 + scrollProgress * 0.06 + Math.sin(t * 0.7) * 0.02;
-    const targetX = 0.95 + px * 0.06;
+    const pop = 0.12 + Math.abs(px) * 0.08 + scrollProgress * 0.14;
+    const breathe = Math.sin(t * 0.9) * 0.018;
+    group.current.position.set(0.7 + px * 0.05, -0.15 + breathe + scrollProgress * 0.04, pop);
 
-    group.current.position.x += (targetX - group.current.position.x) * 0.08;
-    group.current.position.y += (targetY - group.current.position.y) * 0.08;
-    group.current.position.z += (targetZ - group.current.position.z) * 0.08;
-
-    // Subtle scale pulse so it reads as lifting off the plate
-    const s = 1.55 + pop * 0.08;
+    const s = 1.35 + pop * 0.04;
     group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, s, 0.08));
   });
 
   return (
-    <group ref={group} position={[0.95, -0.95, 0.08]} rotation={[0, Math.PI * 0.72, 0]}>
-      <primitive object={clone} />
+    <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.18, 0.28, 0]}>
+      {/* Base / keyboard deck */}
+      <Aluminum args={[1.6, 0.05, 1.05]} radius={0.022} position={[0, 0.025, 0]} />
+      <RoundedBox args={[1.4, 0.01, 0.48]} radius={0.006} position={[0, 0.055, 0.12]} castShadow>
+        <meshStandardMaterial color="#16171a" metalness={0.35} roughness={0.5} />
+      </RoundedBox>
+      {[0.28, 0.2, 0.12, 0.04].map((z, i) => (
+        <RoundedBox key={i} args={[1.26, 0.005, 0.05]} radius={0.003} position={[0, 0.062, z]}>
+          <meshStandardMaterial color="#0a0b0d" roughness={0.7} />
+        </RoundedBox>
+      ))}
+      <Aluminum args={[0.56, 0.005, 0.34]} radius={0.01} position={[0, 0.055, -0.26]} />
+
+      {/*
+        Lid stands upright: tall in Y, thin in Z.
+        Screen on +Z face (toward camera). Slight recline via group rotation.x.
+      */}
+      <group position={[0, 0.05, -0.48]} rotation={[-0.2, 0, 0]}>
+        <Aluminum args={[1.6, 1.02, 0.038]} radius={0.02} position={[0, 0.51, -0.01]} />
+        <RoundedBox args={[1.48, 0.94, 0.012]} radius={0.008} position={[0, 0.51, 0.012]}>
+          <meshStandardMaterial color="#050506" metalness={0.25} roughness={0.45} />
+        </RoundedBox>
+        <mesh position={[0, 0.51, 0.02]}>
+          <planeGeometry args={[1.36, 0.84]} />
+          <meshBasicMaterial color="#000" />
+        </mesh>
+        <group position={[0, 0.51, 0.022]}>
+          <ScreenDisplay />
+        </group>
+        <mesh position={[0, 0.95, 0.02]}>
+          <circleGeometry args={[0.012, 16]} />
+          <meshStandardMaterial color="#222" />
+        </mesh>
+      </group>
     </group>
   );
 }
@@ -81,55 +268,48 @@ function PopChair({ scrollProgress }: { scrollProgress: number }) {
 function MatchCamera({ scrollProgress }: { scrollProgress: number }) {
   useFrame((state) => {
     const p = scrollProgress;
-    // Camera framed like the hero still — look into the lounge from slightly left
     state.camera.position.lerp(
       new THREE.Vector3(
-        THREE.MathUtils.lerp(0.05, 0.25, p),
-        THREE.MathUtils.lerp(0.35, 0.5, p),
-        THREE.MathUtils.lerp(3.4, 2.95, p),
+        THREE.MathUtils.lerp(0.2, 0.45, p),
+        THREE.MathUtils.lerp(0.7, 0.85, p),
+        THREE.MathUtils.lerp(3.1, 2.65, p),
       ),
       0.06,
     );
-    state.camera.lookAt(0.85, 0.05, 0);
+    state.camera.lookAt(0.7, 0.15, 0);
   });
   return null;
 }
 
-/**
- * Transparent WebGL layer: only the popping chair.
- * Room, table, city, and holographic screens stay in the photoreal plate.
- */
 export function LoungeScene({ scrollProgress = 0 }: { scrollProgress?: number }) {
   return (
     <>
-      {/* Lighting matched to the still: warm wall wash + cool holo fill */}
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[-2.5, 3.5, 2]} intensity={0.55} color="#c8d4e8" />
+      <ambientLight intensity={0.45} />
+      <directionalLight position={[-2.5, 4, 2]} intensity={0.8} color="#dbe4f0" />
       <spotLight
-        position={[2.2, 1.8, 1.5]}
-        angle={0.55}
-        penumbra={0.7}
-        intensity={3.2}
-        color="#ffb56b"
+        position={[2.5, 2.5, 2]}
+        angle={0.5}
+        penumbra={0.8}
+        intensity={3.6}
+        color="#ffc89a"
         castShadow
-        distance={8}
+        distance={12}
       />
-      <pointLight position={[1.8, 1.2, -0.4]} intensity={0.85} color="#5eead4" distance={5} />
-      <pointLight position={[-1.5, 1.0, 1.5]} intensity={0.4} color="#f5f0e8" distance={6} />
-      <hemisphereLight args={["#9aabbc", "#0a0a0c", 0.35]} />
+      <pointLight position={[1, 1.2, 1.5]} intensity={0.8} color="#ffffff" />
+      <pointLight position={[2, 0.8, -0.5]} intensity={0.5} color="#5eead4" />
+      <hemisphereLight args={["#c5d0e0", "#0a0a0c", 0.4]} />
 
       <MatchCamera scrollProgress={scrollProgress} />
-      <PopChair scrollProgress={scrollProgress} />
+      <HeroLaptop scrollProgress={scrollProgress} />
 
       <ContactShadows
-        position={[0.95, -0.98, 0.1]}
-        opacity={0.7}
-        scale={3.2}
+        position={[0.75, -0.42, 0.1]}
+        opacity={0.8}
+        scale={5.5}
         blur={2.6}
-        far={3.5}
-        color="#000000"
+        far={4.5}
       />
-      <Environment preset="apartment" environmentIntensity={0.55} />
+      <Environment preset="city" environmentIntensity={0.7} />
     </>
   );
 }

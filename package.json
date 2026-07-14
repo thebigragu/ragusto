@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "models:lounge": "blender --background --python blender/build_lounge.py",
+    "models:laptop": "blender --background --python blender/build_hero_laptop.py",
     "models:chair": "blender --background --python blender/build_hero_chair.py",
+    "models:lounge": "blender --background --python blender/build_lounge.py",
     "models:hero": "blender --background --python blender/build_studio_hero.py",
     "models:pavilion": "blender --background --python blender/build_pavilion.py",
-    "models": "npm run models:chair"
+    "models": "npm run models:laptop"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
