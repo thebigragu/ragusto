@@ -1,6 +1,6 @@
 "use client";
 
-import { Float, MeshTransmissionMaterial } from "@react-three/drei";
+import { Float } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
@@ -18,21 +18,16 @@ function GlassPanel({
     <Float speed={1.2} rotationIntensity={0.25} floatIntensity={0.6}>
       <mesh position={position} rotation={rotation} scale={scale}>
         <boxGeometry args={[1.6, 1, 0.06]} />
-        <MeshTransmissionMaterial
-          backside
-          samples={4}
-          thickness={0.4}
-          chromaticAberration={0.04}
-          anisotropy={0.2}
-          distortion={0.1}
-          distortionScale={0.2}
-          temporalDistortion={0.1}
-          iridescence={0.3}
-          iridescenceIOR={1}
-          iridescenceThicknessRange={[100, 400]}
+        <meshPhysicalMaterial
           color="#c9d4ff"
-          roughness={0.15}
-          metalness={0.05}
+          roughness={0.12}
+          metalness={0.15}
+          transmission={0.85}
+          thickness={0.35}
+          ior={1.4}
+          transparent
+          opacity={0.92}
+          reflectivity={0.4}
         />
       </mesh>
     </Float>
