@@ -5,7 +5,191 @@ import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-useGLTF.preload("/models/macbook-pro.glb");
+/** jackbaeten — MacBook Pro M3 16" 2024 (CC BY, via Sketchfab / themockitship) */
+const MACBOOK_MODEL = "/models/macbook-m3-16.glb";
+const SCREEN_MATERIAL = "sfCQkHOWyrsLmor";
+const HIDDEN_MATERIALS = new Set([
+  "jwuTsnFxKtBUxpK",
+  "fNHiBfcxHUJCahl",
+  "ZCDwChwkbBfITSW",
+]);
+
+const UI_W = 1280;
+const UI_H = 832;
+
+useGLTF.preload(MACBOOK_MODEL);
+
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function paintRightRail(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
+  const rx = 918;
+  const rw = w - rx - 16;
+
+  ctx.fillStyle = "#0c0e14";
+  ctx.fillRect(rx, 44, rw, h - 44);
+  ctx.strokeStyle = "#1a1e28";
+  ctx.beginPath();
+  ctx.moveTo(rx, 52);
+  ctx.lineTo(rx, h - 10);
+  ctx.stroke();
+
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "600 11px system-ui,sans-serif";
+  ctx.fillText("FLEET CONTEXT", rx + 14, 72);
+
+  // Health ring
+  const cx = rx + rw * 0.5;
+  const cy = 128;
+  const score = 94 + Math.floor(Math.sin(t * 0.7) * 2);
+  ctx.strokeStyle = "#1f2937";
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 34, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = "#3b82f6";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 34, -Math.PI / 2, -Math.PI / 2 + (score / 100) * Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = "#f9fafb";
+  ctx.font = "700 22px system-ui,sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`${score}%`, cx, cy + 8);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "11px system-ui,sans-serif";
+  ctx.fillText("Fleet health", rx + 14, 178);
+
+  // Active agents
+  ctx.fillStyle = "#141821";
+  roundRect(ctx, rx + 10, 192, rw - 20, 118, 10);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 12px system-ui,sans-serif";
+  ctx.fillText("Active agents", rx + 22, 214);
+  const agents = [
+    { n: "Triage · Northwind", s: "running", c: "#34d399" },
+    { n: "Indexer · RAG", s: "syncing", c: "#60a5fa" },
+    { n: "Deploy · portal", s: "idle", c: "#9ca3af" },
+    { n: "Escalation · Harbor", s: "alert", c: "#fbbf24" },
+  ];
+  agents.forEach((a, i) => {
+    const y = 232 + i * 22;
+    ctx.fillStyle = a.c;
+    ctx.beginPath();
+    ctx.arc(rx + 26, y - 4, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#d1d5db";
+    ctx.font = "11px system-ui,sans-serif";
+    ctx.fillText(a.n, rx + 38, y);
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "10px system-ui,sans-serif";
+    ctx.fillText(a.s, rx + rw - 58, y);
+  });
+
+  // Region latency
+  ctx.fillStyle = "#141821";
+  roundRect(ctx, rx + 10, 322, rw - 20, 108, 10);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 12px system-ui,sans-serif";
+  ctx.fillText("Region latency", rx + 22, 344);
+  const regions = [
+    { l: "US-East", ms: 11 + Math.floor(Math.sin(t * 1.4) * 3), p: 0.92 },
+    { l: "EU-West", ms: 24 + Math.floor(Math.cos(t) * 4), p: 0.74 },
+    { l: "APAC", ms: 38 + Math.floor(Math.sin(t * 0.8) * 5), p: 0.58 },
+  ];
+  regions.forEach((r, i) => {
+    const y = 362 + i * 26;
+    ctx.fillStyle = "#9ca3af";
+    ctx.font = "11px system-ui,sans-serif";
+    ctx.fillText(r.l, rx + 22, y);
+    ctx.fillStyle = "#4b5563";
+    roundRect(ctx, rx + 88, y - 10, rw - 118, 8, 4);
+    ctx.fill();
+    ctx.fillStyle = i === 0 ? "#3b82f6" : "#14b8a6";
+    roundRect(ctx, rx + 88, y - 10, (rw - 118) * r.p, 8, 4);
+    ctx.fill();
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "10px ui-monospace,monospace";
+    ctx.fillText(`${r.ms}ms`, rx + rw - 48, y);
+  });
+
+  // Deploy queue
+  ctx.fillStyle = "#141821";
+  roundRect(ctx, rx + 10, 442, rw - 20, 96, 10);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 12px system-ui,sans-serif";
+  ctx.fillText("Deploy queue", rx + 22, 464);
+  const deploys = [
+    { n: "portal.lumen", p: 0.62 + Math.sin(t * 0.9) * 0.08 },
+    { n: "ops-api", p: 0.28 },
+  ];
+  deploys.forEach((d, i) => {
+    const y = 482 + i * 28;
+    ctx.fillStyle = "#d1d5db";
+    ctx.font = "11px system-ui,sans-serif";
+    ctx.fillText(d.n, rx + 22, y);
+    ctx.fillStyle = "#252a36";
+    roundRect(ctx, rx + 22, y + 6, rw - 44, 6, 3);
+    ctx.fill();
+    ctx.fillStyle = "#8b5cf6";
+    roundRect(ctx, rx + 22, y + 6, (rw - 44) * Math.min(1, d.p), 6, 3);
+    ctx.fill();
+  });
+
+  // API quota + alerts
+  ctx.fillStyle = "#141821";
+  roundRect(ctx, rx + 10, 550, rw - 20, 88, 10);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 12px system-ui,sans-serif";
+  ctx.fillText("API quota", rx + 22, 572);
+  const quota = 0.68 + Math.sin(t * 0.5) * 0.04;
+  ctx.fillStyle = "#252a36";
+  roundRect(ctx, rx + 22, 584, rw - 44, 10, 5);
+  ctx.fill();
+  ctx.fillStyle = "#f59e0b";
+  roundRect(ctx, rx + 22, 584, (rw - 44) * quota, 10, 5);
+  ctx.fill();
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "10px system-ui,sans-serif";
+  ctx.fillText(`${Math.floor(quota * 100)}% of 2M req/day`, rx + 22, 612);
+
+  ctx.fillStyle = "#141821";
+  roundRect(ctx, rx + 10, 650, rw - 20, h - 666, 10);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 12px system-ui,sans-serif";
+  ctx.fillText("Alerts", rx + 22, 672);
+  const alerts = [
+    { t: "Spike in webhook retries", c: "#fbbf24" },
+    { t: "SSL renew · 12 days", c: "#60a5fa" },
+  ];
+  alerts.forEach((a, i) => {
+    const y = 692 + i * 24;
+    ctx.fillStyle = a.c;
+    ctx.fillText("▸", rx + 22, y);
+    ctx.fillStyle = "#d1d5db";
+    ctx.font = "11px system-ui,sans-serif";
+    ctx.fillText(a.t, rx + 34, y);
+  });
+}
 
 function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
   ctx.fillStyle = "#0a0b0f";
@@ -21,21 +205,21 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.fill();
   });
   ctx.fillStyle = "#1c1f28";
-  roundRect(ctx, 86, 12, 240, 20, 6);
+  roundRect(ctx, 86, 12, 280, 20, 6);
   ctx.fill();
   ctx.fillStyle = "#8b919c";
   ctx.font = "11px system-ui,sans-serif";
   ctx.fillText("arcform.app / northwind-ops", 96, 26);
 
-  // Sidebar
+  // Left sidebar
   ctx.fillStyle = "#0e1016";
-  ctx.fillRect(0, 44, 150, h - 44);
+  ctx.fillRect(0, 44, 148, h - 44);
   ["Overview", "Workflows", "Agents", "Analytics", "Settings"].forEach((label, i) => {
     const y = 78 + i * 38;
     const active = i === Math.floor(t * 0.4) % 5;
     if (active) {
       ctx.fillStyle = "rgba(59,130,246,0.2)";
-      roundRect(ctx, 10, y - 14, 130, 30, 8);
+      roundRect(ctx, 10, y - 14, 128, 30, 8);
       ctx.fill();
     }
     ctx.fillStyle = active ? "#f3f4f6" : "#9ca3af";
@@ -43,7 +227,8 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.fillText(label, 26, y + 4);
   });
 
-  const mx = 170;
+  const mx = 164;
+  const mainW = 740;
   ctx.fillStyle = "#f9fafb";
   ctx.font = "600 22px system-ui,sans-serif";
   ctx.fillText("Operations Console", mx, 82);
@@ -71,7 +256,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
 
   // Chart
   ctx.fillStyle = "#141821";
-  roundRect(ctx, mx, 210, 510, 190, 14);
+  roundRect(ctx, mx, 210, mainW, 190, 14);
   ctx.fill();
   ctx.fillStyle = "#9ca3af";
   ctx.font = "12px system-ui,sans-serif";
@@ -80,8 +265,8 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.strokeStyle = "#3b82f6";
   ctx.lineWidth = 2.5;
   ctx.beginPath();
-  for (let i = 0; i < 50; i++) {
-    const x = mx + 20 + i * 9.5;
+  for (let i = 0; i < 72; i++) {
+    const x = mx + 20 + i * 9.8;
     const y = 320 - Math.sin(i * 0.32 + t * 1.7) * 40 - Math.cos(i * 0.12 + t) * 14;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
@@ -91,8 +276,8 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.strokeStyle = "#14b8a6";
   ctx.lineWidth = 1.75;
   ctx.beginPath();
-  for (let i = 0; i < 50; i++) {
-    const x = mx + 20 + i * 9.5;
+  for (let i = 0; i < 72; i++) {
+    const x = mx + 20 + i * 9.8;
     const y = 330 - Math.sin(i * 0.25 - t * 1.3) * 26;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
@@ -101,7 +286,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
 
   // Feed
   ctx.fillStyle = "#141821";
-  roundRect(ctx, mx, 420, 510, 155, 14);
+  roundRect(ctx, mx, 420, mainW, h - 436, 14);
   ctx.fill();
   const rows = [
     "Agent routed invoice batch · Northwind",
@@ -109,6 +294,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     "Deploy green · portal.lumen",
     "Escalation closed · Harbor desk",
     "Webhook delivered · stripe.events",
+    "Policy sync · SOC2 controls",
   ];
   const off = Math.floor(t * 1.15) % rows.length;
   rows.forEach((_, i) => {
@@ -116,7 +302,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     const y = 448 + i * 26;
     if (i === 0) {
       ctx.fillStyle = "rgba(59,130,246,0.12)";
-      roundRect(ctx, mx + 8, y - 14, 494, 24, 6);
+      roundRect(ctx, mx + 8, y - 14, mainW - 16, 24, 6);
       ctx.fill();
     }
     ctx.fillStyle = "#34d399";
@@ -126,269 +312,75 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.font = "12px system-ui,sans-serif";
     ctx.fillText(line, mx + 36, y);
   });
-}
 
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
-) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-
-function paintMacKeyboard(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  const deck = "#0b0b0d";
-  const gap = "#050506";
-  const keyTop = "#3d3d42";
-  const keyBottom = "#2a2a2f";
-  const keyEdge = "#1a1a1e";
-  const trackpad = "#45454c";
-  const trackpadInner = "#3a3a40";
-
-  ctx.fillStyle = deck;
-  ctx.fillRect(0, 0, w, h);
-
-  const kbX = w * 0.1;
-  const kbY = h * 0.06;
-  const kbW = w * 0.8;
-  const kbH = h * 0.56;
-  const padY = h * 0.66;
-  const padH = h * 0.26;
-  const padX = w * 0.28;
-  const padW = w * 0.44;
-
-  const rows: { cols: number; widths?: number[]; height?: number }[] = [
-    { cols: 14, height: 0.11 },
-    { cols: 14, height: 0.14 },
-    { cols: 14, height: 0.14 },
-    { cols: 13, widths: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.6, 1], height: 0.14 },
-    { cols: 12, widths: [1.6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8], height: 0.14 },
-    {
-      cols: 10,
-      widths: [1.2, 1.1, 1.1, 1.1, 4.8, 1.1, 1.1, 1.1, 1.1, 1.2],
-      height: 0.14,
-    },
-  ];
-
-  const rowGap = kbH * 0.028;
-  let y = kbY;
-  rows.forEach((row) => {
-    const rowH = kbH * (row.height ?? 0.14);
-    const units = row.widths ?? Array(row.cols).fill(1);
-    const unitW = kbW / units.reduce((a, b) => a + b, 0);
-    let x = kbX;
-    units.forEach((unit) => {
-      const kw = unitW * unit - rowGap;
-      const kh = rowH - rowGap;
-      const r = Math.min(kw, kh) * 0.16;
-
-      ctx.fillStyle = gap;
-      roundRect(ctx, x - 1, y - 1, kw + 2, kh + 2, r + 1);
-      ctx.fill();
-
-      const grad = ctx.createLinearGradient(x, y, x, y + kh);
-      grad.addColorStop(0, keyTop);
-      grad.addColorStop(1, keyBottom);
-      ctx.fillStyle = grad;
-      roundRect(ctx, x, y, kw, kh, r);
-      ctx.fill();
-
-      ctx.strokeStyle = keyEdge;
-      ctx.lineWidth = 1;
-      roundRect(ctx, x + 0.5, y + 0.5, kw - 1, kh - 1, r);
-      ctx.stroke();
-
-      x += unitW * unit;
-    });
-    y += rowH;
-  });
-
-  // Speaker grille dots flanking keyboard
-  ctx.fillStyle = "rgba(255,255,255,0.04)";
-  for (let side = 0; side < 2; side++) {
-    const gx = side === 0 ? w * 0.04 : w * 0.94;
-    for (let i = 0; i < 18; i++) {
-      for (let j = 0; j < 3; j++) {
-        ctx.beginPath();
-        ctx.arc(gx, kbY + i * (kbH / 18) + j * 3, 1.1, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
-  // Trackpad — inset glass slab
-  ctx.fillStyle = gap;
-  roundRect(ctx, padX - 3, padY - 3, padW + 6, padH + 6, 18);
-  ctx.fill();
-
-  const padGrad = ctx.createLinearGradient(padX, padY, padX, padY + padH);
-  padGrad.addColorStop(0, trackpad);
-  padGrad.addColorStop(0.5, trackpadInner);
-  padGrad.addColorStop(1, "#323238");
-  ctx.fillStyle = padGrad;
-  roundRect(ctx, padX, padY, padW, padH, 16);
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(255,255,255,0.06)";
-  ctx.lineWidth = 1.5;
-  roundRect(ctx, padX + 1, padY + 1, padW - 2, padH - 2, 15);
-  ctx.stroke();
-
-  // Subtle deck sheen
-  const sheen = ctx.createLinearGradient(0, 0, w, h * 0.4);
-  sheen.addColorStop(0, "rgba(255,255,255,0.03)");
-  sheen.addColorStop(1, "rgba(255,255,255,0)");
-  ctx.fillStyle = sheen;
-  ctx.fillRect(0, 0, w, h);
-}
-
-function createMacKeyboardTexture() {
-  const canvas = document.createElement("canvas");
-  canvas.width = 1024;
-  canvas.height = 640;
-  const ctx = canvas.getContext("2d")!;
-  paintMacKeyboard(ctx, 1024, 640);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-  return texture;
+  paintRightRail(ctx, w, h, t);
 }
 
 function useLiveScreenTexture() {
   const { ctx, tex } = useMemo(() => {
     const canvas = document.createElement("canvas");
-    canvas.width = 1024;
-    canvas.height = 640;
+    canvas.width = UI_W;
+    canvas.height = UI_H;
     const context = canvas.getContext("2d")!;
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 8;
+    texture.flipY = true;
     return { ctx: context, tex: texture };
   }, []);
 
   useEffect(() => () => tex.dispose(), [tex]);
 
   useFrame((state) => {
-    paintAppUI(ctx, 1024, 640, state.clock.elapsedTime);
+    paintAppUI(ctx, UI_W, UI_H, state.clock.elapsedTime);
     tex.needsUpdate = true;
   });
 
   return tex;
 }
 
-/** GLB deck UVs don't align — sync a textured plane to the body each frame. */
-function MacKeyboardDeck({
-  texture,
-  laptopRoot,
-  parentRef,
-}: {
-  texture: THREE.CanvasTexture;
-  laptopRoot: React.RefObject<THREE.Object3D | null>;
-  parentRef: React.RefObject<THREE.Group | null>;
-}) {
-  const meshRef = useRef<THREE.Mesh>(null);
-
-  useFrame(() => {
-    const mesh = meshRef.current;
-    const root = laptopRoot.current;
-    const parent = parentRef.current;
-    if (!mesh || !root || !parent) return;
-
-    const body = root.getObjectByName("body") as THREE.Mesh | undefined;
-    if (!body) return;
-
-    body.updateWorldMatrix(true, false);
-    const box = new THREE.Box3().setFromObject(body);
-    const size = box.getSize(new THREE.Vector3());
-
-    const point = new THREE.Vector3(
-      (box.min.x + box.max.x) * 0.5,
-      box.max.y + 0.004,
-      box.min.z + size.z * 0.62,
-    );
-    parent.worldToLocal(point);
-    mesh.position.copy(point);
-    mesh.scale.set(size.x * 0.9, size.z * 0.36, 1);
-  });
-
-  return (
-    <mesh ref={meshRef} rotation={[-0.58, 0.012, 0]} renderOrder={20}>
-      <planeGeometry args={[1, 1]} />
-      <meshBasicMaterial map={texture} toneMapped={false} />
-    </mesh>
-  );
-}
-
-function tuneMacMaterials(
-  object: THREE.Object3D,
-  screenTex: THREE.CanvasTexture,
-) {
+function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture) {
   object.traverse((child) => {
     if (!(child instanceof THREE.Mesh)) return;
 
-    if (child.name === "matte") {
-      child.material = new THREE.MeshStandardMaterial({
-        map: screenTex,
-        emissiveMap: screenTex,
-        emissive: "#ffffff",
-        emissiveIntensity: 1.15,
-        roughness: 0.35,
-        metalness: 0,
-        toneMapped: false,
-      });
-      return;
-    }
+    const mats = Array.isArray(child.material) ? child.material : [child.material];
+    let changed = false;
+    const next = mats.map((mat) => {
+      if (!(mat instanceof THREE.MeshStandardMaterial)) return mat;
 
-    if (child.name === "body") {
-      const mats = Array.isArray(child.material) ? child.material : [child.material];
-      mats.forEach((mat) => {
-        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
-        if (mat.name === "blackmatte") {
-          mat.color.set("#050506");
-          mat.metalness = 0.04;
-          mat.roughness = 0.55;
-          mat.envMapIntensity = 0.25;
-          return;
-        }
-        mat.metalness = 1;
-        mat.roughness = 0.2;
-        mat.envMapIntensity = 1.5;
-        mat.color.set("#c5c8cc");
-      });
-      return;
-    }
+      if (mat.name === SCREEN_MATERIAL) {
+        changed = true;
+        return new THREE.MeshStandardMaterial({
+          map: screenTex,
+          emissiveMap: screenTex,
+          emissive: new THREE.Color(1, 1, 1),
+          emissiveIntensity: 0.95,
+          roughness: 0.35,
+          metalness: 0,
+          toneMapped: false,
+        });
+      }
 
-    if (child.name === "back") {
-      const mats = Array.isArray(child.material) ? child.material : [child.material];
-      mats.forEach((mat) => {
-        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
-        mat.metalness = 1;
-        mat.roughness = 0.2;
-        mat.envMapIntensity = 1.5;
-        if (mat.name === "aluminium") mat.color.set("#c5c8cc");
-      });
+      if (HIDDEN_MATERIALS.has(mat.name)) {
+        mat.visible = false;
+      }
+
+      return mat;
+    });
+
+    if (changed) {
+      child.material = Array.isArray(child.material) ? next : next[0];
     }
   });
 }
 
-/** MacBook Pro GLB with live product UI mapped to the display mesh */
+/** MacBook Pro M3 16" with live Operations Console on the display */
 function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
-  const { scene: srcScene } = useGLTF("/models/macbook-pro.glb");
+  const { scene: srcScene } = useGLTF(MACBOOK_MODEL);
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
-  const laptopRoot = useRef<THREE.Object3D>(null);
   const pointer = useRef({ x: 0, y: 0 });
   const screenTex = useLiveScreenTexture();
-  const keyboardTex = useMemo(() => createMacKeyboardTexture(), []);
 
   useEffect(() => {
     tuneMacMaterials(scene, screenTex);
@@ -400,8 +392,6 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
     });
   }, [scene, screenTex]);
 
-  useEffect(() => () => keyboardTex.dispose(), [keyboardTex]);
-
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -412,39 +402,27 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   }, []);
 
   useFrame((state) => {
-    // GLB hinge rests closed at 90°. ~66° cracks the lid slightly toward camera.
-    const screen = laptopRoot.current?.getObjectByName("screen");
-    if (screen) {
-      screen.rotation.x = THREE.MathUtils.degToRad(68);
-    }
-
     if (!group.current) return;
     const t = state.clock.elapsedTime;
     const px = pointer.current.x;
     const py = pointer.current.y;
 
-    const targetY = 0.28 + px * 0.38;
-    const targetX = 0.18 + py * 0.08;
+    const targetY = 0.22 + px * 0.34;
+    const targetX = 0.14 + py * 0.07;
     group.current.rotation.y += (targetY - group.current.rotation.y) * 0.07;
     group.current.rotation.x += (targetX - group.current.rotation.x) * 0.07;
 
-    const pop = 0.12 + Math.abs(px) * 0.08 + scrollProgress * 0.14;
-    const breathe = Math.sin(t * 0.9) * 0.018;
+    const pop = 0.1 + Math.abs(px) * 0.07 + scrollProgress * 0.12;
+    const breathe = Math.sin(t * 0.9) * 0.015;
     group.current.position.set(0.7 + px * 0.05, -0.15 + breathe + scrollProgress * 0.04, pop);
 
-    const s = 1.08 + pop * 0.032;
+    const s = 1.06 + pop * 0.028;
     group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, s, 0.08));
   });
 
   return (
-    <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.18, 0.28, 0]}>
-      <primitive
-        ref={laptopRoot}
-        object={scene}
-        scale={0.051}
-        position={[0, 0.04, 0]}
-      />
-      <MacKeyboardDeck texture={keyboardTex} laptopRoot={laptopRoot} parentRef={group} />
+    <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.14, 0.36, 0]}>
+      <primitive object={scene} scale={0.052} position={[0, 0.02, 0]} />
     </group>
   );
 }
@@ -468,32 +446,32 @@ function MatchCamera({ scrollProgress }: { scrollProgress: number }) {
 export function LoungeScene({ scrollProgress = 0 }: { scrollProgress?: number }) {
   return (
     <>
-      <ambientLight intensity={0.45} />
-      <directionalLight position={[-2.5, 4, 2]} intensity={0.8} color="#dbe4f0" />
+      <ambientLight intensity={0.42} />
+      <directionalLight position={[-2.5, 4, 2]} intensity={0.75} color="#dbe4f0" />
       <spotLight
         position={[2.5, 2.5, 2]}
         angle={0.5}
         penumbra={0.8}
-        intensity={3.6}
+        intensity={3.2}
         color="#ffc89a"
         castShadow
         distance={12}
       />
-      <pointLight position={[1, 1.2, 1.5]} intensity={0.8} color="#ffffff" />
-      <pointLight position={[2, 0.8, -0.5]} intensity={0.5} color="#5eead4" />
-      <hemisphereLight args={["#c5d0e0", "#0a0a0c", 0.4]} />
+      <pointLight position={[1, 1.2, 1.5]} intensity={0.7} color="#ffffff" />
+      <pointLight position={[2, 0.8, -0.5]} intensity={0.45} color="#5eead4" />
+      <hemisphereLight args={["#c5d0e0", "#0a0a0c", 0.35]} />
 
       <MatchCamera scrollProgress={scrollProgress} />
       <HeroLaptop scrollProgress={scrollProgress} />
 
       <ContactShadows
-        position={[0.75, -0.42, 0.1]}
+        position={[0.72, -0.4, 0.1]}
         opacity={0.8}
         scale={5.5}
         blur={2.6}
         far={4.5}
       />
-      <Environment preset="city" environmentIntensity={0.7} />
+      <Environment preset="city" environmentIntensity={0.55} />
     </>
   );
 }
