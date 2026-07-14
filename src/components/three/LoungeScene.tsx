@@ -230,10 +230,11 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   }, []);
 
   useFrame((state) => {
-    // GLB ships closed at 90°. Face the camera, then crack the lid toward the viewer.
+    // GLB hinge rests closed at 90°. Rotating down to ~58° cracks the lid
+    // toward the camera so the live display faces the viewer.
     const screen = laptopRoot.current?.getObjectByName("screen");
     if (screen) {
-      screen.rotation.x = THREE.MathUtils.degToRad(115);
+      screen.rotation.x = THREE.MathUtils.degToRad(58);
     }
 
     if (!group.current) return;
@@ -260,7 +261,6 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
         ref={laptopRoot}
         object={scene}
         scale={0.051}
-        rotation={[0, Math.PI, 0]}
         position={[0, 0.04, 0]}
       />
     </group>
