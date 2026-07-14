@@ -379,6 +379,7 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   const { scene: srcScene } = useGLTF(MACBOOK_MODEL);
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
+  const pointer = useRef({ x: 0, y: 0 });
   const screenTex = useLiveScreenTexture();
 
   useEffect(() => {
@@ -391,14 +392,37 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
     });
   }, [scene, screenTex]);
 
-  useFrame(() => {
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointer.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
+
+  useFrame((state) => {
     if (!group.current) return;
-    group.current.position.z = 0.1 + scrollProgress * 0.06;
+    const t = state.clock.elapsedTime;
+    const px = pointer.current.x;
+    const py = pointer.current.y;
+
+    const targetY = 0.22 + px * 0.34;
+    const targetX = 0.14 + py * 0.07;
+    group.current.rotation.y += (targetY - group.current.rotation.y) * 0.07;
+    group.current.rotation.x += (targetX - group.current.rotation.x) * 0.07;
+
+    const pop = 0.1 + Math.abs(px) * 0.07 + scrollProgress * 0.12;
+    const breathe = Math.sin(t * 0.9) * 0.015;
+    group.current.position.set(0.7 + px * 0.05, -0.15 + breathe + scrollProgress * 0.04, pop);
+
+    const s = 1.06 + pop * 0.028;
+    group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, s, 0.08));
   });
 
   return (
     <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.14, 0.36, 0]}>
-      <primitive object={scene} scale={0.0442} position={[0, 0.02, 0]} />
+      <primitive object={scene} scale={0.052} position={[0, 0.02, 0]} />
     </group>
   );
 }
