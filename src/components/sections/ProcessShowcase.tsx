@@ -65,8 +65,8 @@ export function ProcessShowcase() {
               From intent to a shipped product
             </h2>
             <p className="max-w-md text-fg-muted leading-relaxed">
-              Scroll to assemble the stack — silicon core, devices, and live interfaces —
-              the same arc every Arcform engagement follows.
+              Scroll as the product stack comes online — silicon, craft, devices —
+              the same discipline that takes an idea to launch.
             </p>
             <ol className="space-y-3 pt-2">
               {processSteps.map((step, i) => (

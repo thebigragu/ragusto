@@ -65,27 +65,86 @@ export function Projects() {
 }
 
 function DeviceMockup({ accent, label }: { accent: string; label: string }) {
+  const host = `app.${label.toLowerCase().replace(/\s+/g, "")}.io / overview`;
+
   return (
-    <div className="absolute inset-0 flex items-center justify-center p-8">
+    <div className="absolute inset-0 flex items-center justify-center p-6 md:p-10">
       <div
-        className="w-full max-w-lg rounded-2xl border border-white/10 bg-black/40 p-3 shadow-2xl backdrop-blur-md transition-transform duration-700 group-hover:-translate-y-2 group-hover:scale-[1.02]"
-        style={{ boxShadow: `0 30px 80px ${accent}33` }}
+        className="relative w-full max-w-xl overflow-hidden rounded-[1.25rem] border border-white/12 bg-[#0c0c10] shadow-2xl transition-transform duration-700 group-hover:-translate-y-2 group-hover:scale-[1.02]"
+        style={{
+          boxShadow: `0 40px 100px ${accent}40, inset 0 1px 0 rgba(255,255,255,0.08)`,
+        }}
       >
-        <div className="mb-3 flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-white/25" />
-          <span className="h-2 w-2 rounded-full bg-white/25" />
-          <span className="h-2 w-2 rounded-full bg-white/25" />
-          <span className="ml-3 flex-1 rounded-full bg-white/10 px-3 py-1 text-[10px] text-white/40">
-            {label.toLowerCase().replace(/\s+/g, "")}.app
+        <div className="flex items-center gap-2 border-b border-white/8 bg-[#14141a] px-4 py-3">
+          <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+          <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" />
+          <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
+          <span className="ml-3 flex-1 rounded-md bg-white/6 px-3 py-1 font-mono text-[10px] tracking-wide text-white/35">
+            {host}
           </span>
         </div>
-        <div className="grid gap-2 rounded-xl bg-white/5 p-4">
-          <div className="h-3 w-1/3 rounded bg-white/20" />
-          <div className="h-24 rounded-lg" style={{ background: `${accent}33` }} />
-          <div className="grid grid-cols-3 gap-2">
-            <div className="h-12 rounded-lg bg-white/10" />
-            <div className="h-12 rounded-lg bg-white/10" />
-            <div className="h-12 rounded-lg bg-white/10" />
+
+        <div className="grid grid-cols-[72px_1fr]">
+          <div className="space-y-2 border-r border-white/6 bg-[#101016] p-3">
+            {[0.9, 0.55, 0.55, 0.4, 0.4].map((o, i) => (
+              <div
+                key={i}
+                className="h-2 rounded-full"
+                style={{
+                  width: `${o * 100}%`,
+                  background: i === 0 ? accent : "rgba(255,255,255,0.12)",
+                }}
+              />
+            ))}
+          </div>
+
+          <div className="space-y-3 p-4">
+            <div className="grid grid-cols-3 gap-2">
+              {["94.2%", "2.4k", "12ms"].map((v, i) => (
+                <div
+                  key={v}
+                  className="rounded-lg border border-white/8 bg-white/[0.03] p-2.5"
+                >
+                  <div
+                    className="mb-2 h-0.5 w-full rounded-full"
+                    style={{ background: accent, opacity: 0.7 - i * 0.1 }}
+                  />
+                  <p className="font-mono text-sm text-white/90">{v}</p>
+                  <p className="text-[9px] tracking-wider text-white/30 uppercase">
+                    {["uptime", "events", "p95"][i]}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex h-24 items-end gap-1.5 rounded-lg border border-white/8 bg-[#0a0a0e] px-3 py-2">
+              {[40, 65, 48, 82, 58, 90, 70, 78, 55, 88, 72, 95].map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-sm"
+                  style={{
+                    height: `${h}%`,
+                    background: `linear-gradient(180deg, ${accent}, ${accent}55)`,
+                    opacity: 0.55 + (i % 4) * 0.1,
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="space-y-1.5">
+              {[0.85, 0.7, 0.55].map((w, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ background: accent, opacity: 1 - i * 0.25 }}
+                  />
+                  <div
+                    className="h-1.5 rounded-full bg-white/10"
+                    style={{ width: `${w * 100}%` }}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

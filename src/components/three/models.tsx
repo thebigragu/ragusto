@@ -2,370 +2,499 @@
 
 import { useMemo } from "react";
 import * as THREE from "three";
+import { usePcbTextures } from "./textures";
 
-/** Dark PCB substrate with metallic edge — RefractWeb/Armory product density */
-export function CircuitBoard({
-  width = 2.4,
-  depth = 2.4,
-  thickness = 0.08,
+type TexPack = NonNullable<ReturnType<typeof usePcbTextures>>;
+
+/**
+ * Hyper-detailed BGA / QFP computing module.
+ * Fidelity target: RefractWeb Blender chip — dense pins, solder mask map,
+ * silicon die photomask, SMDs, gold finish, macro lighting response.
+ */
+export function PhotorealChip({
+  textures,
+  scale = 1,
 }: {
-  width?: number;
-  depth?: number;
-  thickness?: number;
+  textures: TexPack;
+  scale?: number;
 }) {
-  const pads = useMemo(() => {
-    const items: { pos: [number, number, number]; s: number }[] = [];
-    const cols = 8;
-    const rows = 8;
-    for (let x = 0; x < cols; x++) {
-      for (let z = 0; z < rows; z++) {
-        if (x > 2 && x < 5 && z > 2 && z < 5) continue; // leave center for die
-        items.push({
-          pos: [
-            -width * 0.38 + (x / (cols - 1)) * width * 0.76,
-            thickness * 0.55,
-            -depth * 0.38 + (z / (rows - 1)) * depth * 0.76,
-          ],
-          s: 0.06 + ((x + z) % 3) * 0.015,
-        });
+  const balls = useMemo(() => {
+    const positions: number[] = [];
+    const n = 14;
+    const span = 1.55;
+    for (let x = 0; x < n; x++) {
+      for (let z = 0; z < n; z++) {
+        if (x > 4 && x < 9 && z > 4 && z < 9) continue;
+        positions.push(
+          -span / 2 + (x / (n - 1)) * span,
+          -0.055,
+          -span / 2 + (z / (n - 1)) * span,
+        );
       }
     }
-    return items;
-  }, [width, depth, thickness]);
+    return new Float32Array(positions);
+  }, []);
 
-  const traces = useMemo(() => {
-    const lines: { pos: [number, number, number]; len: number; rot: number }[] = [];
-    for (let i = 0; i < 14; i++) {
-      const side = i % 2 === 0;
-      lines.push({
-        pos: [
-          side ? -width * 0.28 : width * 0.28,
-          thickness * 0.52,
-          -depth * 0.32 + (i / 13) * depth * 0.64,
-        ],
-        len: 0.35 + (i % 4) * 0.08,
-        rot: side ? 0 : Math.PI,
+  const pins = useMemo(() => {
+    const items: { pos: [number, number, number]; rot: number }[] = [];
+    const count = 28;
+    const half = 1.05;
+    for (let i = 0; i < count; i++) {
+      const t = -0.95 + (i / (count - 1)) * 1.9;
+      items.push({ pos: [t, -0.02, half], rot: 0 });
+      items.push({ pos: [t, -0.02, -half], rot: 0 });
+      items.push({ pos: [half, -0.02, t], rot: Math.PI / 2 });
+      items.push({ pos: [-half, -0.02, t], rot: Math.PI / 2 });
+    }
+    return items;
+  }, []);
+
+  const smds = useMemo(() => {
+    const items: { pos: [number, number, number]; w: number; d: number; kind: "c" | "r" }[] = [];
+    for (let i = 0; i < 36; i++) {
+      const angle = (i / 36) * Math.PI * 2;
+      const r = 0.95 + (i % 3) * 0.12;
+      items.push({
+        pos: [Math.cos(angle) * r, 0.06, Math.sin(angle) * r],
+        w: i % 2 ? 0.08 : 0.12,
+        d: i % 2 ? 0.05 : 0.06,
+        kind: i % 3 === 0 ? "c" : "r",
       });
     }
-    return lines;
-  }, [width, depth, thickness]);
+    return items;
+  }, []);
+
+  const ballGeo = useMemo(() => new THREE.SphereGeometry(0.028, 10, 10), []);
+  const ballMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: "#d4af37",
+        metalness: 1,
+        roughness: 0.18,
+      }),
+    [],
+  );
 
   return (
-    <group>
-      {/* PCB body */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[width, thickness, depth]} />
-        <meshStandardMaterial color="#0d1f18" metalness={0.35} roughness={0.55} />
+    <group scale={scale}>
+      {/* PCB substrate */}
+      <mesh castShadow receiveShadow position={[0, 0, 0]}>
+        <boxGeometry args={[2.2, 0.09, 2.2]} />
+        <meshPhysicalMaterial
+          map={textures.pcb}
+          roughness={0.45}
+          metalness={0.25}
+          clearcoat={0.35}
+          clearcoatRoughness={0.4}
+        />
       </mesh>
-      {/* Copper edge ring */}
-      <mesh position={[0, thickness * 0.52, 0]}>
-        <boxGeometry args={[width * 0.98, 0.004, depth * 0.98]} />
-        <meshStandardMaterial color="#1a3d2e" metalness={0.5} roughness={0.4} />
+
+      {/* Beveled package rim */}
+      <mesh position={[0, 0.055, 0]}>
+        <boxGeometry args={[1.95, 0.04, 1.95]} />
+        <meshPhysicalMaterial
+          color="#1a1a1e"
+          metalness={0.7}
+          roughness={0.28}
+          clearcoat={0.5}
+        />
       </mesh>
-      {/* Gold contact pads */}
-      {pads.map((p, i) => (
-        <mesh key={i} position={p.pos} castShadow>
-          <boxGeometry args={[p.s, 0.012, p.s]} />
-          <meshStandardMaterial color="#c9a227" metalness={0.95} roughness={0.22} />
+
+      {/* Heat spreader / IHS */}
+      <mesh position={[0, 0.095, 0]} castShadow>
+        <boxGeometry args={[1.55, 0.05, 1.55]} />
+        <meshPhysicalMaterial
+          color="#c5cad3"
+          metalness={0.95}
+          roughness={0.22}
+          clearcoat={0.8}
+          clearcoatRoughness={0.15}
+          map={textures.metal}
+        />
+      </mesh>
+
+      {/* Silicon die under glass */}
+      <mesh position={[0, 0.13, 0]}>
+        <boxGeometry args={[0.72, 0.02, 0.72]} />
+        <meshPhysicalMaterial
+          map={textures.die}
+          metalness={0.85}
+          roughness={0.12}
+          iridescence={1}
+          iridescenceIOR={1.3}
+          iridescenceThicknessRange={[100, 800]}
+          emissive="#1e3a8a"
+          emissiveIntensity={0.15}
+        />
+      </mesh>
+
+      {/* Die window / epoxy */}
+      <mesh position={[0, 0.145, 0]}>
+        <boxGeometry args={[0.78, 0.012, 0.78]} />
+        <meshPhysicalMaterial
+          color="#9ec5ff"
+          transmission={0.75}
+          thickness={0.2}
+          roughness={0.05}
+          metalness={0}
+          transparent
+          opacity={0.55}
+          ior={1.5}
+        />
+      </mesh>
+
+      {/* BGA solder balls */}
+      <BgaBalls geometry={ballGeo} material={ballMat} positions={balls} />
+
+      {/* Edge pins */}
+      {pins.map((p, i) => (
+        <mesh key={i} position={p.pos} rotation={[0.35, p.rot, 0]} castShadow>
+          <boxGeometry args={[0.035, 0.02, 0.14]} />
+          <meshStandardMaterial color="#d4af37" metalness={1} roughness={0.2} />
         </mesh>
       ))}
-      {/* Trace lines */}
-      {traces.map((t, i) => (
-        <mesh key={`t-${i}`} position={t.pos} rotation={[0, t.rot, 0]}>
-          <boxGeometry args={[t.len, 0.006, 0.018]} />
-          <meshStandardMaterial
-            color="#2dd4bf"
-            metalness={0.7}
-            roughness={0.3}
-            emissive="#14b8a6"
-            emissiveIntensity={0.15}
-          />
-        </mesh>
+
+      {/* SMD passives */}
+      {smds.map((s, i) => (
+        <group key={i} position={s.pos}>
+          <mesh castShadow>
+            <boxGeometry args={[s.w, 0.035, s.d]} />
+            <meshStandardMaterial
+              color={s.kind === "c" ? "#1a1a1a" : "#c4a574"}
+              metalness={s.kind === "c" ? 0.4 : 0.2}
+              roughness={0.45}
+            />
+          </mesh>
+          {s.kind === "r" && (
+            <>
+              <mesh position={[-s.w * 0.4, 0, 0]}>
+                <boxGeometry args={[0.02, 0.036, s.d * 0.95]} />
+                <meshStandardMaterial color="#d4af37" metalness={1} roughness={0.25} />
+              </mesh>
+              <mesh position={[s.w * 0.4, 0, 0]}>
+                <boxGeometry args={[0.02, 0.036, s.d * 0.95]} />
+                <meshStandardMaterial color="#d4af37" metalness={1} roughness={0.25} />
+              </mesh>
+            </>
+          )}
+        </group>
       ))}
-      {/* Mounting holes */}
-      {[
-        [-width * 0.42, thickness * 0.6, -depth * 0.42],
-        [width * 0.42, thickness * 0.6, -depth * 0.42],
-        [-width * 0.42, thickness * 0.6, depth * 0.42],
-        [width * 0.42, thickness * 0.6, depth * 0.42],
-      ].map((pos, i) => (
-        <mesh key={`h-${i}`} position={pos as [number, number, number]}>
-          <cylinderGeometry args={[0.05, 0.05, 0.02, 12]} />
-          <meshStandardMaterial color="#050505" metalness={0.8} roughness={0.3} />
-        </mesh>
-      ))}
+
+      {/* Crystal oscillator can */}
+      <mesh position={[0.72, 0.08, -0.72]} castShadow>
+        <boxGeometry args={[0.22, 0.07, 0.16]} />
+        <meshPhysicalMaterial color="#d8dde6" metalness={0.9} roughness={0.2} />
+      </mesh>
+
+      {/* Inductor */}
+      <mesh position={[-0.75, 0.075, 0.7]} castShadow>
+        <cylinderGeometry args={[0.07, 0.07, 0.06, 16]} />
+        <meshStandardMaterial color="#2a2a30" metalness={0.6} roughness={0.35} />
+      </mesh>
     </group>
   );
 }
 
-/** Silicon die with etched lanes — signature technical object */
-export function SiliconDie({ scale = 1 }: { scale?: number }) {
-  const lanes = useMemo(() => {
-    const items: { pos: [number, number, number]; w: number; d: number }[] = [];
-    for (let i = 0; i < 9; i++) {
-      items.push({
-        pos: [-0.28 + i * 0.07, 0.045, 0],
-        w: 0.018,
-        d: 0.55,
-      });
-      items.push({
-        pos: [0, 0.048, -0.28 + i * 0.07],
-        w: 0.55,
-        d: 0.018,
-      });
+function BgaBalls({
+  geometry,
+  material,
+  positions,
+}: {
+  geometry: THREE.BufferGeometry;
+  material: THREE.Material;
+  positions: Float32Array;
+}) {
+  const mesh = useMemo(() => {
+    const count = positions.length / 3;
+    const m = new THREE.InstancedMesh(geometry, material, count);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < count; i++) {
+      dummy.position.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+      dummy.updateMatrix();
+      m.setMatrixAt(i, dummy.matrix);
+    }
+    m.instanceMatrix.needsUpdate = true;
+    m.castShadow = true;
+    return m;
+  }, [geometry, material, positions]);
+
+  return <primitive object={mesh} />;
+}
+
+/**
+ * Precision-machined launch craft.
+ * Fidelity target: Galvanite hero-object polish — panel seams, nozzles,
+ * brushed metal, rivets, emissive propulsion — applied as Arcform “ship it” metaphor.
+ */
+export function PrecisionCraft({
+  textures,
+  scale = 1,
+}: {
+  textures: TexPack;
+  scale?: number;
+}) {
+  const rivets = useMemo(() => {
+    const items: [number, number, number][] = [];
+    for (let ring = 0; ring < 5; ring++) {
+      const y = -0.55 + ring * 0.35;
+      const r = 0.28 - ring * 0.02;
+      for (let i = 0; i < 12; i++) {
+        const a = (i / 12) * Math.PI * 2;
+        items.push([Math.cos(a) * r, y, Math.sin(a) * r]);
+      }
     }
     return items;
   }, []);
 
   return (
     <group scale={scale}>
-      <mesh castShadow>
-        <boxGeometry args={[0.72, 0.06, 0.72]} />
-        <meshStandardMaterial color="#2a3142" metalness={0.85} roughness={0.18} />
-      </mesh>
-      <mesh position={[0, 0.035, 0]}>
-        <boxGeometry args={[0.62, 0.02, 0.62]} />
-        <meshStandardMaterial
-          color="#3b82f6"
-          metalness={0.6}
-          roughness={0.25}
-          emissive="#1d4ed8"
-          emissiveIntensity={0.25}
+      {/* Nose cone */}
+      <mesh position={[0, 1.15, 0]} castShadow>
+        <coneGeometry args={[0.22, 0.55, 32]} />
+        <meshPhysicalMaterial
+          map={textures.metal}
+          color="#e8ecf2"
+          metalness={0.95}
+          roughness={0.18}
+          clearcoat={0.7}
+          clearcoatRoughness={0.12}
         />
       </mesh>
-      {lanes.map((l, i) => (
-        <mesh key={i} position={l.pos}>
-          <boxGeometry args={[l.w, 0.01, l.d]} />
-          <meshStandardMaterial
-            color="#93c5fd"
-            metalness={0.9}
-            roughness={0.15}
-            emissive="#60a5fa"
-            emissiveIntensity={0.35}
-          />
+
+      {/* Upper body */}
+      <mesh position={[0, 0.55, 0]} castShadow>
+        <cylinderGeometry args={[0.26, 0.3, 0.7, 48]} />
+        <meshPhysicalMaterial
+          map={textures.metal}
+          color="#b8c0cc"
+          metalness={0.92}
+          roughness={0.22}
+          clearcoat={0.55}
+        />
+      </mesh>
+
+      {/* Mid band / accent */}
+      <mesh position={[0, 0.35, 0]}>
+        <cylinderGeometry args={[0.305, 0.305, 0.08, 48]} />
+        <meshPhysicalMaterial
+          color="#3b82f6"
+          metalness={0.7}
+          roughness={0.25}
+          emissive="#1d4ed8"
+          emissiveIntensity={0.35}
+        />
+      </mesh>
+
+      {/* Lower body */}
+      <mesh position={[0, -0.15, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.34, 0.85, 48]} />
+        <meshPhysicalMaterial
+          map={textures.metal}
+          color="#9aa3b0"
+          metalness={0.9}
+          roughness={0.28}
+        />
+      </mesh>
+
+      {/* Panel groove rings */}
+      {[0.8, 0.45, 0.05, -0.35].map((y, i) => (
+        <mesh key={i} position={[0, y, 0]}>
+          <torusGeometry args={[0.305 - i * 0.01, 0.008, 8, 48]} />
+          <meshStandardMaterial color="#2a2e36" metalness={0.8} roughness={0.4} />
         </mesh>
       ))}
-      {/* Bond wires suggestion */}
+
+      {/* Porthole */}
+      <mesh position={[0.28, 0.6, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.07, 0.07, 0.04, 24]} />
+        <meshPhysicalMaterial
+          color="#7dd3fc"
+          transmission={0.6}
+          thickness={0.3}
+          roughness={0.05}
+          metalness={0.1}
+          transparent
+          opacity={0.85}
+          emissive="#38bdf8"
+          emissiveIntensity={0.2}
+        />
+      </mesh>
+
+      {/* Fins */}
+      {[0, 1, 2, 3].map((i) => {
+        const a = (i / 4) * Math.PI * 2;
+        return (
+          <mesh
+            key={i}
+            position={[Math.cos(a) * 0.38, -0.55, Math.sin(a) * 0.38]}
+            rotation={[0.15, -a, 0.35]}
+            castShadow
+          >
+            <boxGeometry args={[0.04, 0.55, 0.28]} />
+            <meshPhysicalMaterial
+              map={textures.metal}
+              color="#c5ccd6"
+              metalness={0.9}
+              roughness={0.25}
+            />
+          </mesh>
+        );
+      })}
+
+      {/* Engine bells */}
       {[
-        [-0.4, 0.02, -0.2],
-        [0.4, 0.02, -0.15],
-        [-0.35, 0.02, 0.25],
-        [0.38, 0.02, 0.2],
+        [0, -1.05, 0],
+        [0.18, -0.95, 0.16],
+        [-0.18, -0.95, 0.16],
+        [0, -0.95, -0.2],
       ].map((pos, i) => (
-        <mesh key={`w-${i}`} position={pos as [number, number, number]} rotation={[0, 0, i % 2 ? 0.4 : -0.4]}>
-          <boxGeometry args={[0.12, 0.006, 0.006]} />
-          <meshStandardMaterial color="#e8e4d9" metalness={1} roughness={0.1} />
+        <group key={i} position={pos as [number, number, number]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[i === 0 ? 0.14 : 0.07, i === 0 ? 0.2 : 0.1, 0.28, 24]} />
+            <meshPhysicalMaterial
+              color="#3a3f48"
+              metalness={0.95}
+              roughness={0.2}
+              clearcoat={0.4}
+            />
+          </mesh>
+          <mesh position={[0, -0.16, 0]}>
+            <sphereGeometry args={[i === 0 ? 0.09 : 0.045, 16, 12]} />
+            <meshStandardMaterial
+              color="#60a5fa"
+              emissive="#3b82f6"
+              emissiveIntensity={1.8}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Plume */}
+      <mesh position={[0, -1.45, 0]}>
+        <coneGeometry args={[0.12, 0.7, 16, 1, true]} />
+        <meshStandardMaterial
+          color="#93c5fd"
+          emissive="#60a5fa"
+          emissiveIntensity={2}
+          transparent
+          opacity={0.45}
+          side={THREE.DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
+
+      {/* Rivets */}
+      {rivets.map((p, i) => (
+        <mesh key={i} position={p}>
+          <sphereGeometry args={[0.012, 8, 8]} />
+          <meshStandardMaterial color="#dfe3ea" metalness={1} roughness={0.15} />
         </mesh>
       ))}
+
+      {/* Antenna */}
+      <mesh position={[0.12, 1.35, 0]} rotation={[0.2, 0, 0.15]}>
+        <cylinderGeometry args={[0.008, 0.008, 0.35, 8]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.9} roughness={0.25} />
+      </mesh>
     </group>
   );
 }
 
-/** Browser chrome with dashboard UI — Vertex/Galvanite product clarity */
-export function BrowserWindow({
-  width = 2.2,
-  height = 1.45,
-  accent = "#3b82f6",
+/** MacBook-class laptop with textured display */
+export function StudioLaptop({
+  textures,
+  accent = "#14b8a6",
 }: {
-  width?: number;
-  height?: number;
+  textures: TexPack;
   accent?: string;
 }) {
-  const bars = useMemo(
-    () =>
-      [0.55, 0.82, 0.4, 0.7, 0.95, 0.48].map((h, i) => ({
-        x: -0.7 + i * 0.28,
-        h,
-      })),
-    [],
-  );
+  const screen =
+    accent === "#7c6cf0"
+      ? textures.dashViolet
+      : accent === "#14b8a6"
+        ? textures.dashTeal
+        : textures.dashBlue;
 
   return (
     <group>
-      {/* Frame */}
-      <mesh castShadow>
-        <boxGeometry args={[width, height, 0.06]} />
-        <meshStandardMaterial color="#121218" metalness={0.4} roughness={0.35} />
+      <mesh castShadow position={[0, 0, 0.2]} receiveShadow>
+        <boxGeometry args={[2.2, 0.05, 1.45]} />
+        <meshPhysicalMaterial color="#1c1c20" metalness={0.85} roughness={0.28} clearcoat={0.4} />
       </mesh>
-      {/* Screen */}
-      <mesh position={[0, -0.04, 0.035]}>
-        <boxGeometry args={[width * 0.94, height * 0.78, 0.01]} />
-        <meshStandardMaterial color="#0b0b10" metalness={0.2} roughness={0.5} />
+      <mesh position={[0, 0.03, 0.45]}>
+        <boxGeometry args={[0.7, 0.008, 0.45]} />
+        <meshStandardMaterial color="#2a2a30" roughness={0.5} />
       </mesh>
-      {/* Title bar */}
-      <mesh position={[0, height * 0.4, 0.036]}>
-        <boxGeometry args={[width * 0.94, 0.12, 0.01]} />
-        <meshStandardMaterial color="#1c1c24" metalness={0.3} roughness={0.4} />
-      </mesh>
-      {/* Traffic lights */}
-      {([-0.9, -0.78, -0.66] as const).map((x, i) => (
-        <mesh key={i} position={[x * (width / 2.2), height * 0.4, 0.045]}>
-          <sphereGeometry args={[0.025, 12, 12]} />
-          <meshStandardMaterial
-            color={i === 0 ? "#ef4444" : i === 1 ? "#eab308" : "#22c55e"}
-            emissive={i === 0 ? "#ef4444" : i === 1 ? "#eab308" : "#22c55e"}
-            emissiveIntensity={0.4}
-          />
+      {/* Keyboard keys suggestion */}
+      {Array.from({ length: 6 }).map((_, row) =>
+        Array.from({ length: 12 }).map((_, col) => (
+          <mesh
+            key={`${row}-${col}`}
+            position={[-0.85 + col * 0.15, 0.03, -0.15 + row * 0.12]}
+          >
+            <boxGeometry args={[0.12, 0.01, 0.09]} />
+            <meshStandardMaterial color="#25252c" roughness={0.55} />
+          </mesh>
+        )),
+      )}
+      <group position={[0, 0.78, -0.52]} rotation={[0.18, 0, 0]}>
+        <mesh castShadow>
+          <boxGeometry args={[2.2, 1.4, 0.04]} />
+          <meshPhysicalMaterial color="#111114" metalness={0.8} roughness={0.3} />
         </mesh>
-      ))}
-      {/* URL bar */}
-      <mesh position={[0.15, height * 0.4, 0.045]}>
-        <boxGeometry args={[width * 0.55, 0.055, 0.008]} />
-        <meshStandardMaterial color="#2a2a34" roughness={0.6} />
-      </mesh>
-      {/* Sidebar */}
-      <mesh position={[-width * 0.35, -0.08, 0.042]}>
-        <boxGeometry args={[0.35, height * 0.65, 0.008]} />
-        <meshStandardMaterial color="#16161e" roughness={0.55} />
-      </mesh>
-      {/* Chart bars */}
-      {bars.map((b, i) => (
-        <mesh key={i} position={[b.x, -0.45 + b.h * 0.35, 0.045]}>
-          <boxGeometry args={[0.14, b.h * 0.7, 0.02]} />
-          <meshStandardMaterial
-            color={accent}
-            metalness={0.3}
-            roughness={0.35}
-            emissive={accent}
-            emissiveIntensity={0.2}
-          />
+        <mesh position={[0, 0, 0.025]}>
+          <planeGeometry args={[2.0, 1.2]} />
+          <meshBasicMaterial map={screen} toneMapped={false} />
         </mesh>
-      ))}
-      {/* KPI cards */}
-      {[0, 1, 2].map((i) => (
-        <mesh key={`k-${i}`} position={[-0.15 + i * 0.42, 0.22, 0.045]}>
-          <boxGeometry args={[0.36, 0.22, 0.012]} />
-          <meshStandardMaterial color="#1a1a24" roughness={0.45} metalness={0.2} />
+        <mesh position={[0, 0.62, 0.022]}>
+          <boxGeometry args={[0.08, 0.08, 0.01]} />
+          <meshStandardMaterial color="#0a0a0a" />
         </mesh>
-      ))}
+      </group>
     </group>
   );
 }
 
-/** Phone with app UI — product showcase language */
-export function PhoneDevice({ accent = "#7c6cf0" }: { accent?: string }) {
+/** Phone with glass + OLED screen texture */
+export function StudioPhone({ textures }: { textures: TexPack }) {
   return (
     <group>
       <mesh castShadow>
-        <boxGeometry args={[0.72, 1.45, 0.08]} />
-        <meshStandardMaterial color="#1a1a1e" metalness={0.7} roughness={0.25} />
+        <boxGeometry args={[0.78, 1.6, 0.09]} />
+        <meshPhysicalMaterial
+          color="#1a1a1e"
+          metalness={0.85}
+          roughness={0.22}
+          clearcoat={0.9}
+          clearcoatRoughness={0.1}
+        />
       </mesh>
-      {/* Screen */}
-      <mesh position={[0, 0, 0.042]}>
-        <boxGeometry args={[0.64, 1.32, 0.01]} />
-        <meshStandardMaterial color="#08080c" roughness={0.4} />
+      <mesh position={[0, 0, 0.048]}>
+        <planeGeometry args={[0.7, 1.48]} />
+        <meshBasicMaterial map={textures.dashViolet} toneMapped={false} />
       </mesh>
-      {/* Notch */}
-      <mesh position={[0, 0.58, 0.048]}>
-        <boxGeometry args={[0.22, 0.05, 0.01]} />
+      <mesh position={[0, 0.68, 0.05]}>
+        <boxGeometry args={[0.2, 0.04, 0.01]} />
         <meshStandardMaterial color="#050508" />
       </mesh>
-      {/* App header */}
-      <mesh position={[0, 0.4, 0.05]}>
-        <boxGeometry args={[0.5, 0.08, 0.008]} />
-        <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.3} />
-      </mesh>
-      {/* Content cards */}
-      {[0.15, -0.1, -0.35].map((y, i) => (
-        <mesh key={i} position={[0, y, 0.05]}>
-          <boxGeometry args={[0.52, 0.18, 0.008]} />
-          <meshStandardMaterial color="#15151c" roughness={0.5} />
-        </mesh>
-      ))}
-      {/* Home indicator */}
-      <mesh position={[0, -0.58, 0.05]}>
-        <boxGeometry args={[0.2, 0.02, 0.006]} />
+      <mesh position={[0, -0.7, 0.05]}>
+        <boxGeometry args={[0.22, 0.015, 0.008]} />
         <meshStandardMaterial color="#3f3f46" />
       </mesh>
     </group>
   );
 }
 
-/** Laptop with open screen — Armory-style product presence */
-export function LaptopDevice({ accent = "#14b8a6" }: { accent?: string }) {
-  return (
-    <group>
-      {/* Base */}
-      <mesh castShadow position={[0, 0, 0.15]} rotation={[-0.05, 0, 0]}>
-        <boxGeometry args={[2.0, 0.06, 1.3]} />
-        <meshStandardMaterial color="#1c1c22" metalness={0.65} roughness={0.3} />
-      </mesh>
-      {/* Trackpad */}
-      <mesh position={[0, 0.04, 0.35]}>
-        <boxGeometry args={[0.55, 0.01, 0.35]} />
-        <meshStandardMaterial color="#2a2a32" roughness={0.45} />
-      </mesh>
-      {/* Screen back */}
-      <mesh position={[0, 0.72, -0.48]} rotation={[0.15, 0, 0]}>
-        <boxGeometry args={[2.0, 1.25, 0.05]} />
-        <meshStandardMaterial color="#141418" metalness={0.7} roughness={0.28} />
-      </mesh>
-      {/* Display */}
-      <mesh position={[0, 0.72, -0.45]} rotation={[0.15, 0, 0]}>
-        <boxGeometry args={[1.85, 1.1, 0.01]} />
-        <meshStandardMaterial color="#0a0a0f" roughness={0.35} />
-      </mesh>
-      {/* Code lines */}
-      {[0.35, 0.2, 0.05, -0.1, -0.25].map((y, i) => (
-        <mesh key={i} position={[-0.35, 0.72 + y * 0.15, -0.44]} rotation={[0.15, 0, 0]}>
-          <boxGeometry args={[0.7 + (i % 3) * 0.2, 0.035, 0.008]} />
-          <meshStandardMaterial
-            color={i % 2 === 0 ? accent : "#3b82f6"}
-            emissive={i % 2 === 0 ? accent : "#3b82f6"}
-            emissiveIntensity={0.25}
-          />
-        </mesh>
-      ))}
-    </group>
-  );
-}
-
-/** Floating UI card stack — Glass UI from Vertex principles, software-specific */
-export function UiCardStack({ accent = "#7c6cf0" }: { accent?: string }) {
-  const cards = [
-    { y: 0.35, z: -0.08, s: 0.92, o: 0.95 },
-    { y: 0.12, z: 0, s: 1, o: 1 },
-    { y: -0.12, z: 0.08, s: 0.88, o: 0.9 },
-  ];
-  return (
-    <group>
-      {cards.map((c, i) => (
-        <group key={i} position={[0, c.y, c.z]} scale={c.s}>
-          <mesh>
-            <boxGeometry args={[1.1, 0.7, 0.04]} />
-            <meshPhysicalMaterial
-              color="#1a1a28"
-              metalness={0.2}
-              roughness={0.2}
-              transmission={0.15}
-              thickness={0.2}
-              transparent
-              opacity={c.o}
-            />
-          </mesh>
-          <mesh position={[-0.25, 0.18, 0.025]}>
-            <boxGeometry args={[0.4, 0.08, 0.01]} />
-            <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.35} />
-          </mesh>
-          <mesh position={[0, -0.05, 0.025]}>
-            <boxGeometry args={[0.85, 0.06, 0.008]} />
-            <meshStandardMaterial color="#3f3f4a" />
-          </mesh>
-          <mesh position={[0, -0.18, 0.025]}>
-            <boxGeometry args={[0.65, 0.06, 0.008]} />
-            <meshStandardMaterial color="#2a2a34" />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
-
 export function SoftGround() {
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.35, 0]} receiveShadow>
-      <circleGeometry args={[6, 48]} />
-      <meshStandardMaterial color="#0a0a0b" roughness={1} metalness={0} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.55, 0]} receiveShadow>
+      <circleGeometry args={[8, 64]} />
+      <meshStandardMaterial color="#070708" roughness={1} metalness={0} />
     </mesh>
   );
+}
+
+export function useStudioTextures() {
+  return usePcbTextures();
 }
