@@ -1,6 +1,7 @@
 "use client";
 
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
+import { HeroHoloOverlay } from "@/components/ui/HoloOverlay";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -16,28 +17,26 @@ const LoungeScene = dynamic(
 );
 
 /**
- * Show the cinematic room / city, but mask out the baked-in photo chair
- * so the live 3D armchair is the only chair you see.
+ * Full original hero world (room, city, table, slat wall, holos) —
+ * chair removed from the plate so the matching 3D chair can pop out.
  */
-function HeroBackdrop() {
+function HeroPlate({ animateHolos = true }: { animateHolos?: boolean }) {
   return (
     <div className="absolute inset-0">
       <Image
-        src="/images/hero-studio.jpg"
-        alt="Arcform studio"
+        src="/images/hero-studio-plate.jpg"
+        alt="Arcform luxury design studio"
         fill
         priority
         sizes="100vw"
-        className="object-cover object-[28%_center]"
+        className="object-cover object-[55%_center]"
       />
-      {/* Hard wipe of photo furniture on the right — only city/window remains */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(90deg, transparent 0%, transparent 32%, rgba(7,8,10,0.55) 48%, #07080a 58%, #07080a 100%)",
-        }}
-      />
+      {/* Keep original still's holographic energy alive on the plate screens */}
+      {animateHolos ? (
+        <div className="absolute inset-0 mix-blend-screen opacity-90">
+          <HeroHoloOverlay />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -62,34 +61,49 @@ export function HeroCanvas() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Reduced motion: show the original complete still (with chair)
+  if (reduced) {
+    return (
+      <div className="absolute inset-0">
+        <Image
+          src="/images/hero-studio.jpg"
+          alt="Arcform luxury design studio"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[62%_center]"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="absolute inset-0">
-      <HeroBackdrop />
+      <HeroPlate />
 
-      {mounted && !reduced ? (
+      {mounted ? (
         <div className="pointer-events-none absolute inset-0">
-          <WebGLErrorBoundary fallback={null}>
+          <WebGLErrorBoundary
+            fallback={
+              // If WebGL fails, fall back to the original still with the chair in place
+              <Image
+                src="/images/hero-studio.jpg"
+                alt=""
+                fill
+                sizes="100vw"
+                className="object-cover object-[62%_center]"
+              />
+            }
+          >
             <SceneCanvas
               className="h-full w-full"
-              camera={{ position: [0.35, 0.55, 3.8], fov: 40 }}
+              camera={{ position: [0.05, 0.35, 3.4], fov: 40 }}
             >
               <LoungeScene scrollProgress={progress} />
             </SceneCanvas>
           </WebGLErrorBoundary>
         </div>
-      ) : (
-        // Reduced-motion / pre-mount: keep a static chair impression from the photo
-        <div className="absolute inset-0">
-          <Image
-            src="/images/hero-studio.jpg"
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover object-[62%_center] opacity-90"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

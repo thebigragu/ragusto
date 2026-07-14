@@ -8,9 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "models:lounge": "blender --background --python blender/build_lounge.py",
+    "models:chair": "blender --background --python blender/build_hero_chair.py",
     "models:hero": "blender --background --python blender/build_studio_hero.py",
     "models:pavilion": "blender --background --python blender/build_pavilion.py",
-    "models": "npm run models:lounge"
+    "models": "npm run models:chair"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
