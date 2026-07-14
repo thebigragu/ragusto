@@ -222,7 +222,7 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
     const breathe = Math.sin(t * 0.9) * 0.018;
     group.current.position.set(0.7 + px * 0.05, -0.15 + breathe + scrollProgress * 0.04, pop);
 
-    const s = 1.35 + pop * 0.04;
+    const s = 1.08 + pop * 0.032;
     group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, s, 0.08));
   });
 
