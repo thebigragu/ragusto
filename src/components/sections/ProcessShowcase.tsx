@@ -62,11 +62,11 @@ export function ProcessShowcase() {
           <div className="relative z-10 space-y-6">
             <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Experience</p>
             <h2 className="font-display max-w-xl text-4xl tracking-tight md:text-6xl">
-              Immersive by design
+              Spaces built for ambition
             </h2>
             <p className="max-w-md text-fg-muted leading-relaxed">
-              Scroll through the landscape — architecture, atmosphere, and product
-              systems composed the way we build for ambitious brands.
+              Scroll through an immersive studio landscape — architecture, light,
+              and atmosphere composing the way we build for modern brands.
             </p>
             <ol className="space-y-3 pt-2">
               {processSteps.map((step, i) => (

@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "models:hero": "blender --background --python blender/build_studio_hero.py",
+    "models:pavilion": "blender --background --python blender/build_pavilion.py",
+    "models": "npm run models:hero && npm run models:pavilion"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

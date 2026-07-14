@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 export const SITE = {
   name: "Arcform",
   tagline: "Engineering digital products that scale.",
-  heroLine: "The immersive product studio.",
+  heroLine: "A luxury studio for AI products and digital craft.",
   description:
-    "Arcform is a luxury AI and product studio building exceptional web experiences, custom applications, and intelligent systems with cinematic craft.",
+    "Arcform is a luxury AI and product studio building immersive websites, intelligent applications, and brand systems with atelier-level craft.",
   url: "https://arcform.dev",
   email: "hello@arcform.dev",
   twitter: "@arcform",

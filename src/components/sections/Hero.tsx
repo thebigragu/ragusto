@@ -9,11 +9,10 @@ import { motion } from "framer-motion";
 export function Hero() {
   return (
     <section className="relative flex min-h-[100svh] items-end overflow-hidden pb-20 pt-[calc(var(--nav-height)+1rem)] md:pb-24">
-      <div className="pointer-events-none absolute inset-0 bg-[#020617]">
+      <div className="pointer-events-none absolute inset-0 bg-[#07070a]">
         <HeroCanvas />
-        {/* Soft vignette — keep the sculpture dominant */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-[#020617]/40" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#020617]/90 via-[#020617]/25 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#07070a] via-transparent to-[#07070a]/50" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#07070a]/92 via-[#07070a]/30 to-transparent" />
       </div>
 
       <div className="container-shell relative z-10 w-full">
@@ -33,17 +32,17 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
           >
-            The immersive product studio
+            A luxury studio for AI products &amp; digital craft
           </motion.h1>
 
           <motion.p
-            className="max-w-md text-base leading-relaxed text-slate-400 md:text-lg"
+            className="max-w-md text-base leading-relaxed text-zinc-400 md:text-lg"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            AI. Applications. Web experiences — engineered with cinematic craft
-            for brands that refuse to look ordinary.
+            Immersive websites, intelligent applications, and brand systems —
+            designed with the precision of a high-end atelier.
           </motion.p>
 
           <motion.div
