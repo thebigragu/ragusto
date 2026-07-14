@@ -1,6 +1,7 @@
 "use client";
 
-import { ContactShadows, Environment, Lightformer, useGLTF } from "@react-three/drei";
+import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
+import { Bloom, EffectComposer, SMAA, Vignette } from "@react-three/postprocessing";
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
@@ -25,9 +26,6 @@ function PavilionModel() {
   return <primitive object={clone} />;
 }
 
-/**
- * Immersive pavilion landscape — Blender GLB + atmospheric layers.
- */
 export function ShowcaseScene({ progress }: { progress: number }) {
   const root = useRef<THREE.Group>(null);
 
@@ -44,17 +42,12 @@ export function ShowcaseScene({ progress }: { progress: number }) {
       <color attach="background" args={["#050508"]} />
       <fog attach="fog" args={["#050508", 7, 20]} />
 
-      <ambientLight intensity={0.15} />
-      <directionalLight position={[-2, 5, -3]} intensity={1.6} color="#22d3ee" />
+      <ambientLight intensity={0.12} />
+      <directionalLight position={[-2, 5, -3]} intensity={1.4} color="#22d3ee" />
       <directionalLight position={[5, 2, 2]} intensity={1.0} color="#fb7185" castShadow />
-      <pointLight position={[2.5, 0.8, 1]} intensity={1.8} color="#f97316" distance={7} />
-      <spotLight position={[0, 6, 2]} angle={0.5} intensity={1.1} color="#e2e8f0" />
+      <pointLight position={[2.5, 0.8, 1]} intensity={1.6} color="#f97316" distance={7} />
 
-      <Environment resolution={128}>
-        <Lightformer intensity={2} position={[0, 3, -4]} scale={[12, 4, 1]} color="#0891b2" />
-        <Lightformer intensity={0.9} position={[4, 1, 2]} scale={3} color="#fb7185" />
-      </Environment>
-
+      <Environment files="/hdri/studio_small_09_1k.hdr" environmentIntensity={0.35} />
       <AuroraBackdrop />
 
       <group ref={root} position={[0, -0.9, 0]} scale={0.95}>
@@ -62,8 +55,13 @@ export function ShowcaseScene({ progress }: { progress: number }) {
       </group>
 
       <GroundEmbers count={280} />
-
       <ContactShadows position={[0, -0.95, 0]} opacity={0.5} scale={18} blur={2.5} far={8} />
+
+      <EffectComposer multisampling={0}>
+        <Bloom luminanceThreshold={0.45} intensity={0.7} mipmapBlur />
+        <Vignette eskil={false} offset={0.2} darkness={0.6} />
+        <SMAA />
+      </EffectComposer>
     </>
   );
 }
