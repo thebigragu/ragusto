@@ -422,7 +422,7 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.14, 0.36, 0]}>
-      <primitive object={scene} scale={0.052} position={[0, 0.02, 0]} />
+      <primitive object={scene} scale={0.0442} position={[0, 0.02, 0]} />
     </group>
   );
 }
