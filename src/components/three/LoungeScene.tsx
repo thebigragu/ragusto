@@ -285,45 +285,52 @@ function useLiveScreenTexture() {
   return tex;
 }
 
-/** GLB deck UVs don't align — attach a textured plane flush on the chassis top. */
-function attachKeyboardDeck(body: THREE.Mesh, keyboardTex: THREE.CanvasTexture) {
-  if (body.getObjectByName("keyboard_deck")) return;
+/** GLB deck UVs don't align — sync a textured plane to the body each frame. */
+function MacKeyboardDeck({
+  texture,
+  laptopRoot,
+  parentRef,
+}: {
+  texture: THREE.CanvasTexture;
+  laptopRoot: React.RefObject<THREE.Object3D | null>;
+  parentRef: React.RefObject<THREE.Group | null>;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
 
-  body.geometry.computeBoundingBox();
-  const box = body.geometry.boundingBox;
-  if (!box) return;
+  useFrame(() => {
+    const mesh = meshRef.current;
+    const root = laptopRoot.current;
+    const parent = parentRef.current;
+    if (!mesh || !root || !parent) return;
 
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-  const kbZ0 = box.min.z + size.z * 0.38;
-  const kbZ1 = box.max.z - size.z * 0.06;
-  const kbDepth = kbZ1 - kbZ0;
-  const kbCenterZ = (kbZ0 + kbZ1) * 0.5;
+    const body = root.getObjectByName("body") as THREE.Mesh | undefined;
+    if (!body) return;
 
-  const deck = new THREE.Mesh(
-    new THREE.PlaneGeometry(size.x * 0.86, kbDepth),
-    new THREE.MeshStandardMaterial({
-      map: keyboardTex,
-      color: "#ffffff",
-      roughness: 0.48,
-      metalness: 0.04,
-      envMapIntensity: 0.35,
-      polygonOffset: true,
-      polygonOffsetFactor: -4,
-      polygonOffsetUnits: -4,
-    }),
+    body.updateWorldMatrix(true, false);
+    const box = new THREE.Box3().setFromObject(body);
+    const size = box.getSize(new THREE.Vector3());
+
+    const point = new THREE.Vector3(
+      (box.min.x + box.max.x) * 0.5,
+      box.max.y + 0.004,
+      box.min.z + size.z * 0.62,
+    );
+    parent.worldToLocal(point);
+    mesh.position.copy(point);
+    mesh.scale.set(size.x * 0.9, size.z * 0.36, 1);
+  });
+
+  return (
+    <mesh ref={meshRef} rotation={[-0.58, 0.012, 0]} renderOrder={20}>
+      <planeGeometry args={[1, 1]} />
+      <meshBasicMaterial map={texture} toneMapped={false} />
+    </mesh>
   );
-  deck.name = "keyboard_deck";
-  deck.rotation.x = -Math.PI / 2;
-  deck.position.set(center.x, box.max.y + 0.12, kbCenterZ);
-  deck.renderOrder = 5;
-  body.add(deck);
 }
 
 function tuneMacMaterials(
   object: THREE.Object3D,
   screenTex: THREE.CanvasTexture,
-  keyboardTex: THREE.CanvasTexture,
 ) {
   object.traverse((child) => {
     if (!(child instanceof THREE.Mesh)) return;
@@ -357,7 +364,6 @@ function tuneMacMaterials(
         mat.envMapIntensity = 1.5;
         mat.color.set("#c5c8cc");
       });
-      attachKeyboardDeck(child, keyboardTex);
       return;
     }
 
@@ -383,19 +389,16 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   const pointer = useRef({ x: 0, y: 0 });
   const screenTex = useLiveScreenTexture();
   const keyboardTex = useMemo(() => createMacKeyboardTexture(), []);
-  const materialsReady = useRef(false);
 
   useEffect(() => {
-    if (materialsReady.current) return;
-    tuneMacMaterials(scene, screenTex, keyboardTex);
+    tuneMacMaterials(scene, screenTex);
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
       }
     });
-    materialsReady.current = true;
-  }, [scene, screenTex, keyboardTex]);
+  }, [scene, screenTex]);
 
   useEffect(() => () => keyboardTex.dispose(), [keyboardTex]);
 
@@ -441,6 +444,7 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
         scale={0.051}
         position={[0, 0.04, 0]}
       />
+      <MacKeyboardDeck texture={keyboardTex} laptopRoot={laptopRoot} parentRef={group} />
     </group>
   );
 }
