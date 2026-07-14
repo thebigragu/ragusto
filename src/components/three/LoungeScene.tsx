@@ -6,7 +6,6 @@ import {
   Float,
   useGLTF,
 } from "@react-three/drei";
-import { EffectComposer, Bloom, Vignette, SMAA } from "@react-three/postprocessing";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
@@ -14,39 +13,50 @@ import * as THREE from "three";
 useGLTF.preload("/models/arcform-lounge.glb");
 useGLTF.preload("/models/armchair/ArmChair_01_1k.gltf");
 
-function MouseParallax({
-  children,
-  strength = 0.22,
-}: {
-  children: React.ReactNode;
-  strength?: number;
-}) {
+function MouseParallax({ children }: { children: React.ReactNode }) {
   const group = useRef<THREE.Group>(null);
-  useFrame((state) => {
+  const target = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      target.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      target.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
+
+  useFrame(() => {
     if (!group.current) return;
-    const tx = state.pointer.x * strength;
-    const ty = state.pointer.y * (strength * 0.4);
+    const tx = target.current.x * 0.2;
+    const ty = target.current.y * 0.08;
     group.current.rotation.y += (tx - group.current.rotation.y) * 0.05;
     group.current.rotation.x += (-ty - group.current.rotation.x) * 0.05;
-    group.current.position.x += (state.pointer.x * 0.12 - group.current.position.x) * 0.04;
-    group.current.position.y += (state.pointer.y * 0.06 - group.current.position.y) * 0.04;
   });
+
   return <group ref={group}>{children}</group>;
 }
 
 function ScrollCamera({ progress }: { progress: number }) {
   useFrame((state) => {
     const p = progress;
-    state.camera.position.z = THREE.MathUtils.lerp(4.2, 3.35, p);
-    state.camera.position.y = THREE.MathUtils.lerp(0.4, 0.65, p);
-    state.camera.position.x = THREE.MathUtils.lerp(0.15, 0.55, p);
-    state.camera.lookAt(0.4, 0.35, -0.4);
+    state.camera.position.lerp(
+      new THREE.Vector3(
+        THREE.MathUtils.lerp(0.2, 0.7, p),
+        THREE.MathUtils.lerp(1.1, 1.35, p),
+        THREE.MathUtils.lerp(5.2, 4.2, p),
+      ),
+      0.08,
+    );
+    state.camera.lookAt(0.6, 0.7, 0);
   });
   return null;
 }
 
 function AnimatedScreens({ root }: { root: THREE.Object3D }) {
-  const canvases = useRef<{ mesh: THREE.Mesh; ctx: CanvasRenderingContext2D; tex: THREE.CanvasTexture; phase: number }[]>([]);
+  const canvases = useRef<
+    { ctx: CanvasRenderingContext2D; tex: THREE.CanvasTexture; phase: number }[]
+  >([]);
 
   useEffect(() => {
     const entries: typeof canvases.current = [];
@@ -61,111 +71,67 @@ function AnimatedScreens({ root }: { root: THREE.Object3D }) {
       if (!ctx) return;
       const tex = new THREE.CanvasTexture(canvas);
       tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = 4;
       mesh.material = new THREE.MeshStandardMaterial({
         map: tex,
         emissiveMap: tex,
         emissive: new THREE.Color("#5eead4"),
-        emissiveIntensity: 1.35,
-        roughness: 0.35,
-        metalness: 0.2,
+        emissiveIntensity: 1.6,
+        roughness: 0.3,
+        metalness: 0.15,
         toneMapped: false,
+        side: THREE.DoubleSide,
       });
-      entries.push({ mesh, ctx, tex, phase: Math.random() * Math.PI * 2 });
+      entries.push({ ctx, tex, phase: Math.random() * Math.PI * 2 });
     });
     canvases.current = entries;
     return () => {
-      entries.forEach((e) => {
-        e.tex.dispose();
-        (e.mesh.material as THREE.Material).dispose();
-      });
+      entries.forEach((e) => e.tex.dispose());
     };
   }, [root]);
 
   useFrame((state) => {
     const t = state.clock.elapsedTime;
-    for (const entry of canvases.current) {
-      const { ctx, tex, phase } = entry;
+    for (const { ctx, tex, phase } of canvases.current) {
       const w = 512;
       const h = 768;
-      ctx.fillStyle = "rgba(4,12,16,0.92)";
+      ctx.fillStyle = "#041016";
       ctx.fillRect(0, 0, w, h);
 
-      ctx.strokeStyle = "rgba(45,212,191,0.25)";
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = "rgba(45,212,191,0.3)";
       for (let x = 0; x < w; x += 32) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
         ctx.lineTo(x, h);
         ctx.stroke();
       }
-      for (let y = 0; y < h; y += 32) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
 
-      // waveform
-      ctx.strokeStyle = "rgba(94,234,212,0.95)";
+      ctx.strokeStyle = "#5eead4";
       ctx.lineWidth = 2;
       ctx.beginPath();
       for (let x = 0; x < w; x++) {
-        const y =
-          180 +
-          Math.sin(x * 0.035 + t * 2.4 + phase) * 28 +
-          Math.sin(x * 0.01 + t * 1.1) * 12;
+        const y = 170 + Math.sin(x * 0.035 + t * 2.5 + phase) * 30;
         if (x === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       }
       ctx.stroke();
 
-      ctx.strokeStyle = "rgba(56,189,248,0.55)";
-      ctx.beginPath();
-      for (let x = 0; x < w; x++) {
-        const y = 260 + Math.sin(x * 0.05 - t * 3 + phase) * 18;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-
-      // bars
       for (let i = 0; i < 12; i++) {
         const bh = 30 + Math.abs(Math.sin(t * 2.2 + i * 0.55 + phase)) * 110;
-        ctx.fillStyle = `rgba(45,212,191,${0.45 + (i % 3) * 0.15})`;
+        ctx.fillStyle = "#2dd4bf";
         ctx.fillRect(48 + i * 34, 560 - bh, 18, bh);
       }
 
-      // scrolling log
-      ctx.font = "12px monospace";
-      ctx.fillStyle = "rgba(153,246,228,0.85)";
-      const lines = [
-        "ARC · telemetry sync",
-        "latency 12ms · ok",
-        "inference · batch",
-        "render · 60fps",
-        "vector · stable",
-        "edge cache · warm",
-      ];
-      const offset = Math.floor(t * 1.6 + phase * 3) % lines.length;
-      for (let i = 0; i < 8; i++) {
-        const line = lines[(offset + i) % lines.length];
-        ctx.fillText(`0${(i % 8) + 1}  ${line}`, 36, 340 + i * 18);
+      ctx.fillStyle = "#99f6e4";
+      ctx.font = "13px monospace";
+      const lines = ["ARC sync", "12ms ok", "batch 04", "60fps", "cache warm", "auth live"];
+      const offset = Math.floor(t * 1.8 + phase) % lines.length;
+      for (let i = 0; i < 7; i++) {
+        ctx.fillText(`0${i + 1}  ${lines[(offset + i) % lines.length]}`, 36, 320 + i * 20);
       }
 
-      // scan
-      const scanY = ((t * 120 + phase * 40) % h);
-      const grad = ctx.createLinearGradient(0, scanY - 20, 0, scanY + 20);
-      grad.addColorStop(0, "rgba(45,212,191,0)");
-      grad.addColorStop(0.5, "rgba(45,212,191,0.28)");
-      grad.addColorStop(1, "rgba(45,212,191,0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, scanY - 20, w, 40);
-
-      // brackets
-      ctx.strokeStyle = "rgba(94,234,212,0.9)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(10, 10, w - 20, h - 20);
+      const scanY = (t * 140 + phase * 50) % h;
+      ctx.fillStyle = "rgba(45,212,191,0.25)";
+      ctx.fillRect(0, scanY, w, 18);
 
       tex.needsUpdate = true;
     }
@@ -189,7 +155,7 @@ function LoungeModel() {
   }, [clone]);
 
   return (
-    <group position={[0.1, -0.95, 0.2]} scale={1.05}>
+    <group position={[0, -0.15, 0]} scale={1.15}>
       <primitive object={clone} />
       <AnimatedScreens root={clone} />
     </group>
@@ -202,18 +168,17 @@ function ArmChair() {
   useMemo(() => {
     clone.traverse((c) => {
       if ((c as THREE.Mesh).isMesh) {
-        const m = c as THREE.Mesh;
-        m.castShadow = true;
-        m.receiveShadow = true;
+        (c as THREE.Mesh).castShadow = true;
+        (c as THREE.Mesh).receiveShadow = true;
       }
     });
   }, [clone]);
   return (
     <primitive
       object={clone}
-      scale={1.28}
-      position={[0.55, -0.95, 0.55]}
-      rotation={[0, -0.65, 0]}
+      scale={1.35}
+      position={[0.7, -0.15, 0.7]}
+      rotation={[0, -0.7, 0]}
     />
   );
 }
@@ -221,41 +186,23 @@ function ArmChair() {
 export function LoungeScene({ scrollProgress = 0 }: { scrollProgress?: number }) {
   return (
     <>
-      <color attach="background" args={["#050506"]} />
-      <fog attach="fog" args={["#050506", 6, 16]} />
-      <ambientLight intensity={0.25} />
-      <directionalLight
-        position={[-3, 5, 4]}
-        intensity={1.35}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-      />
-      <pointLight position={[2.2, 2.4, 1]} intensity={1.1} color="#5eead4" distance={8} />
-      <pointLight position={[-2.5, 1.5, 2]} intensity={0.7} color="#fbbf24" distance={7} />
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[-2.5, 6, 4]} intensity={1.6} castShadow />
+      <pointLight position={[2, 2.5, 1.5]} intensity={1.4} color="#5eead4" distance={10} />
+      <pointLight position={[-2, 1.8, 2]} intensity={0.9} color="#fbbf24" distance={8} />
+      <hemisphereLight args={["#b8c4d4", "#1a1a1c", 0.45]} />
 
       <ScrollCamera progress={scrollProgress} />
 
       <MouseParallax>
-        <Float speed={0.6} rotationIntensity={0.04} floatIntensity={0.08}>
+        <Float speed={0.5} rotationIntensity={0.03} floatIntensity={0.06}>
           <LoungeModel />
           <ArmChair />
         </Float>
       </MouseParallax>
 
-      <ContactShadows
-        position={[0, -0.94, 0]}
-        opacity={0.55}
-        scale={12}
-        blur={2.6}
-        far={6}
-      />
-      <Environment preset="city" environmentIntensity={0.4} />
-
-      <EffectComposer multisampling={0}>
-        <SMAA />
-        <Bloom intensity={0.55} luminanceThreshold={0.55} mipmapBlur />
-        <Vignette offset={0.25} darkness={0.55} />
-      </EffectComposer>
+      <ContactShadows position={[0, -0.14, 0]} opacity={0.45} scale={14} blur={2.5} far={8} />
+      <Environment preset="apartment" environmentIntensity={0.55} />
     </>
   );
 }

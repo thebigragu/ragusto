@@ -1,6 +1,9 @@
 "use client";
 
+import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
+import { HeroHoloOverlay } from "@/components/ui/HoloOverlay";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const SceneCanvas = dynamic(
@@ -13,11 +16,31 @@ const LoungeScene = dynamic(
   { ssr: false },
 );
 
+function HeroStill() {
+  return (
+    <>
+      <Image
+        src="/images/hero-studio.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-[62%_center]"
+      />
+      <div className="absolute inset-0">
+        <HeroHoloOverlay />
+      </div>
+    </>
+  );
+}
+
 export function HeroCanvas() {
   const [progress, setProgress] = useState(0);
   const [reduced, setReduced] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
@@ -31,19 +54,24 @@ export function HeroCanvas() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (reduced) {
-    return (
-      <div
-        className="h-full w-full bg-cover bg-center"
-        style={{ backgroundImage: "url(/images/hero-studio.jpg)" }}
-        aria-hidden
-      />
-    );
-  }
-
+  // Always paint the photoreal still so the hero is never blank.
+  // WebGL layers on top when available.
   return (
-    <SceneCanvas className="h-full w-full">
-      <LoungeScene scrollProgress={progress} />
-    </SceneCanvas>
+    <div className="absolute inset-0">
+      <HeroStill />
+
+      {mounted && !reduced ? (
+        <div className="absolute inset-0 mix-blend-normal opacity-[0.92]">
+          <WebGLErrorBoundary fallback={null}>
+            <SceneCanvas
+              className="h-full w-full"
+              camera={{ position: [0.2, 1.1, 5.2], fov: 40 }}
+            >
+              <LoungeScene scrollProgress={progress} />
+            </SceneCanvas>
+          </WebGLErrorBoundary>
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -57,9 +57,14 @@ export function ProcessShowcase() {
   return (
     <section id="process" ref={sectionRef} className="relative h-[280vh] scroll-mt-24">
       <div className="sticky top-0 flex min-h-[100svh] items-center overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-transparent to-bg" />
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-40"
+          style={{ backgroundImage: "url(/images/studio-atrium.jpg)" }}
+          aria-hidden
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-bg/70 to-bg" />
         {!reduced && visible ? (
-          <div className="absolute inset-0 opacity-90">
+          <div className="absolute inset-0 opacity-85">
             <SceneCanvas className="h-full w-full" camera={{ position: [0, 0.2, 4.5], fov: 40 }}>
               <ShowcaseScene progress={progress} />
             </SceneCanvas>

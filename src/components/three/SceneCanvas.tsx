@@ -13,18 +13,21 @@ type SceneCanvasProps = {
 export function SceneCanvas({
   children,
   className,
-  dpr = [1, 1.75],
-  camera = { position: [0, 0.35, 4.2], fov: 38 },
+  dpr = [1, 1.5],
+  camera = { position: [0.2, 1.1, 5.2], fov: 40 },
 }: SceneCanvasProps) {
   return (
-    <div className={className}>
+    <div className={className} style={{ width: "100%", height: "100%", minHeight: "100%" }}>
       <Canvas
         dpr={dpr}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{
+          antialias: true,
+          alpha: true,
+          powerPreference: "high-performance",
+          failIfMajorPerformanceCaveat: false,
+        }}
         camera={camera}
-        style={{ width: "100%", height: "100%" }}
-        eventSource={typeof document !== "undefined" ? document.documentElement : undefined}
-        eventPrefix="client"
+        style={{ width: "100%", height: "100%", display: "block" }}
         onCreated={({ gl }) => {
           gl.setClearColor(0x000000, 0);
         }}
