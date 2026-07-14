@@ -1,43 +1,20 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { processSteps } from "@/content/process";
 import { useEffect, useRef, useState } from "react";
 
-const SceneCanvas = dynamic(
-  () => import("@/components/three/SceneCanvas").then((m) => m.SceneCanvas),
-  { ssr: false },
-);
-
-const ShowcaseScene = dynamic(
-  () => import("@/components/three/ShowcaseScene").then((m) => m.ShowcaseScene),
-  { ssr: false },
-);
-
-/** Sticky process narrative + live 3D assembly — fluid, no boxed media */
+/** Sticky process narrative over studio still — no WebGL overlay */
 export function ProcessShowcase() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
-  const [visible, setVisible] = useState(false);
-  const [reduced, setReduced] = useState(false);
   const active = Math.min(
     processSteps.length - 1,
     Math.floor(progress * processSteps.length),
   );
 
   useEffect(() => {
-    setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  }, []);
-
-  useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
-
-    const io = new IntersectionObserver(
-      ([entry]) => setVisible(entry.isIntersecting),
-      { threshold: 0.05 },
-    );
-    io.observe(el);
 
     const onScroll = () => {
       const rect = el.getBoundingClientRect();
@@ -48,10 +25,7 @@ export function ProcessShowcase() {
 
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", onScroll);
-    };
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
@@ -63,13 +37,6 @@ export function ProcessShowcase() {
           aria-hidden
         />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-bg/70 to-bg" />
-        {!reduced && visible ? (
-          <div className="absolute inset-0 opacity-85">
-            <SceneCanvas className="h-full w-full" camera={{ position: [0, 0.2, 4.5], fov: 40 }}>
-              <ShowcaseScene progress={progress} />
-            </SceneCanvas>
-          </div>
-        ) : null}
 
         <div className="container-shell relative z-10 grid w-full gap-12 py-24 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">

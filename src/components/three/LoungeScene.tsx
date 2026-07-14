@@ -285,93 +285,83 @@ function useLiveScreenTexture() {
   return tex;
 }
 
-function addKeyboardDeck(body: THREE.Mesh, keyboardTex: THREE.CanvasTexture) {
-  if (body.getObjectByName("keyboard_keys")) return;
+function MacKeyboardOverlay({ texture }: { texture: THREE.CanvasTexture }) {
+  const keys = useMemo(() => {
+    const rows = [
+      { cols: 14, z: 0 },
+      { cols: 14, z: 1 },
+      { cols: 14, z: 2 },
+      { cols: 13, z: 3, wideCol: 11, wide: 1.55 },
+      { cols: 12, z: 4, wideStart: 0, wide: 1.45, wideEnd: 11, wideEndW: 1.65 },
+      { cols: 10, z: 5, units: [1.1, 1, 1, 1, 4.6, 1, 1, 1, 1, 1.1] },
+    ];
+    const kbW = 0.92;
+    const kbH = 0.36;
+    const unitW = kbW / 14;
+    const unitH = kbH / 6;
+    const startX = -kbW * 0.5;
+    const startY = kbH * 0.5;
+    const placements: { x: number; y: number; sx: number }[] = [];
 
-  body.geometry.computeBoundingBox();
-  const box = body.geometry.boundingBox;
-  if (!box) return;
+    rows.forEach((row) => {
+      const units =
+        row.units ??
+        Array.from({ length: row.cols }, (_, i) => {
+          if (row.wideCol === i) return row.wide ?? 1.55;
+          if (row.wideStart === i) return row.wide ?? 1.45;
+          if (row.wideEnd === i) return row.wideEndW ?? 1.65;
+          return 1;
+        });
 
-  const size = box.getSize(new THREE.Vector3());
-  const center = box.getCenter(new THREE.Vector3());
-
-  const kbW = size.x * 0.64;
-  const kbZ0 = box.min.z + size.z * 0.52;
-  const kbZ1 = box.min.z + size.z * 0.86;
-  const startX = center.x - kbW * 0.5;
-  const unitW = kbW / 14;
-  const unitD = (kbZ1 - kbZ0) / 6;
-  const keyY = box.max.y + 0.07;
-  const deckZ = (kbZ0 + kbZ1) * 0.5;
-
-  const deck = new THREE.Mesh(
-    new THREE.PlaneGeometry(kbW, kbZ1 - kbZ0),
-    new THREE.MeshStandardMaterial({
-      map: keyboardTex,
-      roughness: 0.48,
-      metalness: 0.04,
-      envMapIntensity: 0.3,
-      polygonOffset: true,
-      polygonOffsetFactor: -2,
-      polygonOffsetUnits: -2,
-    }),
-  );
-  deck.name = "keyboard_deck";
-  deck.rotation.x = -Math.PI / 2;
-  deck.position.set(center.x, box.max.y + 0.04, deckZ);
-  deck.renderOrder = 2;
-  body.add(deck);
-
-  const rows = [
-    { cols: 14, z: 0 },
-    { cols: 14, z: 1 },
-    { cols: 14, z: 2 },
-    { cols: 13, z: 3, wideCol: 11, wide: 1.55 },
-    { cols: 12, z: 4, wideStart: 0, wide: 1.45, wideEnd: 11, wideEndW: 1.65 },
-    { cols: 10, z: 5, units: [1.1, 1, 1, 1, 4.6, 1, 1, 1, 1, 1.1] },
-  ];
-
-  const keyGeo = new THREE.BoxGeometry(unitW * 0.86, 0.06, unitD * 0.8);
-  keyGeo.translate(0, 0.03, 0);
-  const keyMat = new THREE.MeshStandardMaterial({
-    color: "#3a3a40",
-    roughness: 0.42,
-    metalness: 0.12,
-    envMapIntensity: 0.4,
-  });
-
-  const placements: THREE.Matrix4[] = [];
-  const dummy = new THREE.Object3D();
-
-  rows.forEach((row) => {
-    const units =
-      row.units ??
-      Array.from({ length: row.cols }, (_, i) => {
-        if (row.wideCol === i) return row.wide ?? 1.55;
-        if (row.wideStart === i) return row.wide ?? 1.45;
-        if (row.wideEnd === i) return row.wideEndW ?? 1.65;
-        return 1;
+      let x = startX;
+      const y = startY - row.z * unitH - unitH * 0.5;
+      units.forEach((unit) => {
+        const w = unitW * unit;
+        placements.push({ x: x + w * 0.5, y, sx: unit * 0.88 });
+        x += w;
       });
-
-    let x = startX;
-    const z = kbZ0 + row.z * unitD + unitD * 0.5;
-    units.forEach((unit) => {
-      const w = unitW * unit;
-      dummy.position.set(x + w * 0.5, keyY, z);
-      dummy.scale.set(unit, 1, 1);
-      dummy.updateMatrix();
-      placements.push(dummy.matrix.clone());
-      x += w;
     });
-  });
 
-  const keys = new THREE.InstancedMesh(keyGeo, keyMat, placements.length);
-  keys.name = "keyboard_keys";
-  keys.castShadow = true;
-  keys.receiveShadow = true;
-  placements.forEach((m, i) => keys.setMatrixAt(i, m));
-  keys.instanceMatrix.needsUpdate = true;
-  body.add(keys);
+    return { placements, unitW, unitH };
+  }, []);
+
+  const keyGeo = useMemo(
+    () => new THREE.BoxGeometry(keys.unitW * 0.86, keys.unitH * 0.72, 0.012),
+    [keys.unitH, keys.unitW],
+  );
+
+  return (
+    <group position={[0, 0.012, 0.165]} rotation={[-0.56, 0.015, 0]}>
+      <mesh renderOrder={6}>
+        <planeGeometry args={[1.02, 0.64]} />
+        <meshStandardMaterial
+          map={texture}
+          roughness={0.46}
+          metalness={0.04}
+          envMapIntensity={0.35}
+          polygonOffset
+          polygonOffsetFactor={-4}
+          polygonOffsetUnits={-4}
+        />
+      </mesh>
+      {keys.placements.map((key, i) => (
+        <mesh
+          key={i}
+          position={[key.x, key.y, 0.008]}
+          scale={[key.sx, 1, 1]}
+          geometry={keyGeo}
+          renderOrder={7}
+        >
+          <meshStandardMaterial
+            color="#3d3d44"
+            roughness={0.38}
+            metalness={0.14}
+            envMapIntensity={0.45}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
 }
 
 function tuneMacMaterials(
@@ -400,10 +390,11 @@ function tuneMacMaterials(
       mats.forEach((mat) => {
         if (!(mat instanceof THREE.MeshStandardMaterial)) return;
         if (mat.name === "blackmatte" && child.name === "body") {
-          mat.color.set("#0a0a0c");
-          mat.metalness = 0.02;
-          mat.roughness = 0.65;
-          mat.envMapIntensity = 0.2;
+          mat.map = keyboardTex;
+          mat.color.set("#ffffff");
+          mat.metalness = 0.04;
+          mat.roughness = 0.5;
+          mat.envMapIntensity = 0.3;
           return;
         }
         mat.metalness = 1;
@@ -413,10 +404,6 @@ function tuneMacMaterials(
           mat.color.set("#c5c8cc");
         }
       });
-    }
-
-    if (child.name === "body" && child instanceof THREE.Mesh) {
-      addKeyboardDeck(child, keyboardTex);
     }
   });
 }
@@ -487,6 +474,7 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
         scale={0.051}
         position={[0, 0.04, 0]}
       />
+      <MacKeyboardOverlay texture={keyboardTex} />
     </group>
   );
 }
