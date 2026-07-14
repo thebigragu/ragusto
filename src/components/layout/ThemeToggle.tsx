@@ -25,6 +25,7 @@ export function ThemeToggle({ className }: { className?: string }) {
         className,
       )}
       onClick={() => setTheme(isDark ? "light" : "dark")}
+      data-cursor="hover"
     >
       {isDark ? "○" : "●"}
     </button>

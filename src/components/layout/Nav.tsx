@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Magnetic } from "@/components/ui/Magnetic";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { SITE } from "@/lib/seo";
 import { cn } from "@/lib/utils";
@@ -69,9 +70,11 @@ export function Nav() {
 
           <div className="hidden items-center gap-3 lg:flex">
             <ThemeToggle />
-            <Button href="/contact" variant="primary">
-              Start a project
-            </Button>
+            <Magnetic>
+              <Button href="/contact" variant="primary">
+                Start a project
+              </Button>
+            </Magnetic>
           </div>
 
           <div className="flex items-center gap-2 lg:hidden">
