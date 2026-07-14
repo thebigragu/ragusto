@@ -57,11 +57,11 @@ export function Hero() {
             </Magnetic>
             <Magnetic>
               <Button
-                href="/#work"
+                href="/#services"
                 variant="secondary"
                 className="border-white/25 text-white hover:bg-white/10"
               >
-                View work
+                View services
               </Button>
             </Magnetic>
           </motion.div>

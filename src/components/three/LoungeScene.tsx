@@ -145,6 +145,124 @@ function roundRect(
   ctx.closePath();
 }
 
+function paintMacKeyboard(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const deck = "#0b0b0d";
+  const gap = "#050506";
+  const keyTop = "#3d3d42";
+  const keyBottom = "#2a2a2f";
+  const keyEdge = "#1a1a1e";
+  const trackpad = "#45454c";
+  const trackpadInner = "#3a3a40";
+
+  ctx.fillStyle = deck;
+  ctx.fillRect(0, 0, w, h);
+
+  const kbX = w * 0.1;
+  const kbY = h * 0.06;
+  const kbW = w * 0.8;
+  const kbH = h * 0.56;
+  const padY = h * 0.66;
+  const padH = h * 0.26;
+  const padX = w * 0.28;
+  const padW = w * 0.44;
+
+  const rows: { cols: number; widths?: number[]; height?: number }[] = [
+    { cols: 14, height: 0.11 },
+    { cols: 14, height: 0.14 },
+    { cols: 14, height: 0.14 },
+    { cols: 13, widths: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.6, 1], height: 0.14 },
+    { cols: 12, widths: [1.6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.8], height: 0.14 },
+    {
+      cols: 10,
+      widths: [1.2, 1.1, 1.1, 1.1, 4.8, 1.1, 1.1, 1.1, 1.1, 1.2],
+      height: 0.14,
+    },
+  ];
+
+  const rowGap = kbH * 0.028;
+  let y = kbY;
+  rows.forEach((row) => {
+    const rowH = kbH * (row.height ?? 0.14);
+    const units = row.widths ?? Array(row.cols).fill(1);
+    const unitW = kbW / units.reduce((a, b) => a + b, 0);
+    let x = kbX;
+    units.forEach((unit) => {
+      const kw = unitW * unit - rowGap;
+      const kh = rowH - rowGap;
+      const r = Math.min(kw, kh) * 0.16;
+
+      ctx.fillStyle = gap;
+      roundRect(ctx, x - 1, y - 1, kw + 2, kh + 2, r + 1);
+      ctx.fill();
+
+      const grad = ctx.createLinearGradient(x, y, x, y + kh);
+      grad.addColorStop(0, keyTop);
+      grad.addColorStop(1, keyBottom);
+      ctx.fillStyle = grad;
+      roundRect(ctx, x, y, kw, kh, r);
+      ctx.fill();
+
+      ctx.strokeStyle = keyEdge;
+      ctx.lineWidth = 1;
+      roundRect(ctx, x + 0.5, y + 0.5, kw - 1, kh - 1, r);
+      ctx.stroke();
+
+      x += unitW * unit;
+    });
+    y += rowH;
+  });
+
+  // Speaker grille dots flanking keyboard
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  for (let side = 0; side < 2; side++) {
+    const gx = side === 0 ? w * 0.04 : w * 0.94;
+    for (let i = 0; i < 18; i++) {
+      for (let j = 0; j < 3; j++) {
+        ctx.beginPath();
+        ctx.arc(gx, kbY + i * (kbH / 18) + j * 3, 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Trackpad — inset glass slab
+  ctx.fillStyle = gap;
+  roundRect(ctx, padX - 3, padY - 3, padW + 6, padH + 6, 18);
+  ctx.fill();
+
+  const padGrad = ctx.createLinearGradient(padX, padY, padX, padY + padH);
+  padGrad.addColorStop(0, trackpad);
+  padGrad.addColorStop(0.5, trackpadInner);
+  padGrad.addColorStop(1, "#323238");
+  ctx.fillStyle = padGrad;
+  roundRect(ctx, padX, padY, padW, padH, 16);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, padX + 1, padY + 1, padW - 2, padH - 2, 15);
+  ctx.stroke();
+
+  // Subtle deck sheen
+  const sheen = ctx.createLinearGradient(0, 0, w, h * 0.4);
+  sheen.addColorStop(0, "rgba(255,255,255,0.03)");
+  sheen.addColorStop(1, "rgba(255,255,255,0)");
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, 0, w, h);
+}
+
+function createMacKeyboardTexture() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1024;
+  canvas.height = 640;
+  const ctx = canvas.getContext("2d")!;
+  paintMacKeyboard(ctx, 1024, 640);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
 function useLiveScreenTexture() {
   const { ctx, tex } = useMemo(() => {
     const canvas = document.createElement("canvas");
@@ -167,7 +285,100 @@ function useLiveScreenTexture() {
   return tex;
 }
 
-function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture) {
+function addKeyboardDeck(body: THREE.Mesh, keyboardTex: THREE.CanvasTexture) {
+  if (body.getObjectByName("keyboard_keys")) return;
+
+  body.geometry.computeBoundingBox();
+  const box = body.geometry.boundingBox;
+  if (!box) return;
+
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const kbW = size.x * 0.64;
+  const kbZ0 = box.min.z + size.z * 0.52;
+  const kbZ1 = box.min.z + size.z * 0.86;
+  const startX = center.x - kbW * 0.5;
+  const unitW = kbW / 14;
+  const unitD = (kbZ1 - kbZ0) / 6;
+  const keyY = box.max.y + 0.07;
+  const deckZ = (kbZ0 + kbZ1) * 0.5;
+
+  const deck = new THREE.Mesh(
+    new THREE.PlaneGeometry(kbW, kbZ1 - kbZ0),
+    new THREE.MeshStandardMaterial({
+      map: keyboardTex,
+      roughness: 0.48,
+      metalness: 0.04,
+      envMapIntensity: 0.3,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+      polygonOffsetUnits: -2,
+    }),
+  );
+  deck.name = "keyboard_deck";
+  deck.rotation.x = -Math.PI / 2;
+  deck.position.set(center.x, box.max.y + 0.04, deckZ);
+  deck.renderOrder = 2;
+  body.add(deck);
+
+  const rows = [
+    { cols: 14, z: 0 },
+    { cols: 14, z: 1 },
+    { cols: 14, z: 2 },
+    { cols: 13, z: 3, wideCol: 11, wide: 1.55 },
+    { cols: 12, z: 4, wideStart: 0, wide: 1.45, wideEnd: 11, wideEndW: 1.65 },
+    { cols: 10, z: 5, units: [1.1, 1, 1, 1, 4.6, 1, 1, 1, 1, 1.1] },
+  ];
+
+  const keyGeo = new THREE.BoxGeometry(unitW * 0.86, 0.06, unitD * 0.8);
+  keyGeo.translate(0, 0.03, 0);
+  const keyMat = new THREE.MeshStandardMaterial({
+    color: "#3a3a40",
+    roughness: 0.42,
+    metalness: 0.12,
+    envMapIntensity: 0.4,
+  });
+
+  const placements: THREE.Matrix4[] = [];
+  const dummy = new THREE.Object3D();
+
+  rows.forEach((row) => {
+    const units =
+      row.units ??
+      Array.from({ length: row.cols }, (_, i) => {
+        if (row.wideCol === i) return row.wide ?? 1.55;
+        if (row.wideStart === i) return row.wide ?? 1.45;
+        if (row.wideEnd === i) return row.wideEndW ?? 1.65;
+        return 1;
+      });
+
+    let x = startX;
+    const z = kbZ0 + row.z * unitD + unitD * 0.5;
+    units.forEach((unit) => {
+      const w = unitW * unit;
+      dummy.position.set(x + w * 0.5, keyY, z);
+      dummy.scale.set(unit, 1, 1);
+      dummy.updateMatrix();
+      placements.push(dummy.matrix.clone());
+      x += w;
+    });
+  });
+
+  const keys = new THREE.InstancedMesh(keyGeo, keyMat, placements.length);
+  keys.name = "keyboard_keys";
+  keys.castShadow = true;
+  keys.receiveShadow = true;
+  placements.forEach((m, i) => keys.setMatrixAt(i, m));
+  keys.instanceMatrix.needsUpdate = true;
+  body.add(keys);
+}
+
+function tuneMacMaterials(
+  object: THREE.Object3D,
+  screenTex: THREE.CanvasTexture,
+  keyboardTex: THREE.CanvasTexture,
+) {
   object.traverse((child) => {
     if (!(child instanceof THREE.Mesh)) return;
 
@@ -188,6 +399,13 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
       const mats = Array.isArray(child.material) ? child.material : [child.material];
       mats.forEach((mat) => {
         if (!(mat instanceof THREE.MeshStandardMaterial)) return;
+        if (mat.name === "blackmatte" && child.name === "body") {
+          mat.color.set("#0a0a0c");
+          mat.metalness = 0.02;
+          mat.roughness = 0.65;
+          mat.envMapIntensity = 0.2;
+          return;
+        }
         mat.metalness = 1;
         mat.roughness = 0.2;
         mat.envMapIntensity = 1.5;
@@ -195,6 +413,10 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
           mat.color.set("#c5c8cc");
         }
       });
+    }
+
+    if (child.name === "body" && child instanceof THREE.Mesh) {
+      addKeyboardDeck(child, keyboardTex);
     }
   });
 }
@@ -206,11 +428,12 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   const laptopRoot = useRef<THREE.Object3D>(null);
   const pointer = useRef({ x: 0, y: 0 });
   const screenTex = useLiveScreenTexture();
+  const keyboardTex = useMemo(() => createMacKeyboardTexture(), []);
   const materialsReady = useRef(false);
 
   useEffect(() => {
     if (materialsReady.current) return;
-    tuneMacMaterials(scene, screenTex);
+    tuneMacMaterials(scene, screenTex, keyboardTex);
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
@@ -218,7 +441,9 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
       }
     });
     materialsReady.current = true;
-  }, [scene, screenTex]);
+  }, [scene, screenTex, keyboardTex]);
+
+  useEffect(() => () => keyboardTex.dispose(), [keyboardTex]);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -230,11 +455,10 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   }, []);
 
   useFrame((state) => {
-    // GLB hinge rests closed at 90°. Rotating down to ~58° cracks the lid
-    // toward the camera so the live display faces the viewer.
+    // GLB hinge rests closed at 90°. ~66° cracks the lid slightly toward camera.
     const screen = laptopRoot.current?.getObjectByName("screen");
     if (screen) {
-      screen.rotation.x = THREE.MathUtils.degToRad(58);
+      screen.rotation.x = THREE.MathUtils.degToRad(68);
     }
 
     if (!group.current) return;
