@@ -15,6 +15,10 @@ const LoungeScene = dynamic(
   { ssr: false },
 );
 
+/**
+ * Show the cinematic room / city, but mask out the baked-in photo chair
+ * so the live 3D armchair is the only chair you see.
+ */
 function HeroBackdrop() {
   return (
     <div className="absolute inset-0">
@@ -24,7 +28,15 @@ function HeroBackdrop() {
         fill
         priority
         sizes="100vw"
-        className="object-cover object-[58%_center]"
+        className="object-cover object-[28%_center]"
+      />
+      {/* Hard wipe of photo furniture on the right — only city/window remains */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, transparent 32%, rgba(7,8,10,0.55) 48%, #07080a 58%, #07080a 100%)",
+        }}
       />
     </div>
   );
@@ -52,7 +64,6 @@ export function HeroCanvas() {
 
   return (
     <div className="absolute inset-0">
-      {/* Always-visible photoreal base */}
       <HeroBackdrop />
 
       {mounted && !reduced ? (
@@ -66,7 +77,19 @@ export function HeroCanvas() {
             </SceneCanvas>
           </WebGLErrorBoundary>
         </div>
-      ) : null}
+      ) : (
+        // Reduced-motion / pre-mount: keep a static chair impression from the photo
+        <div className="absolute inset-0">
+          <Image
+            src="/images/hero-studio.jpg"
+            alt=""
+            fill
+            sizes="100vw"
+            className="object-cover object-[62%_center] opacity-90"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent" />
+        </div>
+      )}
     </div>
   );
 }
