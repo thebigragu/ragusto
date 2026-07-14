@@ -30,6 +30,16 @@ export const projects: Project[] = [
     accent: "#14B8A6",
   },
   {
+    id: "signal-saas",
+    name: "Signal Analytics",
+    category: "SaaS Product",
+    description:
+      "A multi-tenant analytics SaaS with realtime dashboards, usage-based billing, and a design system that scales with every release.",
+    outcomes: ["Series A ready", "Sub-second charts", "SOC2 path"],
+    stack: ["TypeScript", "ClickHouse", "R3F"],
+    accent: "#7C6CF0",
+  },
+  {
     id: "harbor-ai",
     name: "Harbor AI Desk",
     category: "AI Integration",

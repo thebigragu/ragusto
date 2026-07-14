@@ -10,9 +10,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const links = [
-  { href: "/#work", label: "Work" },
   { href: "/#services", label: "Services" },
-  { href: "/#process", label: "Approach" },
+  { href: "/#work", label: "Work" },
+  { href: "/#process", label: "Process" },
   { href: "/contact", label: "Contact" },
 ];
 

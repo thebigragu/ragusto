@@ -1,17 +1,21 @@
 # Arcform
 
-Luxury digital studio website — editorial layout with photoreal cinematic artwork.
+Luxury digital studio — cinematic single-page site with Blender-authored 3D lounge hero.
 
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS
+- React Three Fiber / Drei / postprocessing
 - Framer Motion + Lenis
-- next/image for optimized hero/section photography-grade art
-- next-themes, Vercel
+- Blender headless model pipeline
 
-## Note on 3D
+## 3D pipeline
 
-Hyperrealistic agency references (Vertex, Galvanite, RefractWeb) use **hand-authored Blender/Octane renders or video**, not live WebGL primitives. This site leads with photoreal hero artwork for that fidelity bar. Interactive WebGL can return later once custom asset production is in place.
+```bash
+npm run models:lounge
+```
+
+Builds `public/models/arcform-lounge.glb` (room, table, holographic screen frames). The Poly Haven armchair loads separately in the hero. Screen meshes named `Screen_A/B/C` get live canvas UI textures in R3F (waveforms, logs, bars).
 
 ## Develop
 
