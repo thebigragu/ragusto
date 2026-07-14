@@ -130,15 +130,3 @@ body {
     scroll-behavior: auto !important;
   }
 }
-
-body.has-custom-cursor,
-body.has-custom-cursor * {
-  cursor: none !important;
-}
-
-@media (pointer: coarse) {
-  body.has-custom-cursor,
-  body.has-custom-cursor * {
-    cursor: auto !important;
-  }
-}

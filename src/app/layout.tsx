@@ -6,7 +6,6 @@ import { Nav } from "@/components/layout/Nav";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { Providers } from "@/components/motion/Providers";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
-import { CustomCursor } from "@/components/ui/CustomCursor";
 import { defaultMetadata, organizationSchema } from "@/lib/seo";
 import "./globals.css";
 
@@ -54,7 +53,6 @@ export default function RootLayout({
                 Skip to content
               </a>
               <ScrollProgress />
-              <CustomCursor />
               <Nav />
               <main id="main" className="flex-1">
                 {children}
