@@ -1,121 +1,93 @@
 "use client";
 
-import {
-  ContactShadows,
-  Environment,
-  Float,
-  useGLTF,
-} from "@react-three/drei";
-import { Bloom, EffectComposer, Vignette } from "@react-three/postprocessing";
+import { ContactShadows, Environment, Float, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
-useGLTF.preload("/models/arcform-lounge.glb");
 useGLTF.preload("/models/armchair/ArmChair_01_1k.gltf");
 
-function AnimatedScreens({ root }: { root: THREE.Object3D }) {
-  const canvases = useRef<
-    { ctx: CanvasRenderingContext2D; tex: THREE.CanvasTexture; phase: number }[]
-  >([]);
+function LiveHoloPanel({
+  position,
+  rotation,
+  scale = 1,
+}: {
+  position: [number, number, number];
+  rotation: [number, number, number];
+  scale?: number;
+}) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const tex = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 768;
+    const t = new THREE.CanvasTexture(canvas);
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
+  }, []);
 
-  useEffect(() => {
-    const entries: typeof canvases.current = [];
-    root.traverse((obj) => {
-      if (!obj.name.startsWith("Screen_") || obj.name.includes("Frame")) return;
-      if (!(obj as THREE.Mesh).isMesh) return;
-      const mesh = obj as THREE.Mesh;
-      const canvas = document.createElement("canvas");
-      canvas.width = 512;
-      canvas.height = 768;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      mesh.material = new THREE.MeshStandardMaterial({
-        map: tex,
-        emissiveMap: tex,
-        emissive: new THREE.Color("#5eead4"),
-        emissiveIntensity: 1.6,
-        roughness: 0.3,
-        metalness: 0.15,
-        toneMapped: false,
-        side: THREE.DoubleSide,
-      });
-      entries.push({ ctx, tex, phase: Math.random() * Math.PI * 2 });
-    });
-    canvases.current = entries;
-    return () => entries.forEach((e) => e.tex.dispose());
-  }, [root]);
+  useEffect(() => () => tex.dispose(), [tex]);
 
   useFrame((state) => {
+    const ctx = (tex.image as HTMLCanvasElement).getContext("2d");
+    if (!ctx) return;
     const t = state.clock.elapsedTime;
-    for (const { ctx, tex, phase } of canvases.current) {
-      const w = 512;
-      const h = 768;
-      ctx.fillStyle = "#041016";
-      ctx.fillRect(0, 0, w, h);
-      ctx.strokeStyle = "rgba(45,212,191,0.3)";
-      for (let x = 0; x < w; x += 32) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
-      }
-      ctx.strokeStyle = "#5eead4";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      for (let x = 0; x < w; x++) {
-        const y = 170 + Math.sin(x * 0.035 + t * 2.5 + phase) * 30;
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.stroke();
-      for (let i = 0; i < 12; i++) {
-        const bh = 30 + Math.abs(Math.sin(t * 2.2 + i * 0.55 + phase)) * 110;
-        ctx.fillStyle = "#2dd4bf";
-        ctx.fillRect(48 + i * 34, 560 - bh, 18, bh);
-      }
-      ctx.fillStyle = "#99f6e4";
-      ctx.font = "13px monospace";
-      const lines = ["ARC sync", "12ms ok", "batch 04", "60fps"];
-      const offset = Math.floor(t * 1.8 + phase) % lines.length;
-      for (let i = 0; i < 6; i++) {
-        ctx.fillText(`0${i + 1}  ${lines[(offset + i) % lines.length]}`, 36, 320 + i * 20);
-      }
-      const scanY = (t * 140 + phase * 50) % h;
-      ctx.fillStyle = "rgba(45,212,191,0.25)";
-      ctx.fillRect(0, scanY, w, 18);
-      tex.needsUpdate = true;
+    const w = 512;
+    const h = 768;
+    ctx.fillStyle = "rgba(4,16,20,0.85)";
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(45,212,191,0.45)";
+    ctx.strokeRect(12, 12, w - 24, h - 24);
+    ctx.strokeStyle = "#5eead4";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let x = 0; x < w; x++) {
+      const y = 200 + Math.sin(x * 0.04 + t * 2.6) * 36;
+      if (x === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    for (let i = 0; i < 10; i++) {
+      const bh = 24 + Math.abs(Math.sin(t * 2 + i * 0.5)) * 100;
+      ctx.fillStyle = "#2dd4bf";
+      ctx.fillRect(60 + i * 38, 580 - bh, 20, bh);
+    }
+    ctx.fillStyle = "#99f6e4";
+    ctx.font = "14px monospace";
+    const lines = ["ARC live", "12ms", "batch ok", "60fps"];
+    for (let i = 0; i < 5; i++) {
+      ctx.fillText(lines[i % lines.length], 48, 360 + i * 22);
+    }
+    const scan = (t * 160) % h;
+    ctx.fillStyle = "rgba(45,212,191,0.22)";
+    ctx.fillRect(0, scan, w, 16);
+    tex.needsUpdate = true;
+
+    if (mesh.current) {
+      mesh.current.position.y = position[1] + Math.sin(t * 0.8 + position[0]) * 0.04;
     }
   });
 
-  return null;
-}
-
-function LoungeRoom() {
-  const { scene } = useGLTF("/models/arcform-lounge.glb");
-  const clone = useMemo(() => scene.clone(true), [scene]);
-
-  useMemo(() => {
-    clone.traverse((c) => {
-      if ((c as THREE.Mesh).isMesh) {
-        const m = c as THREE.Mesh;
-        m.castShadow = true;
-        m.receiveShadow = true;
-      }
-    });
-  }, [clone]);
-
   return (
-    <group position={[-0.4, -0.15, -0.3]} scale={1.1}>
-      <primitive object={clone} />
-      <AnimatedScreens root={clone} />
-    </group>
+    <Float speed={1.2} floatIntensity={0.25} rotationIntensity={0.15}>
+      <mesh ref={mesh} position={position} rotation={rotation} scale={scale}>
+        <planeGeometry args={[0.55, 0.82]} />
+        <meshStandardMaterial
+          map={tex}
+          emissiveMap={tex}
+          emissive="#5eead4"
+          emissiveIntensity={1.4}
+          transparent
+          opacity={0.92}
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </Float>
   );
 }
 
-/** Hero centerpiece — PBR armchair with mouse + scroll motion */
+/** Interactive PBR armchair — hero centerpiece */
 function HeroChair({ scrollProgress }: { scrollProgress: number }) {
   const { scene } = useGLTF("/models/armchair/ArmChair_01_1k.gltf");
   const group = useRef<THREE.Group>(null);
@@ -147,35 +119,19 @@ function HeroChair({ scrollProgress }: { scrollProgress: number }) {
     const px = pointer.current.x;
     const py = pointer.current.y;
 
-    // Swivel toward cursor + gentle idle drift
-    const targetY = -0.55 + px * 0.45 + Math.sin(t * 0.35) * 0.04;
-    const targetX = py * 0.06 + Math.sin(t * 0.5) * 0.02;
-    group.current.rotation.y += (targetY - group.current.rotation.y) * 0.06;
-    group.current.rotation.x += (targetX - group.current.rotation.x) * 0.06;
+    const targetY = -0.35 + px * 0.55 + Math.sin(t * 0.4) * 0.05;
+    const targetX = py * 0.08;
+    group.current.rotation.y += (targetY - group.current.rotation.y) * 0.07;
+    group.current.rotation.x += (targetX - group.current.rotation.x) * 0.07;
 
-    // Subtle hover + scroll lift
-    const baseY = -0.22 + scrollProgress * 0.08;
-    const floatY = Math.sin(t * 0.9) * 0.035;
-    group.current.position.set(
-      1.05 + px * 0.08,
-      baseY + floatY,
-      0.15 + scrollProgress * -0.12,
-    );
+    const baseY = -0.85 + scrollProgress * 0.1;
+    const floatY = Math.sin(t * 1.1) * 0.04;
+    group.current.position.set(1.15 + px * 0.1, baseY + floatY, 0.2);
   });
 
   return (
-    <group ref={group} position={[1.05, -0.22, 0.15]}>
-      <Float speed={1.4} rotationIntensity={0.12} floatIntensity={0.35}>
-        <primitive object={clone} scale={1.55} rotation={[0, -0.55, 0]} />
-      </Float>
-      <spotLight
-        position={[1.5, 2.2, 1.8]}
-        angle={0.45}
-        penumbra={0.6}
-        intensity={2.2}
-        color="#fff8f0"
-        castShadow
-      />
+    <group ref={group} position={[1.15, -0.85, 0.2]}>
+      <primitive object={clone} scale={1.85} rotation={[0, -0.5, 0]} />
     </group>
   );
 }
@@ -185,45 +141,46 @@ function HeroCamera({ scrollProgress }: { scrollProgress: number }) {
     const p = scrollProgress;
     state.camera.position.lerp(
       new THREE.Vector3(
-        THREE.MathUtils.lerp(0.1, 0.45, p),
-        THREE.MathUtils.lerp(0.95, 1.15, p),
-        THREE.MathUtils.lerp(4.8, 4.0, p),
+        THREE.MathUtils.lerp(0.35, 0.7, p),
+        THREE.MathUtils.lerp(0.55, 0.75, p),
+        THREE.MathUtils.lerp(3.8, 3.2, p),
       ),
-      0.06,
+      0.07,
     );
-    state.camera.lookAt(0.85, 0.45, 0);
+    state.camera.lookAt(0.9, 0.15, 0);
   });
   return null;
 }
 
+/**
+ * Transparent WebGL layer — chair + holos only.
+ * No opaque background / EffectComposer (those wiped the hero photo).
+ */
 export function LoungeScene({ scrollProgress = 0 }: { scrollProgress?: number }) {
   return (
     <>
-      <color attach="background" args={["#050506"]} />
-      <fog attach="fog" args={["#050506", 8, 18]} />
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[-3, 5, 3]} intensity={1.4} castShadow />
-      <pointLight position={[-2.5, 1.5, 2]} intensity={0.85} color="#fbbf24" distance={9} />
-      <pointLight position={[2.5, 2, 1]} intensity={0.7} color="#5eead4" distance={8} />
-      <hemisphereLight args={["#c8d4e8", "#0a0a0c", 0.35]} />
+      <ambientLight intensity={0.65} />
+      <directionalLight position={[2, 5, 3]} intensity={1.8} castShadow />
+      <directionalLight position={[-3, 2, 2]} intensity={0.7} color="#b8c8ff" />
+      <pointLight position={[1.5, 1.5, 2]} intensity={1.2} color="#fff4e6" />
+      <pointLight position={[2.2, 1.2, -0.5]} intensity={0.9} color="#5eead4" />
+      <hemisphereLight args={["#e8eef8", "#1a1a1c", 0.55]} />
 
       <HeroCamera scrollProgress={scrollProgress} />
-      <LoungeRoom />
       <HeroChair scrollProgress={scrollProgress} />
 
-      <ContactShadows
-        position={[0.9, -0.38, 0.1]}
-        opacity={0.55}
-        scale={3.5}
-        blur={2.2}
-        far={4}
-      />
-      <Environment preset="apartment" environmentIntensity={0.6} />
+      <LiveHoloPanel position={[2.05, 0.55, -0.35]} rotation={[0, -0.45, 0.05]} scale={1.05} />
+      <LiveHoloPanel position={[2.55, 0.35, 0.15]} rotation={[0, -0.75, -0.04]} scale={0.9} />
+      <LiveHoloPanel position={[1.7, 0.75, -0.7]} rotation={[0, -0.2, 0.08]} scale={0.85} />
 
-      <EffectComposer multisampling={0}>
-        <Bloom intensity={0.4} luminanceThreshold={0.6} mipmapBlur />
-        <Vignette offset={0.2} darkness={0.45} />
-      </EffectComposer>
+      <ContactShadows
+        position={[1.15, -0.95, 0.2]}
+        opacity={0.65}
+        scale={4}
+        blur={2.4}
+        far={5}
+      />
+      <Environment preset="apartment" environmentIntensity={0.75} />
     </>
   );
 }

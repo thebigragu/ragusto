@@ -11,9 +11,9 @@ export function Hero() {
     <section className="relative flex min-h-[100svh] items-end overflow-hidden pb-16 pt-[calc(var(--nav-height)+2rem)] md:items-center md:pb-24">
       <div className="absolute inset-0">
         <HeroCanvas />
-        {/* Theme-independent cinematic grade — was washing out media with --bg */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/20" />
+        {/* Soft grade only on the left for copy legibility — keep right media bright */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent md:via-black/25" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15" />
       </div>
 
       <div className="container-shell relative z-10 grid w-full gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">

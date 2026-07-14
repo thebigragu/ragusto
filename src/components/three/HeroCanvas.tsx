@@ -15,19 +15,17 @@ const LoungeScene = dynamic(
   { ssr: false },
 );
 
-/** Window/city only — chair is 3D, not baked into the photo */
 function HeroBackdrop() {
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0">
       <Image
         src="/images/hero-studio.jpg"
-        alt=""
+        alt="Arcform studio"
         fill
         priority
         sizes="100vw"
-        className="scale-110 object-cover object-[12%_center] opacity-70"
+        className="object-cover object-[58%_center]"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/55 to-black/90" />
     </div>
   );
 }
@@ -52,20 +50,17 @@ export function HeroCanvas() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (reduced) {
-    return <HeroBackdrop />;
-  }
-
   return (
     <div className="absolute inset-0">
+      {/* Always-visible photoreal base */}
       <HeroBackdrop />
 
-      {mounted ? (
-        <div className="absolute inset-0">
+      {mounted && !reduced ? (
+        <div className="pointer-events-none absolute inset-0">
           <WebGLErrorBoundary fallback={null}>
             <SceneCanvas
               className="h-full w-full"
-              camera={{ position: [0.1, 0.95, 4.8], fov: 38 }}
+              camera={{ position: [0.35, 0.55, 3.8], fov: 40 }}
             >
               <LoungeScene scrollProgress={progress} />
             </SceneCanvas>
