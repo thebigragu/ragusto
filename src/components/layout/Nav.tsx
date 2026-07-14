@@ -10,10 +10,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 const links = [
-  { href: "/#services", label: "Services" },
   { href: "/#work", label: "Work" },
-  { href: "/#process", label: "Process" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/#services", label: "Services" },
+  { href: "/#process", label: "Approach" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export function Nav() {

@@ -1,38 +1,21 @@
 # Arcform
 
-Premium AI & software studio website — cinematic homepage with Blender-authored 3D.
+Luxury digital studio website — editorial layout with photoreal cinematic artwork.
 
 ## Stack
 
 - Next.js (App Router) + TypeScript + Tailwind CSS
 - Framer Motion + Lenis
-- Three.js / React Three Fiber / Drei
-- **Blender 5.2** (headless) → GLB models in `public/models/`
-- next-themes (dark / light)
-- Vercel
+- next/image for optimized hero/section photography-grade art
+- next-themes, Vercel
 
-## 3D models
+## Note on 3D
 
-Regenerate GLBs (requires Blender on PATH):
-
-```bash
-npm run models
-```
-
-Scripts live in `blender/`:
-- `build_studio_hero.py` → `public/models/studio-hero.glb` (desk, monitors, boards, orb)
-- `build_pavilion.py` → `public/models/studio-pavilion.glb` (pavilion + landscape rocks)
+Hyperrealistic agency references (Vertex, Galvanite, RefractWeb) use **hand-authored Blender/Octane renders or video**, not live WebGL primitives. This site leads with photoreal hero artwork for that fidelity bar. Interactive WebGL can return later once custom asset production is in place.
 
 ## Develop
 
 ```bash
 npm install
 npm run dev
-```
-
-## Build
-
-```bash
-npm run build
-npm start
 ```

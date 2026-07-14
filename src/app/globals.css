@@ -11,7 +11,7 @@
   --accent-teal: #14b8a6;
   --accent-violet: #7c6cf0;
   --glow: rgba(59, 130, 246, 0.35);
-  --noise-opacity: 0.04;
+  --noise-opacity: 0.025;
   --nav-height: 72px;
   --ease-apple: cubic-bezier(0.22, 1, 0.36, 1);
   --max-w: 1800px;
@@ -25,7 +25,7 @@
   --fg-muted: #a1a1aa;
   --border: rgba(245, 245, 244, 0.1);
   --glow: rgba(124, 108, 240, 0.28);
-  --noise-opacity: 0.06;
+  --noise-opacity: 0.035;
 }
 
 @theme inline {
