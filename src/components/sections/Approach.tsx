@@ -1,21 +1,23 @@
 "use client";
 
+import { AtriumHoloOverlay } from "@/components/ui/HoloOverlay";
+import { InteractiveMedia } from "@/components/ui/InteractiveMedia";
 import { processSteps } from "@/content/process";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 export function Approach() {
   return (
     <section id="process" className="scroll-mt-24">
-      <div className="relative min-h-[70vh] overflow-hidden md:min-h-[85vh]">
-        <Image
-          src="/images/pavilion-night.jpg"
-          alt="Immersive Arcform studio landscape"
-          fill
+      <div className="relative min-h-[70vh] md:min-h-[85vh]">
+        <InteractiveMedia
+          src="/images/studio-atrium.jpg"
+          alt="Arcform studio atrium at night"
           sizes="100vw"
-          className="object-cover"
+          intensity={0.95}
+          className="absolute inset-0"
+          overlay={<AtriumHoloOverlay />}
+          grade={<div className="absolute inset-0 bg-gradient-to-t from-black via-black/45 to-black/25" />}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-black/30" />
         <div className="container-shell relative z-10 flex min-h-[70vh] flex-col justify-end py-16 md:min-h-[85vh] md:py-24">
           <motion.div
             className="max-w-2xl space-y-4"

@@ -1,22 +1,24 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { BenchHoloOverlay } from "@/components/ui/HoloOverlay";
+import { InteractiveMedia } from "@/components/ui/InteractiveMedia";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { motion } from "framer-motion";
-import Image from "next/image";
 
 export function FinalCTA() {
   return (
     <section className="relative overflow-hidden">
       <div className="relative min-h-[70vh] md:min-h-[80vh]">
-        <Image
-          src="/images/atelier-objects.jpg"
+        <InteractiveMedia
+          src="/images/studio-bench.jpg"
           alt=""
-          fill
           sizes="100vw"
-          className="object-cover object-center"
+          intensity={0.9}
+          className="absolute inset-0"
+          overlay={<BenchHoloOverlay />}
+          grade={<div className="absolute inset-0 bg-black/65" />}
         />
-        <div className="absolute inset-0 bg-black/65" />
         <div className="container-shell relative z-10 flex min-h-[70vh] flex-col items-center justify-center py-24 text-center md:min-h-[80vh]">
           <motion.div
             className="max-w-2xl space-y-8"
