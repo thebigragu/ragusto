@@ -1,9 +1,11 @@
 "use client";
 
-import { ContactShadows, Environment, RoundedBox } from "@react-three/drei";
+import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
+
+useGLTF.preload("/models/macbook-pro.glb");
 
 function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
   ctx.fillStyle = "#0a0b0f";
@@ -143,7 +145,7 @@ function roundRect(
   ctx.closePath();
 }
 
-function ScreenDisplay() {
+function useLiveScreenTexture() {
   const { ctx, tex } = useMemo(() => {
     const canvas = document.createElement("canvas");
     canvas.width = 1024;
@@ -162,41 +164,66 @@ function ScreenDisplay() {
     tex.needsUpdate = true;
   });
 
-  return (
-    <mesh>
-      <planeGeometry args={[1.36, 0.84]} />
-      <meshStandardMaterial
-        map={tex}
-        emissiveMap={tex}
-        emissive="#ffffff"
-        emissiveIntensity={1.2}
-        roughness={0.35}
-        metalness={0}
-        toneMapped={false}
-      />
-    </mesh>
-  );
+  return tex;
 }
 
-function Aluminum(props: ComponentProps<typeof RoundedBox>) {
-  return (
-    <RoundedBox castShadow receiveShadow smoothness={8} {...props}>
-      <meshPhysicalMaterial
-        color="#c5c8cc"
-        metalness={1}
-        roughness={0.22}
-        clearcoat={0.4}
-        clearcoatRoughness={0.2}
-        envMapIntensity={1.4}
-      />
-    </RoundedBox>
-  );
+function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture) {
+  object.traverse((child) => {
+    if (!(child instanceof THREE.Mesh)) return;
+
+    if (child.name === "matte") {
+      child.material = new THREE.MeshStandardMaterial({
+        map: screenTex,
+        emissiveMap: screenTex,
+        emissive: "#ffffff",
+        emissiveIntensity: 1.15,
+        roughness: 0.35,
+        metalness: 0,
+        toneMapped: false,
+      });
+      return;
+    }
+
+    if (child.name === "body" || child.name === "back") {
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      mats.forEach((mat) => {
+        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
+        mat.metalness = 1;
+        mat.roughness = 0.2;
+        mat.envMapIntensity = 1.5;
+        if (mat.name === "aluminium") {
+          mat.color.set("#c5c8cc");
+        }
+      });
+    }
+  });
 }
 
-/** Photoreal open laptop — aluminum + live product UI on screen */
+/** MacBook Pro GLB with live product UI mapped to the display mesh */
 function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
+  const { scene } = useGLTF("/models/macbook-pro.glb");
   const group = useRef<THREE.Group>(null);
   const pointer = useRef({ x: 0, y: 0 });
+  const screenTex = useLiveScreenTexture();
+
+  const laptop = useMemo(() => {
+    const clone = scene.clone(true);
+    tuneMacMaterials(clone, screenTex);
+
+    const screen = clone.getObjectByName("screen");
+    if (screen) {
+      screen.rotation.x = THREE.MathUtils.degToRad(178);
+    }
+
+    clone.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+      }
+    });
+
+    return clone;
+  }, [scene, screenTex]);
 
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
@@ -228,39 +255,7 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.18, 0.28, 0]}>
-      {/* Base / keyboard deck */}
-      <Aluminum args={[1.6, 0.05, 1.05]} radius={0.022} position={[0, 0.025, 0]} />
-      <RoundedBox args={[1.4, 0.01, 0.48]} radius={0.006} position={[0, 0.055, 0.12]} castShadow>
-        <meshStandardMaterial color="#16171a" metalness={0.35} roughness={0.5} />
-      </RoundedBox>
-      {[0.28, 0.2, 0.12, 0.04].map((z, i) => (
-        <RoundedBox key={i} args={[1.26, 0.005, 0.05]} radius={0.003} position={[0, 0.062, z]}>
-          <meshStandardMaterial color="#0a0b0d" roughness={0.7} />
-        </RoundedBox>
-      ))}
-      <Aluminum args={[0.56, 0.005, 0.34]} radius={0.01} position={[0, 0.055, -0.26]} />
-
-      {/*
-        Lid stands upright: tall in Y, thin in Z.
-        Screen on +Z face (toward camera). Slight recline via group rotation.x.
-      */}
-      <group position={[0, 0.05, -0.48]} rotation={[-0.2, 0, 0]}>
-        <Aluminum args={[1.6, 1.02, 0.038]} radius={0.02} position={[0, 0.51, -0.01]} />
-        <RoundedBox args={[1.48, 0.94, 0.012]} radius={0.008} position={[0, 0.51, 0.012]}>
-          <meshStandardMaterial color="#050506" metalness={0.25} roughness={0.45} />
-        </RoundedBox>
-        <mesh position={[0, 0.51, 0.02]}>
-          <planeGeometry args={[1.36, 0.84]} />
-          <meshBasicMaterial color="#000" />
-        </mesh>
-        <group position={[0, 0.51, 0.022]}>
-          <ScreenDisplay />
-        </group>
-        <mesh position={[0, 0.95, 0.02]}>
-          <circleGeometry args={[0.012, 16]} />
-          <meshStandardMaterial color="#222" />
-        </mesh>
-      </group>
+      <primitive object={laptop} scale={0.051} position={[0, 0.04, 0]} />
     </group>
   );
 }
