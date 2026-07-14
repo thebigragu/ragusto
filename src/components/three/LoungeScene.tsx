@@ -285,6 +285,41 @@ function useLiveScreenTexture() {
   return tex;
 }
 
+/** GLB deck UVs don't align — attach a textured plane flush on the chassis top. */
+function attachKeyboardDeck(body: THREE.Mesh, keyboardTex: THREE.CanvasTexture) {
+  if (body.getObjectByName("keyboard_deck")) return;
+
+  body.geometry.computeBoundingBox();
+  const box = body.geometry.boundingBox;
+  if (!box) return;
+
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const kbZ0 = box.min.z + size.z * 0.38;
+  const kbZ1 = box.max.z - size.z * 0.06;
+  const kbDepth = kbZ1 - kbZ0;
+  const kbCenterZ = (kbZ0 + kbZ1) * 0.5;
+
+  const deck = new THREE.Mesh(
+    new THREE.PlaneGeometry(size.x * 0.86, kbDepth),
+    new THREE.MeshStandardMaterial({
+      map: keyboardTex,
+      color: "#ffffff",
+      roughness: 0.48,
+      metalness: 0.04,
+      envMapIntensity: 0.35,
+      polygonOffset: true,
+      polygonOffsetFactor: -4,
+      polygonOffsetUnits: -4,
+    }),
+  );
+  deck.name = "keyboard_deck";
+  deck.rotation.x = -Math.PI / 2;
+  deck.position.set(center.x, box.max.y + 0.12, kbCenterZ);
+  deck.renderOrder = 5;
+  body.add(deck);
+}
+
 function tuneMacMaterials(
   object: THREE.Object3D,
   screenTex: THREE.CanvasTexture,
@@ -308,22 +343,21 @@ function tuneMacMaterials(
 
     if (child.name === "body") {
       const mats = Array.isArray(child.material) ? child.material : [child.material];
-      child.material = mats.map((mat) => {
-        if (!(mat instanceof THREE.MeshStandardMaterial)) return mat;
+      mats.forEach((mat) => {
+        if (!(mat instanceof THREE.MeshStandardMaterial)) return;
         if (mat.name === "blackmatte") {
-          return new THREE.MeshStandardMaterial({
-            map: keyboardTex,
-            roughness: 0.52,
-            metalness: 0.04,
-            envMapIntensity: 0.35,
-          });
+          mat.color.set("#050506");
+          mat.metalness = 0.04;
+          mat.roughness = 0.55;
+          mat.envMapIntensity = 0.25;
+          return;
         }
         mat.metalness = 1;
         mat.roughness = 0.2;
         mat.envMapIntensity = 1.5;
         mat.color.set("#c5c8cc");
-        return mat;
       });
+      attachKeyboardDeck(child, keyboardTex);
       return;
     }
 
@@ -342,7 +376,8 @@ function tuneMacMaterials(
 
 /** MacBook Pro GLB with live product UI mapped to the display mesh */
 function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
-  const { scene } = useGLTF("/models/macbook-pro.glb");
+  const { scene: srcScene } = useGLTF("/models/macbook-pro.glb");
+  const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
   const laptopRoot = useRef<THREE.Object3D>(null);
   const pointer = useRef({ x: 0, y: 0 });
