@@ -203,17 +203,14 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
 function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   const { scene } = useGLTF("/models/macbook-pro.glb");
   const group = useRef<THREE.Group>(null);
+  const screenHinge = useRef<THREE.Object3D>(null);
   const pointer = useRef({ x: 0, y: 0 });
   const screenTex = useLiveScreenTexture();
 
   const laptop = useMemo(() => {
     const clone = scene.clone(true);
     tuneMacMaterials(clone, screenTex);
-
-    const screen = clone.getObjectByName("screen");
-    if (screen) {
-      screen.rotation.x = THREE.MathUtils.degToRad(178);
-    }
+    screenHinge.current = clone.getObjectByName("screen") ?? null;
 
     clone.traverse((child) => {
       if (child instanceof THREE.Mesh) {
@@ -235,6 +232,11 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   }, []);
 
   useFrame((state) => {
+    // Model ships closed at 90° — hold lid open at 180° (same as reference impl)
+    if (screenHinge.current) {
+      screenHinge.current.rotation.set(Math.PI, 0, 0);
+    }
+
     if (!group.current) return;
     const t = state.clock.elapsedTime;
     const px = pointer.current.x;
