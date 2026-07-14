@@ -6,53 +6,38 @@ export type Service = {
   accent: "blue" | "teal" | "violet";
 };
 
+/** Four pillars — no overlap with a separate “solutions” block */
 export const services: Service[] = [
   {
-    id: "ai-apps",
-    title: "AI Application Development",
-    summary: "Production AI systems that ship, learn, and scale with your business.",
+    id: "ai",
+    title: "AI Products",
+    summary: "Copilots, agents, and retrieval systems built for production — not demos.",
     details:
-      "From intelligent copilots to retrieval pipelines and agent workflows — we design, train integrations, and harden AI products for real users.",
+      "Grounded RAG, workflow automation, evals, and guardrails embedded into products your users already trust.",
     accent: "violet",
   },
   {
-    id: "custom-software",
-    title: "Custom Software",
-    summary: "Bespoke platforms engineered around your operations — not the other way around.",
+    id: "apps",
+    title: "Custom Applications",
+    summary: "SaaS, portals, dashboards, and internal platforms engineered end-to-end.",
     details:
-      "Internal tools, customer portals, and mission-critical systems built with clean architecture, strong typing, and long-term maintainability.",
+      "Type-safe full-stack systems with clean architecture, secure auth, and interfaces that scale with your team.",
     accent: "blue",
   },
   {
     id: "web",
-    title: "Web Design & Development",
-    summary: "Cinematic, conversion-focused experiences that feel as sharp as they perform.",
+    title: "Web Experiences",
+    summary: "Brand-defining sites with cinematic motion and conversion clarity.",
     details:
-      "Brand-led interfaces, motion systems, and blazing Next.js builds optimized for SEO, accessibility, and Core Web Vitals.",
-    accent: "teal",
-  },
-  {
-    id: "fullstack",
-    title: "Full Stack Development",
-    summary: "End-to-end product engineering from API to pixel.",
-    details:
-      "Cloud applications, SaaS products, and dashboards with secure auth, scalable data layers, and polished frontends.",
-    accent: "blue",
-  },
-  {
-    id: "automation",
-    title: "Automation & Integrations",
-    summary: "Replace manual process with reliable, observable workflows.",
-    details:
-      "Business automation, API development, and third-party integrations that connect your stack without fragile duct tape.",
+      "Next.js builds optimized for performance, SEO, and storytelling — the kind of presence that signals engineering excellence.",
     accent: "teal",
   },
   {
     id: "design",
-    title: "UI/UX & Branding",
-    summary: "Visual systems that communicate premium quality on first glance.",
+    title: "Design Systems",
+    summary: "UI/UX and identity that make sophisticated software feel inevitable.",
     details:
-      "Product design, design systems, and brand identity that make sophisticated software feel inevitable and trustworthy.",
+      "Product design, motion language, and brand systems that keep every screen coherent as you ship.",
     accent: "violet",
   },
 ];

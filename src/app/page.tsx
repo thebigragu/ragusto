@@ -1,30 +1,24 @@
-import { Benefits } from "@/components/sections/Benefits";
 import { FAQ } from "@/components/sections/FAQ";
 import { FinalCTA } from "@/components/sections/FinalCTA";
 import { Hero } from "@/components/sections/Hero";
-import { Industries } from "@/components/sections/Industries";
-import { Process } from "@/components/sections/Process";
+import { ProcessShowcase } from "@/components/sections/ProcessShowcase";
 import { Projects } from "@/components/sections/Projects";
+import { Proof } from "@/components/sections/Proof";
 import { Services } from "@/components/sections/Services";
-import { Solutions } from "@/components/sections/Solutions";
-import { Technology } from "@/components/sections/Technology";
-import { Testimonials } from "@/components/sections/Testimonials";
-import { Trust } from "@/components/sections/Trust";
 import { PageTransition } from "@/components/motion/PageTransition";
 
+/**
+ * Tight homepage arc:
+ * Hero → Services → Work → Process (with 3D) → Proof → FAQ → CTA
+ */
 export default function Home() {
   return (
     <PageTransition>
       <Hero />
-      <Trust />
       <Services />
       <Projects />
-      <Process />
-      <Technology />
-      <Solutions />
-      <Industries />
-      <Benefits />
-      <Testimonials />
+      <ProcessShowcase />
+      <Proof />
       <FAQ />
       <FinalCTA />
     </PageTransition>

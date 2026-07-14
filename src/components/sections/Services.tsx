@@ -20,14 +20,14 @@ export function Services() {
         <div className="mb-14 max-w-3xl space-y-4">
           <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Services</p>
           <h2 className="font-display text-4xl tracking-tight md:text-6xl">
-            Capabilities built for modern product teams
+            Four practices. One standard of craft.
           </h2>
           <p className="text-fg-muted leading-relaxed">
-            AI, custom software, and premium web — delivered as one coherent engineering practice.
+            AI, applications, web, and design — delivered as one engineering practice.
           </p>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2">
           {services.map((service) => {
             const open = active === service.id;
             return (

@@ -12,12 +12,11 @@ const columns = [
     ],
   },
   {
-    title: "Capabilities",
+    title: "More",
     links: [
-      { href: "/#solutions", label: "AI Solutions" },
-      { href: "/#solutions", label: "Web Solutions" },
-      { href: "/#solutions", label: "Applications" },
       { href: "/#faq", label: "FAQ" },
+      { href: "/privacy", label: "Privacy" },
+      { href: `mailto:${SITE.email}`, label: "Email" },
     ],
   },
 ];

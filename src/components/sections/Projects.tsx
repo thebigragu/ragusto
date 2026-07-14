@@ -7,16 +7,13 @@ export function Projects() {
   return (
     <section id="work" className="section-pad scroll-mt-24">
       <div className="container-shell">
-        <div className="mb-14 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-2xl space-y-4">
-            <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Selected work</p>
-            <h2 className="font-display text-4xl tracking-tight md:text-6xl">
-              Products that feel inevitable
-            </h2>
-          </div>
-          <p className="max-w-sm text-fg-muted">
-            Placeholder case studies that demonstrate the caliber of systems we ship —
-            portals, SaaS, AI desks, and internal platforms.
+        <div className="mb-14 max-w-2xl space-y-4">
+          <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Selected work</p>
+          <h2 className="font-display text-4xl tracking-tight md:text-6xl">
+            Products that feel inevitable
+          </h2>
+          <p className="max-w-lg text-fg-muted">
+            Portals, SaaS, AI desks, and internal platforms — the caliber of systems we ship.
           </p>
         </div>
 

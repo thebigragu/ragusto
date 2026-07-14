@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { processSteps } from "@/content/process";
 import { useEffect, useRef, useState } from "react";
 
 const SceneCanvas = dynamic(
@@ -13,7 +14,8 @@ const ShowcaseScene = dynamic(
   { ssr: false },
 );
 
-export function ShowcaseCanvas() {
+/** Process + product assembly in one section — no separate Technology block */
+export function ProcessShowcase() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -48,43 +50,61 @@ export function ShowcaseCanvas() {
     };
   }, []);
 
-  const stages = ["Discover", "Design", "Build", "Ship"];
-  const active = Math.min(stages.length - 1, Math.floor(progress * stages.length));
+  const active = Math.min(
+    processSteps.length - 1,
+    Math.floor(progress * processSteps.length),
+  );
 
   return (
-    <div ref={sectionRef} className="relative h-[220vh]">
-      <div className="sticky top-0 flex h-screen items-center overflow-hidden">
+    <section id="process" ref={sectionRef} className="relative h-[240vh] scroll-mt-24">
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden border-y border-border">
         <div className="container-shell grid w-full items-center gap-10 lg:grid-cols-2">
           <div className="relative z-10 space-y-6">
-            <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Technology</p>
+            <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Process</p>
             <h2 className="font-display max-w-xl text-4xl tracking-tight md:text-6xl">
-              Software forged in layers
+              From intent to a shipped product
             </h2>
             <p className="max-w-md text-fg-muted leading-relaxed">
-              Scroll to assemble the pipeline — from discovery through deployment —
-              as modular systems come online.
+              Scroll to assemble the stack — silicon core, devices, and live interfaces —
+              the same arc every Arcform engagement follows.
             </p>
-            <ul className="flex flex-wrap gap-3 pt-2">
-              {stages.map((stage, i) => (
+            <ol className="space-y-3 pt-2">
+              {processSteps.map((step, i) => (
                 <li
-                  key={stage}
-                  className={`rounded-full border px-4 py-2 text-sm transition-colors duration-500 ${
-                    i <= active
-                      ? "border-accent-blue/50 bg-accent-blue/10 text-fg"
+                  key={step.id}
+                  className={`rounded-2xl border px-4 py-3 transition-colors duration-500 ${
+                    i === active
+                      ? "border-accent-blue/40 bg-accent-blue/10"
                       : "border-border text-fg-muted"
                   }`}
                 >
-                  {stage}
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-mono text-xs text-accent-blue">{step.phase}</span>
+                    <span className="font-display text-lg tracking-tight text-fg">
+                      {step.title}
+                    </span>
+                  </div>
+                  {i === active && (
+                    <p className="mt-1.5 text-sm text-fg-muted leading-relaxed">
+                      {step.description}
+                    </p>
+                  )}
                 </li>
               ))}
-            </ul>
+            </ol>
           </div>
 
-          <div className="relative h-[42vh] min-h-[280px] w-full lg:h-[60vh]">
+          <div className="relative h-[42vh] min-h-[280px] w-full lg:h-[62vh]">
             {reduced || !visible ? (
-              <div className="absolute inset-0 rounded-3xl ambient-grid opacity-60" />
+              <div
+                className="absolute inset-0 rounded-3xl"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 40% 40%, color-mix(in oklab, var(--accent-blue) 20%, transparent), transparent 60%), var(--bg-elevated)",
+                }}
+              />
             ) : (
-              <SceneCanvas className="absolute inset-0 rounded-3xl overflow-hidden">
+              <SceneCanvas className="absolute inset-0 overflow-hidden rounded-3xl">
                 <ShowcaseScene progress={progress} />
               </SceneCanvas>
             )}
@@ -92,6 +112,6 @@ export function ShowcaseCanvas() {
           </div>
         </div>
       </div>
-    </div>
+    </section>
   );
 }
