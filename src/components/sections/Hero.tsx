@@ -8,18 +8,18 @@ import { motion } from "framer-motion";
 
 export function Hero() {
   return (
-    <section className="relative flex min-h-[100svh] items-end overflow-hidden pb-16 pt-[calc(var(--nav-height)+2rem)] md:items-center md:pb-24">
-      <div className="pointer-events-none absolute inset-0">
+    <section className="relative flex min-h-[100svh] items-end overflow-hidden pb-20 pt-[calc(var(--nav-height)+1rem)] md:pb-24">
+      <div className="pointer-events-none absolute inset-0 bg-[#020617]">
         <HeroCanvas />
-        {/* Keep product sculpture readable — light vignette only */}
-        <div className="absolute inset-0 bg-gradient-to-r from-bg via-bg/55 to-transparent md:via-bg/40" />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-bg/30" />
+        {/* Soft vignette — keep the sculpture dominant */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-[#020617]/40" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#020617]/90 via-[#020617]/25 to-transparent" />
       </div>
 
       <div className="container-shell relative z-10 w-full">
-        <div className="max-w-2xl space-y-8 lg:max-w-xl">
+        <div className="max-w-xl space-y-6">
           <motion.p
-            className="font-display text-5xl leading-[0.95] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl"
+            className="font-display text-5xl leading-[0.95] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl"
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
@@ -28,25 +28,26 @@ export function Hero() {
           </motion.p>
 
           <motion.h1
-            className="text-2xl leading-tight tracking-tight md:text-4xl"
+            className="text-xl leading-snug tracking-tight text-white/90 md:text-3xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
           >
-            {SITE.heroLine}
+            The immersive product studio
           </motion.h1>
 
           <motion.p
-            className="max-w-md text-base leading-relaxed text-fg-muted md:text-lg"
+            className="max-w-md text-base leading-relaxed text-slate-400 md:text-lg"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            {SITE.tagline}
+            AI. Applications. Web experiences — engineered with cinematic craft
+            for brands that refuse to look ordinary.
           </motion.p>
 
           <motion.div
-            className="flex flex-wrap items-center gap-4"
+            className="flex flex-wrap items-center gap-4 pt-2"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}

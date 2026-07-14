@@ -60,13 +60,13 @@ export function ProcessShowcase() {
       <div className="sticky top-0 flex h-screen items-center overflow-hidden border-y border-border">
         <div className="container-shell grid w-full items-center gap-10 lg:grid-cols-2">
           <div className="relative z-10 space-y-6">
-            <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Process</p>
+            <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Experience</p>
             <h2 className="font-display max-w-xl text-4xl tracking-tight md:text-6xl">
-              From intent to a shipped product
+              Immersive by design
             </h2>
             <p className="max-w-md text-fg-muted leading-relaxed">
-              Scroll as the product stack comes online — silicon, craft, devices —
-              the same discipline that takes an idea to launch.
+              Scroll through the landscape — architecture, atmosphere, and product
+              systems composed the way we build for ambitious brands.
             </p>
             <ol className="space-y-3 pt-2">
               {processSteps.map((step, i) => (
