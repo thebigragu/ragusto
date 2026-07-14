@@ -203,23 +203,21 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
 function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   const { scene } = useGLTF("/models/macbook-pro.glb");
   const group = useRef<THREE.Group>(null);
-  const screenHinge = useRef<THREE.Object3D>(null);
+  const laptopRoot = useRef<THREE.Object3D>(null);
   const pointer = useRef({ x: 0, y: 0 });
   const screenTex = useLiveScreenTexture();
+  const materialsReady = useRef(false);
 
-  const laptop = useMemo(() => {
-    const clone = scene.clone(true);
-    tuneMacMaterials(clone, screenTex);
-    screenHinge.current = clone.getObjectByName("screen") ?? null;
-
-    clone.traverse((child) => {
+  useEffect(() => {
+    if (materialsReady.current) return;
+    tuneMacMaterials(scene, screenTex);
+    scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
         child.receiveShadow = true;
       }
     });
-
-    return clone;
+    materialsReady.current = true;
   }, [scene, screenTex]);
 
   useEffect(() => {
@@ -232,9 +230,10 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
   }, []);
 
   useFrame((state) => {
-    // Model ships closed at 90° — hold lid open at 180° (same as reference impl)
-    if (screenHinge.current) {
-      screenHinge.current.rotation.set(Math.PI, 0, 0);
+    // GLB ships closed at 90°. Face the camera, then crack the lid toward the viewer.
+    const screen = laptopRoot.current?.getObjectByName("screen");
+    if (screen) {
+      screen.rotation.x = THREE.MathUtils.degToRad(115);
     }
 
     if (!group.current) return;
@@ -257,7 +256,13 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
 
   return (
     <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.18, 0.28, 0]}>
-      <primitive object={laptop} scale={0.051} position={[0, 0.04, 0]} />
+      <primitive
+        ref={laptopRoot}
+        object={scene}
+        scale={0.051}
+        rotation={[0, Math.PI, 0]}
+        position={[0, 0.04, 0]}
+      />
     </group>
   );
 }
