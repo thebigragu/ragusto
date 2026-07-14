@@ -1,7 +1,6 @@
 "use client";
 
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
-import { HeroHoloOverlay } from "@/components/ui/HoloOverlay";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -16,21 +15,20 @@ const LoungeScene = dynamic(
   { ssr: false },
 );
 
-function HeroStill() {
+/** Window/city only — chair is 3D, not baked into the photo */
+function HeroBackdrop() {
   return (
-    <>
+    <div className="absolute inset-0 overflow-hidden">
       <Image
         src="/images/hero-studio.jpg"
         alt=""
         fill
         priority
         sizes="100vw"
-        className="object-cover object-[62%_center]"
+        className="scale-110 object-cover object-[12%_center] opacity-70"
       />
-      <div className="absolute inset-0">
-        <HeroHoloOverlay />
-      </div>
-    </>
+      <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/55 to-black/90" />
+    </div>
   );
 }
 
@@ -54,18 +52,20 @@ export function HeroCanvas() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Always paint the photoreal still so the hero is never blank.
-  // WebGL layers on top when available.
+  if (reduced) {
+    return <HeroBackdrop />;
+  }
+
   return (
     <div className="absolute inset-0">
-      <HeroStill />
+      <HeroBackdrop />
 
-      {mounted && !reduced ? (
-        <div className="absolute inset-0 mix-blend-normal opacity-[0.92]">
+      {mounted ? (
+        <div className="absolute inset-0">
           <WebGLErrorBoundary fallback={null}>
             <SceneCanvas
               className="h-full w-full"
-              camera={{ position: [0.2, 1.1, 5.2], fov: 40 }}
+              camera={{ position: [0.1, 0.95, 4.8], fov: 38 }}
             >
               <LoungeScene scrollProgress={progress} />
             </SceneCanvas>
