@@ -1,9 +1,8 @@
 "use client";
 
+import { TechBackdrop } from "@/components/ui/TechBackdrop";
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
-import { HeroHoloOverlay } from "@/components/ui/HoloOverlay";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useEffect, useState } from "react";
 
 const SceneCanvas = dynamic(
@@ -15,24 +14,6 @@ const LoungeScene = dynamic(
   () => import("@/components/three/LoungeScene").then((m) => m.LoungeScene),
   { ssr: false },
 );
-
-function HeroPlate() {
-  return (
-    <div className="absolute inset-0">
-      <Image
-        src="/images/hero-studio-plate.jpg"
-        alt="Arcform luxury design studio"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-[55%_center]"
-      />
-      <div className="absolute inset-0 mix-blend-screen opacity-85">
-        <HeroHoloOverlay />
-      </div>
-    </div>
-  );
-}
 
 export function HeroCanvas() {
   const [progress, setProgress] = useState(0);
@@ -54,26 +35,11 @@ export function HeroCanvas() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (reduced) {
-    return (
-      <div className="absolute inset-0">
-        <Image
-          src="/images/hero-studio-plate.jpg"
-          alt="Arcform luxury design studio"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-[55%_center]"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="absolute inset-0">
-      <HeroPlate />
+      <TechBackdrop variant="hero" />
 
-      {mounted ? (
+      {mounted && !reduced ? (
         <div className="pointer-events-none absolute inset-0">
           <WebGLErrorBoundary fallback={null}>
             <SceneCanvas

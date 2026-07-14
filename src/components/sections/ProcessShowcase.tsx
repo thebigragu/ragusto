@@ -1,6 +1,7 @@
 "use client";
 
 import { processSteps } from "@/content/process";
+import { TechBackdrop } from "@/components/ui/TechBackdrop";
 import { useEffect, useRef, useState } from "react";
 
 /** Sticky process narrative over studio still — no WebGL overlay */
@@ -31,12 +32,8 @@ export function ProcessShowcase() {
   return (
     <section id="process" ref={sectionRef} className="relative h-[280vh] scroll-mt-24">
       <div className="sticky top-0 flex min-h-[100svh] items-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{ backgroundImage: "url(/images/studio-atrium.jpg)" }}
-          aria-hidden
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-bg/70 to-bg" />
+        <TechBackdrop variant="section" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-bg/75 to-bg" />
 
         <div className="container-shell relative z-10 grid w-full gap-12 py-24 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">

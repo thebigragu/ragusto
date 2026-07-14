@@ -15,8 +15,9 @@ export function Services() {
   const [active, setActive] = useState<string | null>(services[0]?.id ?? null);
 
   return (
-    <section id="services" className="section-pad scroll-mt-24">
-      <div className="container-shell">
+    <section id="services" className="relative scroll-mt-24 section-pad">
+      <div className="pointer-events-none absolute inset-0 ambient-grid opacity-[0.12]" aria-hidden />
+      <div className="container-shell relative">
         <div className="mb-14 max-w-3xl space-y-4">
           <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">Services</p>
           <h2 className="font-display text-4xl tracking-tight md:text-6xl">
@@ -34,7 +35,6 @@ export function Services() {
               <motion.button
                 key={service.id}
                 type="button"
-                data-cursor="hover"
                 className={cn(
                   "group relative overflow-hidden rounded-3xl border border-border p-7 text-left transition-colors",
                   open ? "bg-bg-elevated" : "bg-transparent hover:bg-bg-muted/40",

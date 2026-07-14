@@ -1,14 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
-import { Magnetic } from "@/components/ui/Magnetic";
+import { TechBackdrop } from "@/components/ui/TechBackdrop";
 import { motion } from "framer-motion";
 
 export function FinalCTA() {
   return (
     <section className="relative overflow-hidden section-pad">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-blue/15 via-transparent to-accent-teal/10" />
-      <div className="pointer-events-none absolute inset-0 ambient-grid opacity-30" />
+      <TechBackdrop variant="section" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-bg/30 to-bg/80" />
       <div className="container-shell relative z-10">
         <motion.div
           className="mx-auto max-w-3xl space-y-8 text-center"
@@ -24,9 +24,7 @@ export function FinalCTA() {
             Tell us about the product, platform, or experience you need.
             We’ll respond with a clear path forward.
           </p>
-          <Magnetic className="justify-center">
-            <Button href="/contact">Start a project</Button>
-          </Magnetic>
+          <Button href="/contact">Start a project</Button>
         </motion.div>
       </div>
     </section>
