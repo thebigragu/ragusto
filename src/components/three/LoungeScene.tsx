@@ -49,8 +49,8 @@ function PopChair({ scrollProgress }: { scrollProgress: number }) {
     const px = pointer.current.x;
     const py = pointer.current.y;
 
-    // Rest pose matches photo: right of center, angled toward the window
-    const restY = -0.55;
+    // Rest pose matches photo: 3/4 view facing the window (left)
+    const restY = Math.PI * 0.72;
     const hoverY = restY + px * 0.35 + Math.sin(t * 0.45) * 0.03;
     group.current.rotation.y += (hoverY - group.current.rotation.y) * 0.06;
     group.current.rotation.x += (py * 0.05 - group.current.rotation.x) * 0.06;
@@ -72,7 +72,7 @@ function PopChair({ scrollProgress }: { scrollProgress: number }) {
   });
 
   return (
-    <group ref={group} position={[0.95, -0.95, 0.08]} rotation={[0, -0.55, 0]}>
+    <group ref={group} position={[0.95, -0.95, 0.08]} rotation={[0, Math.PI * 0.72, 0]}>
       <primitive object={clone} />
     </group>
   );
