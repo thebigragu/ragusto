@@ -1,5 +1,7 @@
 "use client";
 
+import { useTiltInputContext } from "@/context/TiltInputContext";
+import type { HeroLayout } from "@/lib/heroLayout";
 import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
@@ -375,11 +377,17 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
 }
 
 /** MacBook Pro M3 16" with live Operations Console on the display */
-function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
+function HeroLaptop({
+  scrollProgress,
+  layout,
+}: {
+  scrollProgress: number;
+  layout: HeroLayout;
+}) {
   const { scene: srcScene } = useGLTF(MACBOOK_MODEL);
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
-  const pointer = useRef({ x: 0, y: 0 });
+  const { input } = useTiltInputContext();
   const screenTex = useLiveScreenTexture();
 
   useEffect(() => {
@@ -392,58 +400,76 @@ function HeroLaptop({ scrollProgress }: { scrollProgress: number }) {
     });
   }, [scene, screenTex]);
 
-  useEffect(() => {
-    const onMove = (e: PointerEvent) => {
-      pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      pointer.current.y = (e.clientY / window.innerHeight) * 2 - 1;
-    };
-    window.addEventListener("pointermove", onMove, { passive: true });
-    return () => window.removeEventListener("pointermove", onMove);
-  }, []);
-
   useFrame((state) => {
     if (!group.current) return;
     const t = state.clock.elapsedTime;
-    const px = pointer.current.x;
-    const py = pointer.current.y;
+    const px = input.current.x;
+    const py = input.current.y;
+    const parallax = layout.mobile ? 0.22 : 0.34;
+    const lift = layout.mobile ? 0.04 : 0.07;
 
-    const targetY = 0.22 + px * 0.34;
-    const targetX = 0.14 + py * 0.07;
+    const targetY = (layout.mobile ? 0.1 : 0.22) + px * parallax;
+    const targetX = (layout.mobile ? 0.08 : 0.14) + py * lift;
     group.current.rotation.y += (targetY - group.current.rotation.y) * 0.07;
     group.current.rotation.x += (targetX - group.current.rotation.x) * 0.07;
 
-    const pop = 0.1 + Math.abs(px) * 0.07 + scrollProgress * 0.12;
-    const breathe = Math.sin(t * 0.9) * 0.015;
-    group.current.position.set(0.7 + px * 0.05, -0.15 + breathe + scrollProgress * 0.04, pop);
+    const pop = 0.08 + Math.abs(px) * 0.05 + scrollProgress * 0.1;
+    const breathe = Math.sin(t * 0.9) * 0.012;
+    const slide = layout.mobile ? 0.03 : 0.05;
+    group.current.position.set(
+      layout.focusX + px * slide,
+      layout.laptopBaseY + breathe + scrollProgress * 0.03,
+      layout.laptopBaseZ + pop,
+    );
 
-    const s = 1.06 + pop * 0.028;
+    const s = 1.04 + pop * 0.022;
     group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, s, 0.08));
   });
 
   return (
-    <group ref={group} position={[0.7, -0.15, 0.12]} rotation={[0.14, 0.36, 0]}>
-      <primitive object={scene} scale={0.0442} position={[0, 0.02, 0]} />
+    <group
+      ref={group}
+      position={[layout.focusX, layout.laptopBaseY, layout.laptopBaseZ]}
+      rotation={[0.14, layout.mobile ? 0.18 : 0.36, 0]}
+    >
+      <primitive object={scene} scale={layout.laptopScale} position={[0, 0.02, 0]} />
     </group>
   );
 }
 
-function MatchCamera({ scrollProgress }: { scrollProgress: number }) {
+function MatchCamera({
+  scrollProgress,
+  layout,
+}: {
+  scrollProgress: number;
+  layout: HeroLayout;
+}) {
   useFrame((state) => {
     const p = scrollProgress;
-    state.camera.position.lerp(
+    const cam = state.camera as THREE.PerspectiveCamera;
+    cam.fov = THREE.MathUtils.lerp(cam.fov, layout.cameraFov, 0.08);
+    cam.updateProjectionMatrix();
+
+    cam.position.lerp(
       new THREE.Vector3(
-        THREE.MathUtils.lerp(0.2, 0.45, p),
-        THREE.MathUtils.lerp(0.7, 0.85, p),
-        THREE.MathUtils.lerp(3.1, 2.65, p),
+        THREE.MathUtils.lerp(layout.cameraPosition[0], layout.cameraPosition[0] + 0.2, p),
+        THREE.MathUtils.lerp(layout.cameraPosition[1], layout.cameraPosition[1] + 0.22, p),
+        THREE.MathUtils.lerp(layout.cameraPosition[2], layout.cameraPosition[2] - 0.45, p),
       ),
       0.06,
     );
-    state.camera.lookAt(0.7, 0.15, 0);
+    cam.lookAt(layout.focusX, layout.focusY, 0);
   });
   return null;
 }
 
-export function LoungeScene({ scrollProgress = 0 }: { scrollProgress?: number }) {
+export function LoungeScene({
+  scrollProgress = 0,
+  layout,
+}: {
+  scrollProgress?: number;
+  layout: HeroLayout;
+}) {
   return (
     <>
       <ambientLight intensity={0.42} />
@@ -461,11 +487,11 @@ export function LoungeScene({ scrollProgress = 0 }: { scrollProgress?: number })
       <pointLight position={[2, 0.8, -0.5]} intensity={0.45} color="#5eead4" />
       <hemisphereLight args={["#c5d0e0", "#0a0a0c", 0.35]} />
 
-      <MatchCamera scrollProgress={scrollProgress} />
-      <HeroLaptop scrollProgress={scrollProgress} />
+      <MatchCamera scrollProgress={scrollProgress} layout={layout} />
+      <HeroLaptop scrollProgress={scrollProgress} layout={layout} />
 
       <ContactShadows
-        position={[0.72, -0.4, 0.1]}
+        position={[layout.shadowX, -0.4, 0.1]}
         opacity={0.8}
         scale={5.5}
         blur={2.6}

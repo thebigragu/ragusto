@@ -11,8 +11,8 @@ export function Hero() {
     <section className="relative flex min-h-[100svh] items-end overflow-hidden pb-16 pt-[calc(var(--nav-height)+2rem)] md:items-center md:pb-24">
       <div className="absolute inset-0">
         <HeroCanvas />
-        {/* Soft left grade for copy — keep room/chair lighting intact on the right */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-transparent md:w-[70%]" />
+        {/* Soft grade for copy — left on desktop, bottom on mobile so laptop stays centered */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-black/35 md:bg-gradient-to-r md:from-black/70 md:via-black/25 md:to-transparent md:w-[70%]" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
       </div>
 

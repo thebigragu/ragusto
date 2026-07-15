@@ -1,7 +1,10 @@
 "use client";
 
+import { TiltInputProvider } from "@/context/TiltInputContext";
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
 import { HeroHoloOverlay } from "@/components/ui/HoloOverlay";
+import { MotionEnablePrompt } from "@/components/ui/MotionEnablePrompt";
+import { getHeroLayout, type HeroLayout } from "@/lib/heroLayout";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -25,7 +28,7 @@ function HeroPlate() {
         fill
         priority
         sizes="100vw"
-        className="object-cover object-[55%_center]"
+        className="object-cover object-center md:object-[55%_center]"
       />
       <div className="absolute inset-0 mix-blend-screen opacity-85">
         <HeroHoloOverlay />
@@ -38,10 +41,20 @@ export function HeroCanvas() {
   const [progress, setProgress] = useState(0);
   const [reduced, setReduced] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [layout, setLayout] = useState<HeroLayout>(() =>
+    getHeroLayout(typeof window !== "undefined" ? window.innerWidth : 1280),
+  );
 
   useEffect(() => {
     setMounted(true);
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+
+  useEffect(() => {
+    const onResize = () => setLayout(getHeroLayout(window.innerWidth));
+    onResize();
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   useEffect(() => {
@@ -63,7 +76,7 @@ export function HeroCanvas() {
           fill
           priority
           sizes="100vw"
-          className="object-cover object-[55%_center]"
+          className="object-cover object-center md:object-[55%_center]"
         />
       </div>
     );
@@ -74,16 +87,22 @@ export function HeroCanvas() {
       <HeroPlate />
 
       {mounted ? (
-        <div className="pointer-events-none absolute inset-0">
-          <WebGLErrorBoundary fallback={null}>
-            <SceneCanvas
-              className="h-full w-full"
-              camera={{ position: [0.15, 0.55, 3.2], fov: 38 }}
-            >
-              <LoungeScene scrollProgress={progress} />
-            </SceneCanvas>
-          </WebGLErrorBoundary>
-        </div>
+        <TiltInputProvider>
+          <MotionEnablePrompt />
+          <div className="pointer-events-none absolute inset-0">
+            <WebGLErrorBoundary fallback={null}>
+              <SceneCanvas
+                className="h-full w-full"
+                camera={{
+                  position: layout.cameraPosition,
+                  fov: layout.cameraFov,
+                }}
+              >
+                <LoungeScene scrollProgress={progress} layout={layout} />
+              </SceneCanvas>
+            </WebGLErrorBoundary>
+          </div>
+        </TiltInputProvider>
       ) : null}
     </div>
   );
