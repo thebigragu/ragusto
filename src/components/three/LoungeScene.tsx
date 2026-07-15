@@ -405,20 +405,26 @@ function HeroLaptop({
     const t = state.clock.elapsedTime;
     const px = input.current.x;
     const py = input.current.y;
-    const parallax = layout.mobile ? 0.22 : 0.34;
-    const lift = layout.mobile ? 0.04 : 0.07;
+    const parallax = layout.mobile ? 0.4 : 0.34;
+    const pitch = layout.mobile ? 0.28 : 0.07;
+    const lerp = layout.mobile ? 0.1 : 0.07;
 
     const targetY = (layout.mobile ? 0.1 : 0.22) + px * parallax;
-    const targetX = (layout.mobile ? 0.08 : 0.14) + py * lift;
-    group.current.rotation.y += (targetY - group.current.rotation.y) * 0.07;
-    group.current.rotation.x += (targetX - group.current.rotation.x) * 0.07;
+    const targetX = (layout.mobile ? 0.08 : 0.14) + py * pitch;
+    group.current.rotation.y += (targetY - group.current.rotation.y) * lerp;
+    group.current.rotation.x += (targetX - group.current.rotation.x) * lerp;
 
-    const pop = 0.08 + Math.abs(px) * 0.05 + scrollProgress * 0.1;
+    const pop =
+      0.08 +
+      (Math.abs(px) * (layout.mobile ? 0.08 : 0.05) +
+        Math.abs(py) * (layout.mobile ? 0.06 : 0.03)) +
+      scrollProgress * 0.1;
     const breathe = Math.sin(t * 0.9) * 0.012;
-    const slide = layout.mobile ? 0.03 : 0.05;
+    const slideX = layout.mobile ? 0.055 : 0.05;
+    const slideY = layout.mobile ? 0.04 : 0;
     group.current.position.set(
-      layout.focusX + px * slide,
-      layout.laptopBaseY + breathe + scrollProgress * 0.03,
+      layout.focusX + px * slideX,
+      layout.laptopBaseY + breathe + scrollProgress * 0.03 + py * slideY,
       layout.laptopBaseZ + pop,
     );
 

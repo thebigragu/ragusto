@@ -55,8 +55,9 @@ export function useTiltInput() {
 
       const dx = e.gamma - baseline.current.gamma;
       const dy = e.beta - baseline.current.beta;
-      input.current.x = clamp(dx / 28, -1, 1);
-      input.current.y = clamp(dy / 28, -1, 1);
+      // Lower divisor = more sensitive (degrees of tilt → normalized input)
+      input.current.x = clamp(dx / 15, -1, 1);
+      input.current.y = clamp(dy / 15, -1, 1);
     };
 
     orientHandler.current = onOrient;
