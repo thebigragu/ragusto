@@ -1,5 +1,6 @@
 "use client";
 
+import { deadzone, expSmooth } from "@/lib/smoothTilt";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export type TiltInput = {
@@ -7,9 +8,16 @@ export type TiltInput = {
   y: number;
 };
 
-type OrientationWithPermission = DeviceOrientationEvent & {
+type OrientationWithPermission = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<PermissionState>;
 };
+
+const GYRO_DIVISOR = 15;
+const GYRO_DEADZONE_DEG = 0.35;
+const BASELINE_SAMPLES = 14;
+/** Higher = snappier follow, lower = smoother (frame-rate independent). */
+const GYRO_SMOOTH_LAMBDA = 42;
+const TOUCH_SMOOTH_LAMBDA = 36;
 
 function isIOSDevice() {
   if (typeof navigator === "undefined") return false;
@@ -24,9 +32,12 @@ function clamp(n: number, min: number, max: number) {
 }
 
 export function useTiltInput() {
+  const target = useRef<TiltInput>({ x: 0, y: 0 });
   const input = useRef<TiltInput>({ x: 0, y: 0 });
   const baseline = useRef<{ beta: number; gamma: number } | null>(null);
+  const baselineSamples = useRef<{ beta: number; gamma: number }[]>([]);
   const orientHandler = useRef<((e: DeviceOrientationEvent) => void) | null>(null);
+  const rafId = useRef<number | null>(null);
   const [isCoarse, setIsCoarse] = useState(false);
   const [needsPermission, setNeedsPermission] = useState(false);
   const [motionEnabled, setMotionEnabled] = useState(false);
@@ -34,10 +45,6 @@ export function useTiltInput() {
   const stopOrientation = useCallback(() => {
     if (orientHandler.current) {
       window.removeEventListener("deviceorientation", orientHandler.current);
-      window.removeEventListener(
-        "deviceorientationabsolute",
-        orientHandler.current as EventListener,
-      );
       orientHandler.current = null;
     }
   }, []);
@@ -45,26 +52,38 @@ export function useTiltInput() {
   const startOrientation = useCallback(() => {
     stopOrientation();
     baseline.current = null;
+    baselineSamples.current = [];
+    target.current = { x: 0, y: 0 };
 
     const onOrient = (e: DeviceOrientationEvent) => {
       if (e.gamma == null || e.beta == null) return;
 
       if (!baseline.current) {
-        baseline.current = { beta: e.beta, gamma: e.gamma };
+        baselineSamples.current.push({ beta: e.beta, gamma: e.gamma });
+        if (baselineSamples.current.length < BASELINE_SAMPLES) return;
+
+        const n = baselineSamples.current.length;
+        let betaSum = 0;
+        let gammaSum = 0;
+        for (const sample of baselineSamples.current) {
+          betaSum += sample.beta;
+          gammaSum += sample.gamma;
+        }
+        baseline.current = { beta: betaSum / n, gamma: gammaSum / n };
       }
 
       const dx = e.gamma - baseline.current.gamma;
       const dy = e.beta - baseline.current.beta;
-      // Lower divisor = more sensitive (degrees of tilt → normalized input)
-      input.current.x = clamp(dx / 15, -1, 1);
-      input.current.y = clamp(dy / 15, -1, 1);
+      const ndx = Math.abs(dx) < GYRO_DEADZONE_DEG ? 0 : dx;
+      const ndy = Math.abs(dy) < GYRO_DEADZONE_DEG ? 0 : dy;
+
+      target.current.x = deadzone(clamp(ndx / GYRO_DIVISOR, -1, 1), 0.02);
+      target.current.y = deadzone(clamp(ndy / GYRO_DIVISOR, -1, 1), 0.02);
     };
 
     orientHandler.current = onOrient;
+    // Single listener — dual orientation + absolute events can fight and cause jitter.
     window.addEventListener("deviceorientation", onOrient, { passive: true });
-    window.addEventListener("deviceorientationabsolute", onOrient as EventListener, {
-      passive: true,
-    });
     setMotionEnabled(true);
     setNeedsPermission(false);
   }, [stopOrientation]);
@@ -74,7 +93,7 @@ export function useTiltInput() {
       return false;
     }
 
-    const Orientation = DeviceOrientationEvent as unknown as OrientationWithPermission;
+    const Orientation = DeviceOrientationEvent as OrientationWithPermission;
     if (typeof Orientation.requestPermission === "function") {
       try {
         const state = await Orientation.requestPermission();
@@ -101,6 +120,8 @@ export function useTiltInput() {
       const onMove = (e: PointerEvent) => {
         input.current.x = (e.clientX / window.innerWidth) * 2 - 1;
         input.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+        target.current.x = input.current.x;
+        target.current.y = input.current.y;
       };
       window.addEventListener("pointermove", onMove, { passive: true });
       return () => window.removeEventListener("pointermove", onMove);
@@ -108,7 +129,7 @@ export function useTiltInput() {
 
     if (typeof DeviceOrientationEvent === "undefined") return;
 
-    const Orientation = DeviceOrientationEvent as unknown as OrientationWithPermission;
+    const Orientation = DeviceOrientationEvent as OrientationWithPermission;
     if (isIOSDevice() && typeof Orientation.requestPermission === "function") {
       setNeedsPermission(true);
       return;
@@ -124,12 +145,32 @@ export function useTiltInput() {
     const onTouch = (e: TouchEvent) => {
       const touch = e.touches[0];
       if (!touch) return;
-      input.current.x = (touch.clientX / window.innerWidth) * 2 - 1;
-      input.current.y = (touch.clientY / window.innerHeight) * 2 - 1;
+      target.current.x = (touch.clientX / window.innerWidth) * 2 - 1;
+      target.current.y = (touch.clientY / window.innerHeight) * 2 - 1;
     };
 
     window.addEventListener("touchmove", onTouch, { passive: true });
     return () => window.removeEventListener("touchmove", onTouch);
+  }, [isCoarse, motionEnabled]);
+
+  useEffect(() => {
+    if (!isCoarse) return;
+
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      const lambda = motionEnabled ? GYRO_SMOOTH_LAMBDA : TOUCH_SMOOTH_LAMBDA;
+
+      input.current.x = expSmooth(input.current.x, target.current.x, lambda, dt);
+      input.current.y = expSmooth(input.current.y, target.current.y, lambda, dt);
+      rafId.current = requestAnimationFrame(tick);
+    };
+
+    rafId.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+    };
   }, [isCoarse, motionEnabled]);
 
   useEffect(() => () => stopOrientation(), [stopOrientation]);

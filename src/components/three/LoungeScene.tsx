@@ -2,6 +2,7 @@
 
 import { useTiltInputContext } from "@/context/TiltInputContext";
 import type { HeroLayout } from "@/lib/heroLayout";
+import { expSmooth } from "@/lib/smoothTilt";
 import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import { useEffect, useMemo, useRef } from "react";
@@ -387,7 +388,8 @@ function HeroLaptop({
   const { scene: srcScene } = useGLTF(MACBOOK_MODEL);
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
-  const { input } = useTiltInputContext();
+  const motion = useRef({ rotY: 0, rotX: 0, posX: 0, posY: 0, posZ: 0, scale: 1 });
+  const { input, isCoarse } = useTiltInputContext();
   const screenTex = useLiveScreenTexture();
 
   useEffect(() => {
@@ -400,19 +402,32 @@ function HeroLaptop({
     });
   }, [scene, screenTex]);
 
-  useFrame((state) => {
+  useEffect(() => {
+    motion.current = {
+      rotY: layout.mobile ? 0.1 : 0.22,
+      rotX: layout.mobile ? 0.08 : 0.14,
+      posX: layout.focusX,
+      posY: layout.laptopBaseY,
+      posZ: layout.laptopBaseZ,
+      scale: 1.04,
+    };
+  }, [layout]);
+
+  useFrame((state, delta) => {
     if (!group.current) return;
     const t = state.clock.elapsedTime;
+    const dt = Math.min(delta, 0.05);
     const px = input.current.x;
     const py = input.current.y;
+
     const parallax = layout.mobile ? 0.4 : 0.34;
     const pitch = layout.mobile ? 0.28 : 0.07;
-    const lerp = layout.mobile ? 0.1 : 0.07;
+    const baseRotY = layout.mobile ? 0.1 : 0.22;
+    const baseRotX = layout.mobile ? 0.08 : 0.14;
+    const follow = isCoarse ? 52 : 18;
 
-    const targetY = (layout.mobile ? 0.1 : 0.22) + px * parallax;
-    const targetX = (layout.mobile ? 0.08 : 0.14) + py * pitch;
-    group.current.rotation.y += (targetY - group.current.rotation.y) * lerp;
-    group.current.rotation.x += (targetX - group.current.rotation.x) * lerp;
+    const targetRotY = baseRotY + px * parallax;
+    const targetRotX = baseRotX + py * pitch;
 
     const pop =
       0.08 +
@@ -422,14 +437,24 @@ function HeroLaptop({
     const breathe = Math.sin(t * 0.9) * 0.012;
     const slideX = layout.mobile ? 0.055 : 0.05;
     const slideY = layout.mobile ? 0.04 : 0;
-    group.current.position.set(
-      layout.focusX + px * slideX,
-      layout.laptopBaseY + breathe + scrollProgress * 0.03 + py * slideY,
-      layout.laptopBaseZ + pop,
-    );
 
-    const s = 1.04 + pop * 0.022;
-    group.current.scale.setScalar(THREE.MathUtils.lerp(group.current.scale.x, s, 0.08));
+    const targetPosX = layout.focusX + px * slideX;
+    const targetPosY = layout.laptopBaseY + breathe + scrollProgress * 0.03 + py * slideY;
+    const targetPosZ = layout.laptopBaseZ + pop;
+    const targetScale = 1.04 + pop * 0.022;
+
+    const m = motion.current;
+    m.rotY = expSmooth(m.rotY, targetRotY, follow, dt);
+    m.rotX = expSmooth(m.rotX, targetRotX, follow, dt);
+    m.posX = expSmooth(m.posX, targetPosX, follow, dt);
+    m.posY = expSmooth(m.posY, targetPosY, follow, dt);
+    m.posZ = expSmooth(m.posZ, targetPosZ, follow, dt);
+    m.scale = expSmooth(m.scale, targetScale, follow, dt);
+
+    group.current.rotation.y = m.rotY;
+    group.current.rotation.x = m.rotX;
+    group.current.position.set(m.posX, m.posY, m.posZ);
+    group.current.scale.setScalar(m.scale);
   });
 
   return (
