@@ -43,284 +43,205 @@ function roundRect(
   ctx.closePath();
 }
 
-function paintRightRail(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  const rx = 918;
-  const rw = w - rx - 16;
-
-  ctx.fillStyle = "#0c0e14";
-  ctx.fillRect(rx, 44, rw, h - 44);
-  ctx.strokeStyle = "#1a1e28";
-  ctx.beginPath();
-  ctx.moveTo(rx, 52);
-  ctx.lineTo(rx, h - 10);
-  ctx.stroke();
-
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = "600 11px system-ui,sans-serif";
-  ctx.fillText("FLEET CONTEXT", rx + 14, 72);
-
-  // Health ring
-  const cx = rx + rw * 0.5;
-  const cy = 128;
-  const score = 94 + Math.floor(Math.sin(t * 0.7) * 2);
-  ctx.strokeStyle = "#1f2937";
-  ctx.lineWidth = 8;
-  ctx.beginPath();
-  ctx.arc(cx, cy, 34, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.strokeStyle = "#3b82f6";
-  ctx.beginPath();
-  ctx.arc(cx, cy, 34, -Math.PI / 2, -Math.PI / 2 + (score / 100) * Math.PI * 2);
-  ctx.stroke();
-  ctx.fillStyle = "#f9fafb";
-  ctx.font = "700 22px system-ui,sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(`${score}%`, cx, cy + 8);
-  ctx.textAlign = "left";
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = "11px system-ui,sans-serif";
-  ctx.fillText("Fleet health", rx + 14, 178);
-
-  // Active agents
-  ctx.fillStyle = "#141821";
-  roundRect(ctx, rx + 10, 192, rw - 20, 118, 10);
-  ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
-  ctx.font = "600 12px system-ui,sans-serif";
-  ctx.fillText("Active agents", rx + 22, 214);
-  const agents = [
-    { n: "Triage · Northwind", s: "running", c: "#34d399" },
-    { n: "Indexer · RAG", s: "syncing", c: "#60a5fa" },
-    { n: "Deploy · portal", s: "idle", c: "#9ca3af" },
-    { n: "Escalation · Harbor", s: "alert", c: "#fbbf24" },
-  ];
-  agents.forEach((a, i) => {
-    const y = 232 + i * 22;
-    ctx.fillStyle = a.c;
-    ctx.beginPath();
-    ctx.arc(rx + 26, y - 4, 4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#d1d5db";
-    ctx.font = "11px system-ui,sans-serif";
-    ctx.fillText(a.n, rx + 38, y);
-    ctx.fillStyle = "#6b7280";
-    ctx.font = "10px system-ui,sans-serif";
-    ctx.fillText(a.s, rx + rw - 58, y);
-  });
-
-  // Region latency
-  ctx.fillStyle = "#141821";
-  roundRect(ctx, rx + 10, 322, rw - 20, 108, 10);
-  ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
-  ctx.font = "600 12px system-ui,sans-serif";
-  ctx.fillText("Region latency", rx + 22, 344);
-  const regions = [
-    { l: "US-East", ms: 11 + Math.floor(Math.sin(t * 1.4) * 3), p: 0.92 },
-    { l: "EU-West", ms: 24 + Math.floor(Math.cos(t) * 4), p: 0.74 },
-    { l: "APAC", ms: 38 + Math.floor(Math.sin(t * 0.8) * 5), p: 0.58 },
-  ];
-  regions.forEach((r, i) => {
-    const y = 362 + i * 26;
-    ctx.fillStyle = "#9ca3af";
-    ctx.font = "11px system-ui,sans-serif";
-    ctx.fillText(r.l, rx + 22, y);
-    ctx.fillStyle = "#4b5563";
-    roundRect(ctx, rx + 88, y - 10, rw - 118, 8, 4);
-    ctx.fill();
-    ctx.fillStyle = i === 0 ? "#3b82f6" : "#14b8a6";
-    roundRect(ctx, rx + 88, y - 10, (rw - 118) * r.p, 8, 4);
-    ctx.fill();
-    ctx.fillStyle = "#e5e7eb";
-    ctx.font = "10px ui-monospace,monospace";
-    ctx.fillText(`${r.ms}ms`, rx + rw - 48, y);
-  });
-
-  // Deploy queue
-  ctx.fillStyle = "#141821";
-  roundRect(ctx, rx + 10, 442, rw - 20, 96, 10);
-  ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
-  ctx.font = "600 12px system-ui,sans-serif";
-  ctx.fillText("Deploy queue", rx + 22, 464);
-  const deploys = [
-    { n: "portal.lumen", p: 0.62 + Math.sin(t * 0.9) * 0.08 },
-    { n: "ops-api", p: 0.28 },
-  ];
-  deploys.forEach((d, i) => {
-    const y = 482 + i * 28;
-    ctx.fillStyle = "#d1d5db";
-    ctx.font = "11px system-ui,sans-serif";
-    ctx.fillText(d.n, rx + 22, y);
-    ctx.fillStyle = "#252a36";
-    roundRect(ctx, rx + 22, y + 6, rw - 44, 6, 3);
-    ctx.fill();
-    ctx.fillStyle = "#8b5cf6";
-    roundRect(ctx, rx + 22, y + 6, (rw - 44) * Math.min(1, d.p), 6, 3);
-    ctx.fill();
-  });
-
-  // API quota + alerts
-  ctx.fillStyle = "#141821";
-  roundRect(ctx, rx + 10, 550, rw - 20, 88, 10);
-  ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
-  ctx.font = "600 12px system-ui,sans-serif";
-  ctx.fillText("API quota", rx + 22, 572);
-  const quota = 0.68 + Math.sin(t * 0.5) * 0.04;
-  ctx.fillStyle = "#252a36";
-  roundRect(ctx, rx + 22, 584, rw - 44, 10, 5);
-  ctx.fill();
-  ctx.fillStyle = "#f59e0b";
-  roundRect(ctx, rx + 22, 584, (rw - 44) * quota, 10, 5);
-  ctx.fill();
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = "10px system-ui,sans-serif";
-  ctx.fillText(`${Math.floor(quota * 100)}% of 2M req/day`, rx + 22, 612);
-
-  ctx.fillStyle = "#141821";
-  roundRect(ctx, rx + 10, 650, rw - 20, h - 666, 10);
-  ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
-  ctx.font = "600 12px system-ui,sans-serif";
-  ctx.fillText("Alerts", rx + 22, 672);
-  const alerts = [
-    { t: "Spike in webhook retries", c: "#fbbf24" },
-    { t: "SSL renew · 12 days", c: "#60a5fa" },
-  ];
-  alerts.forEach((a, i) => {
-    const y = 692 + i * 24;
-    ctx.fillStyle = a.c;
-    ctx.fillText("▸", rx + 22, y);
-    ctx.fillStyle = "#d1d5db";
-    ctx.font = "11px system-ui,sans-serif";
-    ctx.fillText(a.t, rx + 34, y);
-  });
-}
-
 function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  ctx.fillStyle = "#0a0b0f";
+  // Arcform Overview dashboard — matches reference hero screen
+  ctx.fillStyle = "#111214";
   ctx.fillRect(0, 0, w, h);
 
-  // Chrome
-  ctx.fillStyle = "#12141a";
-  ctx.fillRect(0, 0, w, 44);
-  ["#ff5f57", "#febc2e", "#28c840"].forEach((c, i) => {
-    ctx.beginPath();
-    ctx.fillStyle = c;
-    ctx.arc(20 + i * 16, 22, 5, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.fillStyle = "#1c1f28";
-  roundRect(ctx, 86, 12, 280, 20, 6);
-  ctx.fill();
-  ctx.fillStyle = "#8b919c";
-  ctx.font = "11px system-ui,sans-serif";
-  ctx.fillText("arcform.app / northwind-ops", 96, 26);
-
-  // Left sidebar
-  ctx.fillStyle = "#0e1016";
-  ctx.fillRect(0, 44, 148, h - 44);
-  ["Overview", "Workflows", "Agents", "Analytics", "Settings"].forEach((label, i) => {
-    const y = 78 + i * 38;
-    const active = i === Math.floor(t * 0.4) % 5;
+  ctx.fillStyle = "#0c0d10";
+  ctx.fillRect(0, 0, 64, h);
+  for (let i = 0; i < 6; i++) {
+    const y = 70 + i * 52;
+    const active = i === 0;
     if (active) {
-      ctx.fillStyle = "rgba(59,130,246,0.2)";
-      roundRect(ctx, 10, y - 14, 128, 30, 8);
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      roundRect(ctx, 10, y - 16, 44, 36, 8);
       ctx.fill();
     }
-    ctx.fillStyle = active ? "#f3f4f6" : "#9ca3af";
-    ctx.font = "13px system-ui,sans-serif";
-    ctx.fillText(label, 26, y + 4);
-  });
+    ctx.fillStyle = active ? "#f5f5f4" : "#6b7280";
+    ctx.beginPath();
+    ctx.arc(32, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
-  const mx = 164;
-  const mainW = 740;
-  ctx.fillStyle = "#f9fafb";
-  ctx.font = "600 22px system-ui,sans-serif";
-  ctx.fillText("Operations Console", mx, 82);
+  ctx.fillStyle = "#141518";
+  ctx.fillRect(64, 0, w - 64, 56);
+  ctx.fillStyle = "#f5f5f4";
+  ctx.font = "600 15px system-ui,sans-serif";
+  ctx.fillText("ARCFORM", 84, 34);
   ctx.fillStyle = "#9ca3af";
   ctx.font = "12px system-ui,sans-serif";
-  ctx.fillText("Live systems · AI triage · role-based access", mx, 102);
+  ctx.fillText("Overview", 180, 34);
+
+  ctx.beginPath();
+  ctx.fillStyle = "#3f3f46";
+  ctx.arc(w - 160, 28, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "12px system-ui,sans-serif";
+  ctx.fillText("Alex Morgan", w - 140, 26);
+  ctx.fillStyle = "#71717a";
+  ctx.font = "10px system-ui,sans-serif";
+  ctx.fillText("Studio Director", w - 140, 40);
 
   const stats = [
-    { l: "Active jobs", v: String(14 + Math.floor((Math.sin(t) + 1) * 3)) },
-    { l: "Latency", v: `${11 + Math.floor(Math.abs(Math.sin(t * 1.6)) * 7)}ms` },
-    { l: "Uptime", v: "99.98%" },
+    { l: "Active Projects", v: "24", d: "+2" },
+    { l: "Tasks in Progress", v: String(34 + Math.floor((Math.sin(t) + 1) * 2)), d: "+5" },
+    { l: "Hours Logged", v: "1,429", d: "+48" },
+    { l: "Budget Utilization", v: "68%", d: "-2%" },
   ];
   stats.forEach((s, i) => {
-    const x = mx + i * 168;
-    ctx.fillStyle = "#141821";
-    roundRect(ctx, x, 120, 152, 72, 12);
+    const x = 84 + i * 288;
+    ctx.fillStyle = "#1a1b1f";
+    roundRect(ctx, x, 76, 272, 88, 12);
     ctx.fill();
     ctx.fillStyle = "#9ca3af";
     ctx.font = "11px system-ui,sans-serif";
-    ctx.fillText(s.l, x + 14, 142);
-    ctx.fillStyle = "#f9fafb";
-    ctx.font = "600 24px system-ui,sans-serif";
-    ctx.fillText(s.v, x + 14, 172);
+    ctx.fillText(s.l, x + 18, 100);
+    ctx.fillStyle = "#f5f5f4";
+    ctx.font = "600 28px system-ui,sans-serif";
+    ctx.fillText(s.v, x + 18, 138);
+    ctx.fillStyle = s.d.startsWith("-") ? "#f87171" : "#34d399";
+    ctx.font = "11px system-ui,sans-serif";
+    ctx.fillText(s.d, x + 210, 138);
   });
 
-  // Chart
-  ctx.fillStyle = "#141821";
-  roundRect(ctx, mx, 210, mainW, 190, 14);
+  ctx.fillStyle = "#1a1b1f";
+  roundRect(ctx, 84, 184, 760, 280, 14);
   ctx.fill();
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = "12px system-ui,sans-serif";
-  ctx.fillText("Throughput", mx + 16, 232);
-
-  ctx.strokeStyle = "#3b82f6";
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 13px system-ui,sans-serif";
+  ctx.fillText("Project Progress", 104, 212);
+  ctx.strokeStyle = "#2a2d35";
+  ctx.lineWidth = 1;
+  for (let g = 0; g < 4; g++) {
+    const y = 250 + g * 48;
+    ctx.beginPath();
+    ctx.moveTo(104, y);
+    ctx.lineTo(820, y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "#a3e635";
   ctx.lineWidth = 2.5;
   ctx.beginPath();
-  for (let i = 0; i < 72; i++) {
-    const x = mx + 20 + i * 9.8;
-    const y = 320 - Math.sin(i * 0.32 + t * 1.7) * 40 - Math.cos(i * 0.12 + t) * 14;
+  for (let i = 0; i < 48; i++) {
+    const x = 110 + i * 14.8;
+    const y = 380 - Math.sin(i * 0.18 + t * 0.4) * 18 - i * 2.1 - Math.cos(i * 0.08) * 8;
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
   }
   ctx.stroke();
-
-  ctx.strokeStyle = "#14b8a6";
-  ctx.lineWidth = 1.75;
-  ctx.beginPath();
-  for (let i = 0; i < 72; i++) {
-    const x = mx + 20 + i * 9.8;
-    const y = 330 - Math.sin(i * 0.25 - t * 1.3) * 26;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  }
-  ctx.stroke();
-
-  // Feed
-  ctx.fillStyle = "#141821";
-  roundRect(ctx, mx, 420, mainW, h - 436, 14);
-  ctx.fill();
-  const rows = [
-    "Agent routed invoice batch · Northwind",
-    "RAG index refreshed · 1.2k docs",
-    "Deploy green · portal.lumen",
-    "Escalation closed · Harbor desk",
-    "Webhook delivered · stripe.events",
-    "Policy sync · SOC2 controls",
-  ];
-  const off = Math.floor(t * 1.15) % rows.length;
-  rows.forEach((_, i) => {
-    const line = rows[(off + i) % rows.length];
-    const y = 448 + i * 26;
-    if (i === 0) {
-      ctx.fillStyle = "rgba(59,130,246,0.12)";
-      roundRect(ctx, mx + 8, y - 14, mainW - 16, 24, 6);
-      ctx.fill();
-    }
-    ctx.fillStyle = "#34d399";
-    ctx.font = "11px ui-monospace,monospace";
-    ctx.fillText("●", mx + 18, y);
-    ctx.fillStyle = "#e5e7eb";
-    ctx.font = "12px system-ui,sans-serif";
-    ctx.fillText(line, mx + 36, y);
+  ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"].forEach((m, i) => {
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "10px system-ui,sans-serif";
+    ctx.fillText(m, 120 + i * 100, 445);
   });
 
-  paintRightRail(ctx, w, h, t);
+  ctx.fillStyle = "#1a1b1f";
+  roundRect(ctx, 864, 184, 380, 280, 14);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 13px system-ui,sans-serif";
+  ctx.fillText("Tasks by Status", 884, 212);
+  const cx = 1054;
+  const cy = 330;
+  const segs = [
+    { c: "#22c55e", p: 0.42 },
+    { c: "#3b82f6", p: 0.28 },
+    { c: "#eab308", p: 0.18 },
+    { c: "#6b7280", p: 0.12 },
+  ];
+  let a0 = -Math.PI / 2;
+  segs.forEach((s) => {
+    const a1 = a0 + s.p * Math.PI * 2;
+    ctx.beginPath();
+    ctx.strokeStyle = s.c;
+    ctx.lineWidth = 22;
+    ctx.arc(cx, cy, 62, a0, a1);
+    ctx.stroke();
+    a0 = a1;
+  });
+  ctx.fillStyle = "#f5f5f4";
+  ctx.font = "600 22px system-ui,sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("128", cx, cy + 4);
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "10px system-ui,sans-serif";
+  ctx.fillText("total", cx, cy + 20);
+  ctx.textAlign = "left";
+  [
+    { l: "Completed", c: "#22c55e" },
+    { l: "In Progress", c: "#3b82f6" },
+    { l: "Review", c: "#eab308" },
+    { l: "Backlog", c: "#6b7280" },
+  ].forEach((L, i) => {
+    const y = 250 + i * 28;
+    ctx.fillStyle = L.c;
+    ctx.beginPath();
+    ctx.arc(1180, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#d1d5db";
+    ctx.font = "11px system-ui,sans-serif";
+    ctx.fillText(L.l, 1194, y + 4);
+  });
+
+  ctx.fillStyle = "#1a1b1f";
+  roundRect(ctx, 84, 484, 760, 320, 14);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 13px system-ui,sans-serif";
+  ctx.fillText("Recent Activity", 104, 514);
+  const rows = [
+    "Maya Chen completed Brand system v2",
+    "Deploy pipeline finished for portal.lumen",
+    "Jonah Lee opened review on pricing UI",
+    "Budget alert cleared for Q3 campaign",
+    "New brief received — Harbor Logistics",
+  ];
+  const off = Math.floor(t * 0.55) % rows.length;
+  rows.forEach((_, i) => {
+    const line = rows[(off + i) % rows.length];
+    const y = 550 + i * 46;
+    ctx.beginPath();
+    ctx.fillStyle = "#3f3f46";
+    ctx.arc(118, y - 4, 12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#e5e7eb";
+    ctx.font = "12px system-ui,sans-serif";
+    ctx.fillText(line, 144, y);
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "10px system-ui,sans-serif";
+    ctx.fillText(`${i + 1}h ago`, 760, y);
+  });
+
+  ctx.fillStyle = "#1a1b1f";
+  roundRect(ctx, 864, 484, 380, 320, 14);
+  ctx.fill();
+  ctx.fillStyle = "#e5e7eb";
+  ctx.font = "600 13px system-ui,sans-serif";
+  ctx.fillText("Budget Overview", 884, 514);
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "11px system-ui,sans-serif";
+  ctx.fillText("Q3 remaining", 884, 560);
+  ctx.fillStyle = "#f5f5f4";
+  ctx.font = "600 32px system-ui,sans-serif";
+  ctx.fillText("$128.4k", 884, 600);
+  ctx.fillStyle = "#25262b";
+  roundRect(ctx, 884, 630, 340, 12, 6);
+  ctx.fill();
+  const bp = 0.68 + Math.sin(t * 0.3) * 0.02;
+  ctx.fillStyle = "#a3e635";
+  roundRect(ctx, 884, 630, 340 * bp, 12, 6);
+  ctx.fill();
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "11px system-ui,sans-serif";
+  ctx.fillText("Utilized", 884, 670);
+  ctx.fillText("Reserved", 884, 710);
+  ctx.fillText("Available", 884, 750);
+  ctx.fillStyle = "#e5e7eb";
+  ctx.fillText("68%", 1180, 670);
+  ctx.fillText("19%", 1180, 710);
+  ctx.fillText("13%", 1180, 750);
 }
 
 function useLiveScreenTexture() {

@@ -1,85 +1,53 @@
 "use client";
 
-import { Button } from "@/components/ui/Button";
-import { Magnetic } from "@/components/ui/Magnetic";
 import { HeroCanvas } from "@/components/three/HeroCanvas";
-import { ArcformMark } from "@/components/brand/ArcformMark";
 import { SITE } from "@/lib/seo";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 export function Hero() {
   return (
-    <section className="relative flex min-h-[100svh] items-end overflow-hidden pb-16 pt-[calc(var(--nav-height)+2rem)] md:items-center md:pb-24">
+    <section className="relative flex min-h-[100svh] items-center overflow-hidden pb-20 pt-[calc(var(--nav-height)+1rem)] md:pb-24">
       <div className="absolute inset-0">
         <HeroCanvas />
-        {/* Filmic grade — preserve desk/laptop on the right */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/30 md:bg-gradient-to-r md:from-black/75 md:via-black/30 md:to-transparent md:w-[68%]" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15" />
+        {/* Soft left grade for copy — match reference low-key lighting */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent md:w-[58%]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/25" />
       </div>
 
-      <div className="container-shell relative z-10 grid w-full gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
-        <div className="max-w-4xl space-y-8">
-          <motion.div
-            className="flex items-center gap-4 text-white md:gap-5"
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <ArcformMark size="lg" className="shrink-0 text-white" />
-            <p className="font-display text-5xl leading-[0.95] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl xl:text-[7.5rem]">
-              {SITE.name}
-            </p>
-          </motion.div>
-
+      <div className="container-shell relative z-10">
+        <div className="max-w-xl space-y-6 md:space-y-7">
           <motion.h1
-            className="max-w-3xl text-2xl leading-tight tracking-tight text-white/70 md:text-4xl"
-            initial={{ opacity: 0, y: 20 }}
+            className="font-serif text-5xl leading-[0.95] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[5.5rem]"
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12, duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="text-white">{SITE.heroLine}</span>
+            {SITE.name.toUpperCase()}
           </motion.h1>
 
           <motion.p
-            className="max-w-xl text-base leading-relaxed text-white/55 md:text-lg"
+            className="max-w-md text-base leading-relaxed text-white/75 md:text-lg"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: 0.12, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            {SITE.tagline} Premium AI, applications, and web experiences engineered
-            for companies that refuse to look ordinary.
+            Digital experiences, crafted with clarity and purpose.
           </motion.p>
 
           <motion.div
-            className="flex flex-wrap items-center gap-4"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.28, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Magnetic>
-              <Button href="/contact">Start a project</Button>
-            </Magnetic>
-            <Magnetic>
-              <Button
-                href="/#services"
-                variant="secondary"
-                className="border-white/25 text-white hover:bg-white/10"
-              >
-                View services
-              </Button>
-            </Magnetic>
+            <Link
+              href="/#services"
+              className="inline-block border-b border-white/70 pb-0.5 text-sm tracking-wide text-white transition-colors hover:border-white hover:text-white"
+            >
+              View our work
+            </Link>
           </motion.div>
         </div>
-
-        <motion.div
-          className="hidden justify-self-end lg:block"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.45, duration: 0.8 }}
-        >
-          <p className="mb-3 text-xs tracking-[0.3em] text-white/45 uppercase">Scroll</p>
-          <div className="h-24 w-px bg-gradient-to-b from-white to-transparent" />
-        </motion.div>
       </div>
     </section>
   );

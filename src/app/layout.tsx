@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Syne } from "next/font/google";
+import { Cormorant_Garamond, Geist, Geist_Mono, Syne } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
 import { Footer } from "@/components/layout/Footer";
 import { Nav } from "@/components/layout/Nav";
@@ -25,6 +25,12 @@ const syne = Syne({
   weight: ["500", "600", "700", "800"],
 });
 
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = defaultMetadata;
 
 export default function RootLayout({
@@ -36,7 +42,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${syne.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="noise min-h-full flex flex-col bg-bg text-fg">
         <script

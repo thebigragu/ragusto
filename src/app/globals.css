@@ -45,6 +45,7 @@
   --color-accent-violet: var(--accent-violet);
   --font-sans: var(--font-geist-sans);
   --font-display: var(--font-syne);
+  --font-serif: var(--font-cormorant);
   --font-mono: var(--font-geist-mono);
 }
 
@@ -75,6 +76,10 @@ body {
 
 .font-display {
   font-family: var(--font-syne), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.font-serif {
+  font-family: var(--font-cormorant), Georgia, "Times New Roman", serif;
 }
 
 .container-shell {
