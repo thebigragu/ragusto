@@ -27,7 +27,7 @@ export function CinematicVideo({
   priority = false,
   opacity = 1,
   alt = "",
-  revision = "v4",
+  revision = "3",
 }: CinematicVideoProps) {
   const ref = useRef<HTMLVideoElement>(null);
   const [reduced, setReduced] = useState(false);
@@ -42,31 +42,20 @@ export function CinematicVideo({
     const el = ref.current;
     if (!el || reduced) return;
 
-    el.muted = true;
-    const tryPlay = () => {
-      void el.play().catch(() => undefined);
-    };
-
-    tryPlay();
-    el.addEventListener("loadeddata", tryPlay);
-    el.addEventListener("canplay", tryPlay);
-
     const io = new IntersectionObserver(
       ([entry]) => {
         if (!entry) return;
-        if (entry.isIntersecting) tryPlay();
-        else el.pause();
+        if (entry.isIntersecting) {
+          void el.play().catch(() => undefined);
+        } else {
+          el.pause();
+        }
       },
-      { threshold: 0.02 },
+      { threshold: 0.08 },
     );
     io.observe(el);
-
-    return () => {
-      io.disconnect();
-      el.removeEventListener("loadeddata", tryPlay);
-      el.removeEventListener("canplay", tryPlay);
-    };
-  }, [reduced, srcBase, revision]);
+    return () => io.disconnect();
+  }, [reduced, ready]);
 
   if (reduced) {
     return (
