@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { HeroCanvas } from "@/components/three/HeroCanvas";
+import { heroUiFocus } from "@/lib/heroUiFocus";
 import { SITE } from "@/lib/seo";
 import { motion } from "framer-motion";
 
@@ -17,7 +18,15 @@ export function Hero() {
       </div>
 
       <div className="container-shell relative z-10">
-        <div className="max-w-xl space-y-6 md:space-y-7">
+        <div
+          className="max-w-xl space-y-6 md:space-y-7"
+          onMouseEnter={() => {
+            heroUiFocus.copy = 1;
+          }}
+          onMouseLeave={() => {
+            heroUiFocus.copy = 0;
+          }}
+        >
           <motion.h1
             className="font-serif text-5xl leading-[0.95] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[5.5rem]"
             initial={{ opacity: 0, y: 24 }}

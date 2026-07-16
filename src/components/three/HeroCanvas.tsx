@@ -2,6 +2,7 @@
 
 import { PointerFieldProvider, usePointerFieldContext } from "@/context/PointerFieldContext";
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
+import { AmbientGlimmer } from "@/components/ui/AmbientGlimmer";
 import { CinematicVideo } from "@/components/ui/CinematicVideo";
 import { MotionEnablePrompt } from "@/components/ui/MotionEnablePrompt";
 import { getHeroLayout, type HeroLayout } from "@/lib/heroLayout";
@@ -51,7 +52,7 @@ function ParallaxPlate({ children }: { children: React.ReactNode }) {
   );
 }
 
-const HERO_VIDEO_CLASS = "object-cover object-[18%_42%] md:object-[22%_45%]";
+const HERO_VIDEO_CLASS = "object-cover object-[30%_40%] md:object-[35%_42%]";
 
 function HeroPlate() {
   return (
@@ -61,11 +62,12 @@ function HeroPlate() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="5"
+          revision="6"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
       </ParallaxPlate>
+      <AmbientGlimmer className="absolute inset-0 z-[1] h-full w-full" />
     </div>
   );
 }
@@ -107,7 +109,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="5"
+          revision="6"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
@@ -140,7 +142,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="5"
+          revision="6"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />

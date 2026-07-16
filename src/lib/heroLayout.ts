@@ -16,41 +16,41 @@ export type HeroLayout = {
   shadowX: number;
 };
 
-/** Desk-planted MacBook — right-weighted so hero copy stays clear. */
+/** Desk-planted MacBook — right-weighted, facing the hero copy. */
 export function getHeroLayout(width: number): HeroLayout {
   const mobile = width < 768;
 
   if (mobile) {
     return {
       mobile: true,
-      focusX: 0.35,
+      focusX: 0.32,
       focusY: 0.02,
-      lookAtX: 0.05,
+      lookAtX: 0.02,
       lookAtY: 0.02,
-      laptopScale: 0.026,
-      laptopBaseY: -0.1,
+      laptopScale: 0.028,
+      laptopBaseY: -0.12,
       laptopBaseZ: 0.05,
-      laptopRotX: 0.08,
-      laptopRotY: 0.2,
-      cameraPosition: [0.05, 0.42, 3.5],
+      laptopRotX: 0.1,
+      laptopRotY: -0.28,
+      cameraPosition: [0.05, 0.4, 3.45],
       cameraFov: 42,
-      shadowX: 0.35,
+      shadowX: 0.32,
     };
   }
 
   return {
     mobile: false,
-    focusX: 1.35,
+    focusX: 1.28,
     focusY: 0.0,
-    lookAtX: 0.28,
-    lookAtY: 0.05,
-    laptopScale: 0.04,
-    laptopBaseY: -0.26,
+    lookAtX: 0.22,
+    lookAtY: 0.04,
+    laptopScale: 0.046,
+    laptopBaseY: -0.28,
     laptopBaseZ: 0.05,
-    laptopRotX: 0.06,
-    laptopRotY: 0.38,
-    cameraPosition: [0.05, 0.48, 3.25],
+    laptopRotX: 0.08,
+    laptopRotY: -0.48,
+    cameraPosition: [0.02, 0.46, 3.2],
     cameraFov: 36,
-    shadowX: 1.35,
+    shadowX: 1.28,
   };
 }

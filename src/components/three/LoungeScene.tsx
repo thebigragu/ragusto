@@ -2,6 +2,7 @@
 
 import { usePointerFieldContext } from "@/context/PointerFieldContext";
 import type { HeroLayout } from "@/lib/heroLayout";
+import { heroUiFocus } from "@/lib/heroUiFocus";
 import { expSmooth } from "@/lib/smoothTilt";
 import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -242,6 +243,20 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.fillText("68%", 1180, 670);
   ctx.fillText("19%", 1180, 710);
   ctx.fillText("13%", 1180, 750);
+
+  // Soft light halo — stronger when cursor hovers hero copy / CTAs
+  const s = screenHighlight.strength;
+  if (s > 0.01) {
+    const hx = screenHighlight.x * w;
+    const hy = screenHighlight.y * h;
+    const halo = ctx.createRadialGradient(hx, hy, 12, hx, hy, Math.max(w, h) * 0.62);
+    halo.addColorStop(0, `rgba(255, 240, 220, ${0.42 * s})`);
+    halo.addColorStop(0.28, `rgba(190, 220, 255, ${0.16 * s})`);
+    halo.addColorStop(0.65, `rgba(120, 160, 220, ${0.05 * s})`);
+    halo.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, w, h);
+  }
 }
 
 function useLiveScreenTexture() {
@@ -292,9 +307,9 @@ function tuneMacMaterials(
         return new THREE.MeshStandardMaterial({
           map: screenTex,
           emissiveMap: screenTex,
-          emissive: new THREE.Color(0.55, 0.58, 0.6),
-          emissiveIntensity: 0.28,
-          roughness: 0.55,
+          emissive: new THREE.Color(0.32, 0.34, 0.36),
+          emissiveIntensity: 0.14,
+          roughness: 0.72,
           metalness: 0,
           toneMapped: true,
         });
@@ -388,9 +403,16 @@ function HeroLaptop({
       );
     }
 
-    screenHighlight.x = 0.5 + px * 0.12;
-    screenHighlight.y = 0.45 + py * 0.1;
-    screenHighlight.strength = expSmooth(screenHighlight.strength, 0.08 + Math.hypot(px, py) * 0.12, 10, dt);
+    screenHighlight.x = 0.42 + px * 0.1;
+    screenHighlight.y = 0.4 + py * 0.08;
+    const copyBoost = heroUiFocus.copy * 0.72;
+    const pointerBoost = 0.05 + Math.hypot(px, py) * 0.08;
+    screenHighlight.strength = expSmooth(
+      screenHighlight.strength,
+      Math.min(1, pointerBoost + copyBoost),
+      12,
+      dt,
+    );
   });
 
   return (
