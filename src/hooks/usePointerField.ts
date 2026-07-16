@@ -30,7 +30,7 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
-/** Pointer / gyro field in [-1, 1] for plate parallax, lights, and holo — not laptop orbit. */
+/** Pointer / gyro field in [-1, 1] for plate parallax, laptop tilt, and lights. */
 export function usePointerField() {
   const target = useRef<PointerField>({ x: 0, y: 0 });
   const input = useRef<PointerField>({ x: 0, y: 0 });

@@ -338,7 +338,7 @@ function tuneMacMaterials(
   });
 }
 
-/** Desk-planted MacBook — cursor drives light/specular, not free orbit. */
+/** Desk-planted MacBook — pointer/gyro tilt like the earlier hero, base faces copy. */
 function HeroLaptop({
   scrollProgress,
   layout,
@@ -350,7 +350,8 @@ function HeroLaptop({
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
   const chassis = useRef<ChassisMat[]>([]);
-  const { input } = usePointerFieldContext();
+  const motion = useRef({ rotY: 0, rotX: 0, posX: 0, posY: 0, posZ: 0, scale: 1 });
+  const { input, isCoarse } = usePointerFieldContext();
   const screenTex = useLiveScreenTexture();
 
   useEffect(() => {
@@ -361,7 +362,12 @@ function HeroLaptop({
         child.receiveShadow = true;
       }
     });
-  }, [scene, screenTex]);
+    motion.current.rotY = layout.laptopRotY;
+    motion.current.rotX = layout.laptopRotX;
+    motion.current.posX = layout.focusX;
+    motion.current.posY = layout.laptopBaseY;
+    motion.current.posZ = layout.laptopBaseZ;
+  }, [scene, screenTex, layout]);
 
   useFrame((state, delta) => {
     if (!group.current) return;
@@ -370,38 +376,54 @@ function HeroLaptop({
     const px = input.current.x;
     const py = input.current.y;
 
-    // Locked planted pose — no pointer tilt/slant
-    const breathe = Math.sin(t * 0.7) * 0.003;
-    const scrollLift = scrollProgress * 0.015;
+    // Original sensitive tilt response (gyro on mobile, pointer on desktop)
+    const parallax = layout.mobile ? 0.4 : 0.34;
+    const pitch = layout.mobile ? 0.28 : 0.07;
+    const follow = isCoarse ? 52 : 18;
+    const breathe = Math.sin(t * 0.7) * 0.004;
+    const pop = Math.max(0, -py) * (layout.mobile ? 0.04 : 0.03);
+    const slideX = layout.mobile ? 0.055 : 0.05;
+    const slideY = layout.mobile ? 0.04 : 0;
 
-    group.current.rotation.x = layout.laptopRotX;
-    group.current.rotation.y = layout.laptopRotY;
+    const targetRotY = layout.laptopRotY + px * parallax;
+    const targetRotX = layout.laptopRotX + py * pitch;
+    const targetPosX = layout.focusX + px * slideX;
+    const targetPosY = layout.laptopBaseY + breathe + scrollProgress * 0.03 + py * slideY;
+    const targetPosZ = layout.laptopBaseZ + pop;
+    const targetScale = 1.04 + pop * 0.022;
+
+    const m = motion.current;
+    m.rotY = expSmooth(m.rotY, targetRotY, follow, dt);
+    m.rotX = expSmooth(m.rotX, targetRotX, follow, dt);
+    m.posX = expSmooth(m.posX, targetPosX, follow, dt);
+    m.posY = expSmooth(m.posY, targetPosY, follow, dt);
+    m.posZ = expSmooth(m.posZ, targetPosZ, follow, dt);
+    m.scale = expSmooth(m.scale, targetScale, follow, dt);
+
+    group.current.rotation.y = m.rotY;
+    group.current.rotation.x = m.rotX;
     group.current.rotation.z = 0;
-    group.current.position.set(
-      layout.focusX,
-      layout.laptopBaseY + breathe + scrollLift,
-      layout.laptopBaseZ,
-    );
-    group.current.scale.setScalar(1);
+    group.current.position.set(m.posX, m.posY, m.posZ);
+    group.current.scale.setScalar(m.scale);
 
     // Specular / roughness nudge toward cursor side
     const side = (px + 1) * 0.5;
     for (const entry of chassis.current) {
       entry.mat.roughness = expSmooth(
         entry.mat.roughness,
-        entry.baseRough * (0.92 + side * 0.1),
+        entry.baseRough * (0.92 + side * 0.12),
         8,
         dt,
       );
       entry.mat.envMapIntensity = expSmooth(
         entry.mat.envMapIntensity,
-        entry.baseEnv * (1.02 + Math.abs(px) * 0.15),
+        entry.baseEnv * (1.05 + Math.abs(px) * 0.22),
         8,
         dt,
       );
     }
 
-    // Screen glass reflection tracks the mouse
+    // Screen glass reflection tracks the mouse / gyro
     screenGlint.x = expSmooth(screenGlint.x, 0.5 + px * 0.38, 14, dt);
     screenGlint.y = expSmooth(screenGlint.y, 0.42 - py * 0.32, 14, dt);
   });
