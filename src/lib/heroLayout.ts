@@ -17,7 +17,7 @@ export type HeroLayout = {
 };
 
 /**
- * Desk-planted MacBook — screen toward copy, base level with the horizon (no roll).
+ * Desk-planted MacBook — screen toward copy, base perfectly level (no roll).
  */
 export function getHeroLayout(width: number): HeroLayout {
   const mobile = width < 768;

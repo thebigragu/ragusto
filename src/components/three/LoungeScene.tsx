@@ -405,7 +405,7 @@ function HeroLaptop({
     m.posZ = expSmooth(m.posZ, targetPosZ, follow, dt);
     m.scale = expSmooth(m.scale, targetScale, follow, dt);
 
-    // YXZ: yaw then pitch — keeps the base level (no bank/roll)
+    // YXZ + z=0: tip and yaw only — base stays perfectly level
     group.current.rotation.order = "YXZ";
     group.current.rotation.set(m.rotX, m.rotY, 0);
     group.current.position.set(m.posX, m.posY, m.posZ);
