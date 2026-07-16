@@ -32,9 +32,9 @@ export function getHeroLayout(width: number): HeroLayout {
       laptopScale: 0.028,
       laptopBaseY: -0.12,
       laptopBaseZ: 0.05,
-      // Face copy; tip screen slightly more toward viewer
+      // Screen faces copy (positive yaw); tip down toward viewer
       laptopRotX: 0.16,
-      laptopRotY: -0.28,
+      laptopRotY: 0.28,
       cameraPosition: [0.05, 0.42, 3.45],
       cameraFov: 42,
       shadowX: 0.28,
@@ -50,9 +50,9 @@ export function getHeroLayout(width: number): HeroLayout {
     laptopScale: 0.046,
     laptopBaseY: -0.28,
     laptopBaseZ: 0.05,
-    // Face Arcform copy more; tip down/toward viewer a bit more
+    // Screen faces Arcform copy (positive yaw); tip down toward viewer
     laptopRotX: 0.18,
-    laptopRotY: -0.32,
+    laptopRotY: 0.34,
     cameraPosition: [0.15, 0.48, 3.2],
     cameraFov: 36,
     shadowX: 1.15,
