@@ -1,7 +1,6 @@
 "use client";
 
 import { processSteps } from "@/content/process";
-import { AtriumHoloOverlay } from "@/components/ui/HoloOverlay";
 import { CinematicVideo } from "@/components/ui/CinematicVideo";
 import { useEffect, useRef, useState } from "react";
 
@@ -36,13 +35,10 @@ export function ProcessShowcase() {
         <CinematicVideo
           srcBase="/videos/process-atrium-loop"
           poster="/videos/process-atrium-loop-poster.jpg"
-          opacity={0.42}
+          opacity={0.5}
           alt=""
           videoClassName="object-cover object-center"
         />
-        <div className="pointer-events-none absolute inset-0 opacity-50">
-          <AtriumHoloOverlay />
-        </div>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-bg/70 to-bg" />
 
         <div className="container-shell relative z-10 grid w-full gap-12 py-24 lg:grid-cols-[0.9fr_1.1fr]">

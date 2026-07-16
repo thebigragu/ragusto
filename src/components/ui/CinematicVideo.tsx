@@ -11,6 +11,8 @@ type CinematicVideoProps = {
   priority?: boolean;
   opacity?: number;
   alt?: string;
+  /** Cache-bust query, e.g. "v=2" */
+  revision?: string;
 };
 
 /**
@@ -25,10 +27,12 @@ export function CinematicVideo({
   priority = false,
   opacity = 1,
   alt = "",
+  revision = "2",
 }: CinematicVideoProps) {
   const ref = useRef<HTMLVideoElement>(null);
   const [reduced, setReduced] = useState(false);
   const [ready, setReady] = useState(false);
+  const q = revision ? `?${revision}` : "";
 
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -58,7 +62,7 @@ export function CinematicVideo({
       <div className={cn("absolute inset-0 overflow-hidden", className)} style={{ opacity }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={poster}
+          src={`${poster}${q}`}
           alt={alt}
           className={cn("h-full w-full object-cover", videoClassName)}
           fetchPriority={priority ? "high" : "auto"}
@@ -72,7 +76,7 @@ export function CinematicVideo({
       {/* Poster underneath until video can paint */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={poster}
+        src={`${poster}${q}`}
         alt=""
         aria-hidden
         className={cn(
@@ -92,13 +96,14 @@ export function CinematicVideo({
         muted
         loop
         playsInline
+        autoPlay
         preload={priority ? "auto" : "metadata"}
-        poster={poster}
+        poster={`${poster}${q}`}
         aria-label={alt || undefined}
         onCanPlay={() => setReady(true)}
       >
-        <source src={`${srcBase}.webm`} type="video/webm" />
-        <source src={`${srcBase}.mp4`} type="video/mp4" />
+        <source src={`${srcBase}.webm${q}`} type="video/webm" />
+        <source src={`${srcBase}.mp4${q}`} type="video/mp4" />
       </video>
     </div>
   );

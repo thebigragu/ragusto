@@ -2,7 +2,6 @@
 
 import { PointerFieldProvider, usePointerFieldContext } from "@/context/PointerFieldContext";
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
-import { HeroHoloOverlay } from "@/components/ui/HoloOverlay";
 import { CinematicVideo } from "@/components/ui/CinematicVideo";
 import { MotionEnablePrompt } from "@/components/ui/MotionEnablePrompt";
 import { getHeroLayout, type HeroLayout } from "@/lib/heroLayout";
@@ -64,9 +63,6 @@ function HeroPlate() {
           videoClassName="object-cover object-center md:object-[55%_center]"
         />
       </ParallaxPlate>
-      <div className="absolute inset-0 mix-blend-screen opacity-85">
-        <HeroHoloOverlay />
-      </div>
     </div>
   );
 }

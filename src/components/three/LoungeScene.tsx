@@ -321,18 +321,6 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   });
 
   paintRightRail(ctx, w, h, t);
-
-  // Soft cursor-driven screen glow (no laptop orbit)
-  if (screenHighlight.strength > 0.01) {
-    const hx = screenHighlight.x * w;
-    const hy = screenHighlight.y * h;
-    const grad = ctx.createRadialGradient(hx, hy, 20, hx, hy, 280);
-    grad.addColorStop(0, `rgba(94,234,212,${0.14 * screenHighlight.strength})`);
-    grad.addColorStop(0.45, `rgba(56,189,248,${0.06 * screenHighlight.strength})`);
-    grad.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-  }
 }
 
 function useLiveScreenTexture() {
@@ -383,11 +371,11 @@ function tuneMacMaterials(
         return new THREE.MeshStandardMaterial({
           map: screenTex,
           emissiveMap: screenTex,
-          emissive: new THREE.Color(1, 1, 1),
-          emissiveIntensity: 0.92,
-          roughness: 0.28,
+          emissive: new THREE.Color(0.55, 0.58, 0.6),
+          emissiveIntensity: 0.28,
+          roughness: 0.55,
           metalness: 0,
-          toneMapped: false,
+          toneMapped: true,
         });
       }
 
@@ -397,9 +385,9 @@ function tuneMacMaterials(
       }
 
       // Photographed aluminum via HDRI
-      mat.metalness = Math.max(mat.metalness, 0.82);
-      mat.roughness = Math.min(Math.max(mat.roughness * 0.55, 0.18), 0.42);
-      mat.envMapIntensity = 1.35;
+      mat.metalness = Math.max(mat.metalness, 0.78);
+      mat.roughness = Math.min(Math.max(mat.roughness * 0.65, 0.22), 0.48);
+      mat.envMapIntensity = 0.85;
       chassis.push({
         mat,
         baseRough: mat.roughness,
@@ -479,14 +467,9 @@ function HeroLaptop({
       );
     }
 
-    screenHighlight.x = 0.5 + px * 0.28;
-    screenHighlight.y = 0.45 + py * 0.22;
-    screenHighlight.strength = expSmooth(
-      screenHighlight.strength,
-      0.35 + Math.hypot(px, py) * 0.65,
-      12,
-      dt,
-    );
+    screenHighlight.x = 0.5 + px * 0.12;
+    screenHighlight.y = 0.45 + py * 0.1;
+    screenHighlight.strength = expSmooth(screenHighlight.strength, 0.08 + Math.hypot(px, py) * 0.12, 10, dt);
   });
 
   return (
@@ -517,7 +500,7 @@ function CursorKeyLight() {
     pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
     pos.current.z = expSmooth(pos.current.z, tz, 16, dt);
     light.current.position.copy(pos.current);
-    light.current.intensity = 2.4 + Math.hypot(px, py) * 0.9;
+    light.current.intensity = 1.1 + Math.hypot(px, py) * 0.35;
   });
 
   return (
@@ -525,8 +508,8 @@ function CursorKeyLight() {
       ref={light}
       position={[2.2, 2.4, 2.0]}
       angle={0.55}
-      penumbra={0.85}
-      intensity={2.4}
+      penumbra={0.9}
+      intensity={1.1}
       color="#ffd2a8"
       castShadow
       distance={14}
@@ -585,7 +568,7 @@ export function LoungeScene({
         blur={2.8}
         far={4.2}
       />
-      <Environment files={STUDIO_HDRI} environmentIntensity={0.95} />
+      <Environment files={STUDIO_HDRI} environmentIntensity={0.55} />
     </>
   );
 }
