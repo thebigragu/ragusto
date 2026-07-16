@@ -17,41 +17,59 @@ export type HeroLayout = {
 };
 
 /**
+ * World-Y offsets from laptopBaseY — captured when lighting was tuned at
+ * desktop baseY -0.28 so every light tracks the laptop 1:1.
+ */
+export const HERO_Y_FROM_BASE = {
+  directional: 3.78,
+  point: 1.08,
+  keyLight: 2.63,
+  keyLightTarget: 2.48,
+  shadow: -0.18,
+} as const;
+
+/**
  * Desk-planted MacBook — screen toward copy, base perfectly level (no roll).
  */
 export function getHeroLayout(width: number): HeroLayout {
   const mobile = width < 768;
 
   if (mobile) {
+    // Camera/look offsets from original mobile baseY -0.12
+    const laptopBaseY = -0.22;
+    const lookAtY = laptopBaseY + 0.14;
     return {
       mobile: true,
       focusX: 0.28,
-      focusY: 0.02,
+      focusY: lookAtY,
       lookAtX: 0.0,
-      lookAtY: 0.02,
+      lookAtY,
       laptopScale: 0.028,
-      laptopBaseY: -0.16,
+      laptopBaseY,
       laptopBaseZ: 0.05,
       laptopRotX: 0.2,
       laptopRotY: -0.4,
-      cameraPosition: [0.05, 0.42, 3.45],
+      cameraPosition: [0.05, laptopBaseY + 0.54, 3.45],
       cameraFov: 42,
       shadowX: 0.28,
     };
   }
 
+  // Camera/look offsets from original desktop baseY -0.28
+  const laptopBaseY = -0.4;
+  const lookAtY = laptopBaseY + 0.3;
   return {
     mobile: false,
     focusX: 1.15,
-    focusY: 0.02,
+    focusY: lookAtY,
     lookAtX: 0.28,
-    lookAtY: 0.02,
+    lookAtY,
     laptopScale: 0.046,
-    laptopBaseY: -0.34,
+    laptopBaseY,
     laptopBaseZ: 0.05,
     laptopRotX: 0.22,
     laptopRotY: -0.42,
-    cameraPosition: [0.15, 0.48, 3.2],
+    cameraPosition: [0.15, laptopBaseY + 0.76, 3.2],
     cameraFov: 36,
     shadowX: 1.15,
   };

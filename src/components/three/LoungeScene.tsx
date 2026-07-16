@@ -2,6 +2,7 @@
 
 import { usePointerFieldContext } from "@/context/PointerFieldContext";
 import type { HeroLayout } from "@/lib/heroLayout";
+import { HERO_Y_FROM_BASE } from "@/lib/heroLayout";
 import { expSmooth } from "@/lib/smoothTilt";
 import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -444,19 +445,21 @@ function HeroLaptop({
   );
 }
 
-function CursorKeyLight() {
+function CursorKeyLight({ layout }: { layout: HeroLayout }) {
   const light = useRef<THREE.SpotLight>(null);
   const { input } = usePointerFieldContext();
+  const keyY = layout.laptopBaseY + HERO_Y_FROM_BASE.keyLight;
   // Front-left key so aluminum reads clean when the laptop faces the copy
-  const pos = useRef(new THREE.Vector3(0.2, 2.35, 2.4));
+  const pos = useRef(new THREE.Vector3(0.2, keyY, 2.4));
 
   useFrame((_, delta) => {
     if (!light.current) return;
     const dt = Math.min(delta, 0.05);
     const px = input.current.x;
     const py = input.current.y;
+    const baseKeyY = layout.laptopBaseY + HERO_Y_FROM_BASE.keyLightTarget;
     const tx = 0.15 + px * 1.1;
-    const ty = 2.2 - py * 0.7;
+    const ty = baseKeyY - py * 0.7;
     const tz = 2.35 + px * 0.2;
     pos.current.x = expSmooth(pos.current.x, tx, 16, dt);
     pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
@@ -468,7 +471,7 @@ function CursorKeyLight() {
   return (
     <spotLight
       ref={light}
-      position={[0.2, 2.35, 2.4]}
+      position={[0.2, keyY, 2.4]}
       angle={0.58}
       penumbra={0.92}
       intensity={0.95}
@@ -512,19 +515,29 @@ export function LoungeScene({
   scrollProgress?: number;
   layout: HeroLayout;
 }) {
+  const y = layout.laptopBaseY;
+
   return (
     <>
       <ambientLight intensity={0.22} />
       <hemisphereLight args={["#c8d4e4", "#0a0a0c", 0.28]} />
-      <directionalLight position={[-2.2, 3.5, 1.5]} intensity={0.35} color="#e8eef6" />
-      <pointLight position={[1.4, 0.8, 0.6]} intensity={0.18} color="#f0e6d8" />
-      <CursorKeyLight />
+      <directionalLight
+        position={[-2.2, y + HERO_Y_FROM_BASE.directional, 1.5]}
+        intensity={0.35}
+        color="#e8eef6"
+      />
+      <pointLight
+        position={[1.4, y + HERO_Y_FROM_BASE.point, 0.6]}
+        intensity={0.18}
+        color="#f0e6d8"
+      />
+      <CursorKeyLight layout={layout} />
 
       <MatchCamera scrollProgress={scrollProgress} layout={layout} />
       <HeroLaptop scrollProgress={scrollProgress} layout={layout} />
 
       <ContactShadows
-        position={[layout.shadowX, layout.laptopBaseY - 0.18, 0.08]}
+        position={[layout.shadowX, y + HERO_Y_FROM_BASE.shadow, 0.08]}
         opacity={0.72}
         scale={5.2}
         blur={2.8}
