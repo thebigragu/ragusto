@@ -41,16 +41,16 @@ const stillSrc = candidates.find((p) => fs.existsSync(p));
 if (!stillSrc) throw new Error("No hero still found");
 
 const plate = path.join(IMAGES, "hero-theme-atmosphere.jpg");
-// Zoom OUT further: blurred full-bleed base + ~58% sharp scene so the room reads wider
+// Zoom OUT further: blurred full-bleed base + ~45% sharp scene so the room reads wider
 run([
   "-y",
   "-i",
   stillSrc,
   "-filter_complex",
   [
-    "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,boxblur=32:10,eq=brightness=-0.2:saturation=0.7[bg]",
-    "[0:v]scale=1120:748:force_original_aspect_ratio=decrease[fg]",
-    "[bg][fg]overlay=(W-w)/2-160:(H-h)/2-30,eq=contrast=1.05:saturation=0.92",
+    "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,boxblur=36:12,eq=brightness=-0.22:saturation=0.65[bg]",
+    "[0:v]scale=880:588:force_original_aspect_ratio=decrease[fg]",
+    "[bg][fg]overlay=(W-w)/2-200:(H-h)/2-20,eq=contrast=1.04:saturation=0.9",
   ].join(";"),
   "-frames:v",
   "1",
@@ -71,11 +71,11 @@ const poster = path.join(VIDEOS, `${basename}-poster.jpg`);
 
 // Mild overscan pan + light breathe (avoid re-zooming the plate)
 const vf = [
-  "scale=2000:1125",
-  "crop=1920:1080:x='(iw-ow)/2+55*sin(2*PI*t/8)':y='(ih-oh)/2+28*cos(2*PI*t/10)'",
-  "eq=contrast=1.1:brightness='-0.05+0.1*sin(2*PI*t/2.4)':saturation='0.86+0.16*sin(2*PI*t/3.6)'",
+  "scale=1980:1114",
+  "crop=1920:1080:x='(iw-ow)/2+40*sin(2*PI*t/8)':y='(ih-oh)/2+22*cos(2*PI*t/10)'",
+  "eq=contrast=1.08:brightness='-0.04+0.09*sin(2*PI*t/2.4)':saturation='0.88+0.14*sin(2*PI*t/3.6)'",
   "vignette=PI/5.5",
-  "noise=alls=12:allf=t+u",
+  "noise=alls=11:allf=t+u",
 ].join(",");
 
 run([
