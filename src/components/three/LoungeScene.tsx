@@ -101,7 +101,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.fillStyle = "#f5f5f4";
     ctx.font = "600 28px system-ui,sans-serif";
     ctx.fillText(s.v, x + 18, 138);
-    ctx.fillStyle = s.d.startsWith("-") ? "#f87171" : "#34d399";
+    ctx.fillStyle = s.d.startsWith("-") ? "#f87171" : "#60a5fa";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(s.d, x + 210, 138);
   });
