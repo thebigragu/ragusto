@@ -367,6 +367,10 @@ function HeroLaptop({
     motion.current.posX = layout.focusX;
     motion.current.posY = layout.laptopBaseY;
     motion.current.posZ = layout.laptopBaseZ;
+    if (group.current) {
+      group.current.rotation.order = "YXZ";
+      group.current.rotation.set(layout.laptopRotX, layout.laptopRotY, 0);
+    }
   }, [scene, screenTex, layout]);
 
   useFrame((state, delta) => {
@@ -401,9 +405,9 @@ function HeroLaptop({
     m.posZ = expSmooth(m.posZ, targetPosZ, follow, dt);
     m.scale = expSmooth(m.scale, targetScale, follow, dt);
 
-    group.current.rotation.y = m.rotY;
-    group.current.rotation.x = m.rotX;
-    group.current.rotation.z = layout.laptopRotZ;
+    // YXZ: yaw then pitch — keeps the base level (no bank/roll)
+    group.current.rotation.order = "YXZ";
+    group.current.rotation.set(m.rotX, m.rotY, 0);
     group.current.position.set(m.posX, m.posY, m.posZ);
     group.current.scale.setScalar(m.scale);
 
@@ -433,7 +437,7 @@ function HeroLaptop({
     <group
       ref={group}
       position={[layout.focusX, layout.laptopBaseY, layout.laptopBaseZ]}
-      rotation={[layout.laptopRotX, layout.laptopRotY, layout.laptopRotZ]}
+      rotation={[layout.laptopRotX, layout.laptopRotY, 0]}
     >
       <primitive object={scene} scale={layout.laptopScale} position={[0, 0.02, 0]} />
     </group>
