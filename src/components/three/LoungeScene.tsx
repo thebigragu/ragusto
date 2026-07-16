@@ -403,7 +403,7 @@ function HeroLaptop({
 
     group.current.rotation.y = m.rotY;
     group.current.rotation.x = m.rotX;
-    group.current.rotation.z = 0;
+    group.current.rotation.z = layout.laptopRotZ;
     group.current.position.set(m.posX, m.posY, m.posZ);
     group.current.scale.setScalar(m.scale);
 
@@ -433,7 +433,7 @@ function HeroLaptop({
     <group
       ref={group}
       position={[layout.focusX, layout.laptopBaseY, layout.laptopBaseZ]}
-      rotation={[layout.laptopRotX, layout.laptopRotY, 0]}
+      rotation={[layout.laptopRotX, layout.laptopRotY, layout.laptopRotZ]}
     >
       <primitive object={scene} scale={layout.laptopScale} position={[0, 0.02, 0]} />
     </group>
