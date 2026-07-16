@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
-import { SITE } from "@/lib/seo";
+import { ArcformWordmark } from "@/components/brand/ArcformMark";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
@@ -49,10 +49,10 @@ export function Nav() {
         >
           <Link
             href="/"
-            className="font-display text-lg tracking-tight md:text-xl"
+            className="text-lg tracking-tight md:text-xl"
             onClick={() => setOpen(false)}
           >
-            {SITE.name}
+            <ArcformWordmark markSize="sm" textClassName="text-lg md:text-xl" />
           </Link>
 
           <nav className="hidden items-center gap-8 lg:flex">

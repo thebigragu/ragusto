@@ -1,6 +1,6 @@
 "use client";
 
-import { useTiltInputContext } from "@/context/TiltInputContext";
+import { usePointerFieldContext } from "@/context/PointerFieldContext";
 import type { HeroLayout } from "@/lib/heroLayout";
 import { expSmooth } from "@/lib/smoothTilt";
 import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
@@ -16,9 +16,13 @@ const HIDDEN_MATERIALS = new Set([
   "fNHiBfcxHUJCahl",
   "ZCDwChwkbBfITSW",
 ]);
+const STUDIO_HDRI = "/hdri/studio_small_09_1k.hdr";
 
 const UI_W = 1280;
 const UI_H = 832;
+
+/** Shared screen highlight from pointer (normalized 0–1 in screen space). */
+const screenHighlight = { x: 0.55, y: 0.45, strength: 0 };
 
 useGLTF.preload(MACBOOK_MODEL);
 
@@ -317,6 +321,18 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   });
 
   paintRightRail(ctx, w, h, t);
+
+  // Soft cursor-driven screen glow (no laptop orbit)
+  if (screenHighlight.strength > 0.01) {
+    const hx = screenHighlight.x * w;
+    const hy = screenHighlight.y * h;
+    const grad = ctx.createRadialGradient(hx, hy, 20, hx, hy, 280);
+    grad.addColorStop(0, `rgba(94,234,212,${0.14 * screenHighlight.strength})`);
+    grad.addColorStop(0.45, `rgba(56,189,248,${0.06 * screenHighlight.strength})`);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
 }
 
 function useLiveScreenTexture() {
@@ -342,7 +358,18 @@ function useLiveScreenTexture() {
   return tex;
 }
 
-function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture) {
+type ChassisMat = {
+  mat: THREE.MeshStandardMaterial;
+  baseRough: number;
+  baseEnv: number;
+};
+
+function tuneMacMaterials(
+  object: THREE.Object3D,
+  screenTex: THREE.CanvasTexture,
+  chassis: ChassisMat[],
+) {
+  chassis.length = 0;
   object.traverse((child) => {
     if (!(child instanceof THREE.Mesh)) return;
 
@@ -357,8 +384,8 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
           map: screenTex,
           emissiveMap: screenTex,
           emissive: new THREE.Color(1, 1, 1),
-          emissiveIntensity: 0.95,
-          roughness: 0.35,
+          emissiveIntensity: 0.92,
+          roughness: 0.28,
           metalness: 0,
           toneMapped: false,
         });
@@ -366,7 +393,18 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
 
       if (HIDDEN_MATERIALS.has(mat.name)) {
         mat.visible = false;
+        return mat;
       }
+
+      // Photographed aluminum via HDRI
+      mat.metalness = Math.max(mat.metalness, 0.82);
+      mat.roughness = Math.min(Math.max(mat.roughness * 0.55, 0.18), 0.42);
+      mat.envMapIntensity = 1.35;
+      chassis.push({
+        mat,
+        baseRough: mat.roughness,
+        baseEnv: mat.envMapIntensity,
+      });
 
       return mat;
     });
@@ -377,7 +415,7 @@ function tuneMacMaterials(object: THREE.Object3D, screenTex: THREE.CanvasTexture
   });
 }
 
-/** MacBook Pro M3 16" with live Operations Console on the display */
+/** Desk-planted MacBook — cursor drives light/specular, not free orbit. */
 function HeroLaptop({
   scrollProgress,
   layout,
@@ -388,12 +426,12 @@ function HeroLaptop({
   const { scene: srcScene } = useGLTF(MACBOOK_MODEL);
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
-  const motion = useRef({ rotY: 0, rotX: 0, posX: 0, posY: 0, posZ: 0, scale: 1 });
-  const { input, isCoarse } = useTiltInputContext();
+  const chassis = useRef<ChassisMat[]>([]);
+  const { input } = usePointerFieldContext();
   const screenTex = useLiveScreenTexture();
 
   useEffect(() => {
-    tuneMacMaterials(scene, screenTex);
+    tuneMacMaterials(scene, screenTex, chassis.current);
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         child.castShadow = true;
@@ -402,17 +440,6 @@ function HeroLaptop({
     });
   }, [scene, screenTex]);
 
-  useEffect(() => {
-    motion.current = {
-      rotY: layout.mobile ? 0.1 : 0.22,
-      rotX: layout.mobile ? 0.08 : 0.14,
-      posX: layout.focusX,
-      posY: layout.laptopBaseY,
-      posZ: layout.laptopBaseZ,
-      scale: 1.04,
-    };
-  }, [layout]);
-
   useFrame((state, delta) => {
     if (!group.current) return;
     const t = state.clock.elapsedTime;
@@ -420,51 +447,90 @@ function HeroLaptop({
     const px = input.current.x;
     const py = input.current.y;
 
-    const parallax = layout.mobile ? 0.4 : 0.34;
-    const pitch = layout.mobile ? 0.28 : 0.07;
-    const baseRotY = layout.mobile ? 0.1 : 0.22;
-    const baseRotX = layout.mobile ? 0.08 : 0.14;
-    const follow = isCoarse ? 52 : 18;
+    // Planted pose — tiny micro-nod only (desk-bound)
+    const targetRotY = layout.laptopRotY + px * 0.035;
+    const targetRotX = layout.laptopRotX + py * 0.025;
+    const breathe = Math.sin(t * 0.7) * 0.004;
+    const scrollLift = scrollProgress * 0.015;
 
-    const targetRotY = baseRotY + px * parallax;
-    const targetRotX = baseRotX + py * pitch;
+    group.current.rotation.y = expSmooth(group.current.rotation.y, targetRotY, 10, dt);
+    group.current.rotation.x = expSmooth(group.current.rotation.x, targetRotX, 10, dt);
+    group.current.position.set(
+      layout.focusX,
+      layout.laptopBaseY + breathe + scrollLift,
+      layout.laptopBaseZ,
+    );
+    group.current.scale.setScalar(1);
 
-    const pop =
-      0.08 +
-      (Math.abs(px) * (layout.mobile ? 0.08 : 0.05) +
-        Math.abs(py) * (layout.mobile ? 0.06 : 0.03)) +
-      scrollProgress * 0.1;
-    const breathe = Math.sin(t * 0.9) * 0.012;
-    const slideX = layout.mobile ? 0.055 : 0.05;
-    const slideY = layout.mobile ? 0.04 : 0;
+    // Specular / roughness nudge toward cursor side
+    const side = (px + 1) * 0.5;
+    for (const entry of chassis.current) {
+      entry.mat.roughness = expSmooth(
+        entry.mat.roughness,
+        entry.baseRough * (0.92 + side * 0.12),
+        8,
+        dt,
+      );
+      entry.mat.envMapIntensity = expSmooth(
+        entry.mat.envMapIntensity,
+        entry.baseEnv * (1.05 + Math.abs(px) * 0.22),
+        8,
+        dt,
+      );
+    }
 
-    const targetPosX = layout.focusX + px * slideX;
-    const targetPosY = layout.laptopBaseY + breathe + scrollProgress * 0.03 + py * slideY;
-    const targetPosZ = layout.laptopBaseZ + pop;
-    const targetScale = 1.04 + pop * 0.022;
-
-    const m = motion.current;
-    m.rotY = expSmooth(m.rotY, targetRotY, follow, dt);
-    m.rotX = expSmooth(m.rotX, targetRotX, follow, dt);
-    m.posX = expSmooth(m.posX, targetPosX, follow, dt);
-    m.posY = expSmooth(m.posY, targetPosY, follow, dt);
-    m.posZ = expSmooth(m.posZ, targetPosZ, follow, dt);
-    m.scale = expSmooth(m.scale, targetScale, follow, dt);
-
-    group.current.rotation.y = m.rotY;
-    group.current.rotation.x = m.rotX;
-    group.current.position.set(m.posX, m.posY, m.posZ);
-    group.current.scale.setScalar(m.scale);
+    screenHighlight.x = 0.5 + px * 0.28;
+    screenHighlight.y = 0.45 + py * 0.22;
+    screenHighlight.strength = expSmooth(
+      screenHighlight.strength,
+      0.35 + Math.hypot(px, py) * 0.65,
+      12,
+      dt,
+    );
   });
 
   return (
     <group
       ref={group}
       position={[layout.focusX, layout.laptopBaseY, layout.laptopBaseZ]}
-      rotation={[0.14, layout.mobile ? 0.18 : 0.36, 0]}
+      rotation={[layout.laptopRotX, layout.laptopRotY, 0]}
     >
       <primitive object={scene} scale={layout.laptopScale} position={[0, 0.02, 0]} />
     </group>
+  );
+}
+
+function CursorKeyLight() {
+  const light = useRef<THREE.SpotLight>(null);
+  const { input } = usePointerFieldContext();
+  const pos = useRef(new THREE.Vector3(2.2, 2.4, 2.0));
+
+  useFrame((_, delta) => {
+    if (!light.current) return;
+    const dt = Math.min(delta, 0.05);
+    const px = input.current.x;
+    const py = input.current.y;
+    const tx = 1.6 + px * 1.8;
+    const ty = 2.1 - py * 0.9;
+    const tz = 1.6 + px * 0.4;
+    pos.current.x = expSmooth(pos.current.x, tx, 16, dt);
+    pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
+    pos.current.z = expSmooth(pos.current.z, tz, 16, dt);
+    light.current.position.copy(pos.current);
+    light.current.intensity = 2.4 + Math.hypot(px, py) * 0.9;
+  });
+
+  return (
+    <spotLight
+      ref={light}
+      position={[2.2, 2.4, 2.0]}
+      angle={0.55}
+      penumbra={0.85}
+      intensity={2.4}
+      color="#ffd2a8"
+      castShadow
+      distance={14}
+    />
   );
 }
 
@@ -483,9 +549,9 @@ function MatchCamera({
 
     cam.position.lerp(
       new THREE.Vector3(
-        THREE.MathUtils.lerp(layout.cameraPosition[0], layout.cameraPosition[0] + 0.2, p),
-        THREE.MathUtils.lerp(layout.cameraPosition[1], layout.cameraPosition[1] + 0.22, p),
-        THREE.MathUtils.lerp(layout.cameraPosition[2], layout.cameraPosition[2] - 0.45, p),
+        THREE.MathUtils.lerp(layout.cameraPosition[0], layout.cameraPosition[0] + 0.12, p),
+        THREE.MathUtils.lerp(layout.cameraPosition[1], layout.cameraPosition[1] + 0.1, p),
+        THREE.MathUtils.lerp(layout.cameraPosition[2], layout.cameraPosition[2] - 0.28, p),
       ),
       0.06,
     );
@@ -503,32 +569,23 @@ export function LoungeScene({
 }) {
   return (
     <>
-      <ambientLight intensity={0.42} />
-      <directionalLight position={[-2.5, 4, 2]} intensity={0.75} color="#dbe4f0" />
-      <spotLight
-        position={[2.5, 2.5, 2]}
-        angle={0.5}
-        penumbra={0.8}
-        intensity={3.2}
-        color="#ffc89a"
-        castShadow
-        distance={12}
-      />
-      <pointLight position={[1, 1.2, 1.5]} intensity={0.7} color="#ffffff" />
-      <pointLight position={[2, 0.8, -0.5]} intensity={0.45} color="#5eead4" />
-      <hemisphereLight args={["#c5d0e0", "#0a0a0c", 0.35]} />
+      <ambientLight intensity={0.22} />
+      <hemisphereLight args={["#c8d4e4", "#0a0a0c", 0.28]} />
+      <directionalLight position={[-2.2, 3.5, 1.5]} intensity={0.35} color="#e8eef6" />
+      <pointLight position={[2.2, 0.6, -0.4]} intensity={0.25} color="#5eead4" />
+      <CursorKeyLight />
 
       <MatchCamera scrollProgress={scrollProgress} layout={layout} />
       <HeroLaptop scrollProgress={scrollProgress} layout={layout} />
 
       <ContactShadows
-        position={[layout.shadowX, -0.4, 0.1]}
-        opacity={0.8}
-        scale={5.5}
-        blur={2.6}
-        far={4.5}
+        position={[layout.shadowX, layout.laptopBaseY - 0.18, 0.08]}
+        opacity={0.72}
+        scale={5.2}
+        blur={2.8}
+        far={4.2}
       />
-      <Environment preset="city" environmentIntensity={0.55} />
+      <Environment files={STUDIO_HDRI} environmentIntensity={0.95} />
     </>
   );
 }

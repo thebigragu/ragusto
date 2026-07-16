@@ -1,8 +1,9 @@
 "use client";
 
+import { usePointerFieldContext } from "@/context/PointerFieldContext";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 const LINES = [
   "ARC · telemetry sync",
@@ -146,10 +147,31 @@ function PanelShell({
   );
 }
 
-/** Animated FUI layers for the hero lounge screens (behind chair). */
+/** Animated FUI layers — panels ease toward pointer for desk-bound interactivity. */
 export function HeroHoloOverlay() {
+  const { input } = usePointerFieldContext();
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const smoothed = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    let raf = 0;
+    const tick = () => {
+      smoothed.current.x += (input.current.x - smoothed.current.x) * 0.08;
+      smoothed.current.y += (input.current.y - smoothed.current.y) * 0.08;
+      setOffset({ x: smoothed.current.x, y: smoothed.current.y });
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [input]);
+
   return (
-    <div className="absolute inset-0 mix-blend-screen">
+    <div
+      className="absolute inset-0 mix-blend-screen will-change-transform"
+      style={{
+        transform: `translate3d(${offset.x * 14}px, ${offset.y * 10}px, 0)`,
+      }}
+    >
       <PanelShell
         className="top-[18%] left-[46%] h-[32%] w-[14%] -rotate-[4deg] md:left-[48%] md:w-[12%]"
         delay={0}

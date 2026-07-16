@@ -1,9 +1,9 @@
 "use client";
 
-import { useTiltInputContext } from "@/context/TiltInputContext";
+import { usePointerFieldContext } from "@/context/PointerFieldContext";
 
 export function MotionEnablePrompt() {
-  const { isCoarse, needsPermission, motionEnabled, requestMotion } = useTiltInputContext();
+  const { isCoarse, needsPermission, motionEnabled, requestMotion } = usePointerFieldContext();
 
   if (!isCoarse || !needsPermission || motionEnabled) return null;
 
@@ -14,7 +14,7 @@ export function MotionEnablePrompt() {
         onClick={() => void requestMotion()}
         className="rounded-full border border-white/25 bg-black/55 px-4 py-2 text-xs tracking-wide text-white/90 backdrop-blur-md transition-colors hover:bg-black/70"
       >
-        Enable motion tilt
+        Enable motion
       </button>
     </div>
   );

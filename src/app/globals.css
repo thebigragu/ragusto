@@ -1,31 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f5f5f4;
-  --bg-elevated: #ffffff;
-  --bg-muted: #eaeae8;
-  --fg: #0a0a0b;
-  --fg-muted: #5c5c63;
-  --border: rgba(10, 10, 11, 0.1);
-  --accent-blue: #3b82f6;
-  --accent-teal: #14b8a6;
-  --accent-violet: #7c6cf0;
-  --glow: rgba(59, 130, 246, 0.35);
-  --noise-opacity: 0.025;
+  /* Warm filmic studio — light */
+  --bg: #f3f1ee;
+  --bg-elevated: #faf9f7;
+  --bg-muted: #e8e5e0;
+  --fg: #0c0c0e;
+  --fg-muted: #5a5854;
+  --border: rgba(12, 12, 14, 0.1);
+  --accent-blue: #3d7ea6;
+  --accent-teal: #2a9b8f;
+  --accent-violet: #5c6b7a;
+  --glow: rgba(61, 126, 166, 0.28);
+  --noise-opacity: 0.02;
   --nav-height: 72px;
   --ease-apple: cubic-bezier(0.22, 1, 0.36, 1);
   --max-w: 1800px;
 }
 
 .dark {
-  --bg: #0a0a0b;
-  --bg-elevated: #16161a;
-  --bg-muted: #1c1c22;
-  --fg: #f5f5f4;
-  --fg-muted: #a1a1aa;
-  --border: rgba(245, 245, 244, 0.1);
-  --glow: rgba(124, 108, 240, 0.28);
-  --noise-opacity: 0.035;
+  /* Cinematic desk night */
+  --bg: #08090b;
+  --bg-elevated: #12141a;
+  --bg-muted: #181b22;
+  --fg: #f2efe9;
+  --fg-muted: #9a9690;
+  --border: rgba(242, 239, 233, 0.1);
+  --accent-blue: #6ba3c7;
+  --accent-teal: #5eead4;
+  --accent-violet: #8a9aaa;
+  --glow: rgba(94, 234, 212, 0.18);
+  --noise-opacity: 0.028;
 }
 
 @theme inline {
@@ -64,7 +69,7 @@ body {
 }
 
 ::selection {
-  background: color-mix(in oklab, var(--accent-blue) 40%, transparent);
+  background: color-mix(in oklab, var(--accent-teal) 35%, transparent);
   color: var(--fg);
 }
 
@@ -87,8 +92,8 @@ body {
   background: linear-gradient(
     120deg,
     var(--fg) 0%,
-    color-mix(in oklab, var(--accent-blue) 70%, var(--fg)) 45%,
-    color-mix(in oklab, var(--accent-violet) 65%, var(--fg)) 100%
+    color-mix(in oklab, var(--accent-blue) 65%, var(--fg)) 50%,
+    color-mix(in oklab, var(--accent-teal) 55%, var(--fg)) 100%
   );
   -webkit-background-clip: text;
   background-clip: text;
@@ -96,7 +101,7 @@ body {
 }
 
 .glass {
-  background: color-mix(in oklab, var(--bg-elevated) 72%, transparent);
+  background: color-mix(in oklab, var(--bg-elevated) 68%, transparent);
   backdrop-filter: blur(18px);
   border: 1px solid var(--border);
 }
@@ -114,10 +119,10 @@ body {
 
 .ambient-grid {
   background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--fg) 6%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--fg) 6%, transparent) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in oklab, var(--fg) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--fg) 5%, transparent) 1px, transparent 1px);
   background-size: 72px 72px;
-  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse at center, black 18%, transparent 72%);
 }
 
 @media (prefers-reduced-motion: reduce) {

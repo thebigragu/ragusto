@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { HeroCanvas } from "@/components/three/HeroCanvas";
+import { ArcformMark } from "@/components/brand/ArcformMark";
 import { SITE } from "@/lib/seo";
 import { motion } from "framer-motion";
 
@@ -11,21 +12,24 @@ export function Hero() {
     <section className="relative flex min-h-[100svh] items-end overflow-hidden pb-16 pt-[calc(var(--nav-height)+2rem)] md:items-center md:pb-24">
       <div className="absolute inset-0">
         <HeroCanvas />
-        {/* Soft grade for copy — left on desktop, bottom on mobile so laptop stays centered */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-black/35 md:bg-gradient-to-r md:from-black/70 md:via-black/25 md:to-transparent md:w-[70%]" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/10" />
+        {/* Filmic grade — preserve desk/laptop on the right */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/30 md:bg-gradient-to-r md:from-black/75 md:via-black/30 md:to-transparent md:w-[68%]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15" />
       </div>
 
       <div className="container-shell relative z-10 grid w-full gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
         <div className="max-w-4xl space-y-8">
-          <motion.p
-            className="font-display text-5xl leading-[0.95] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl xl:text-[7.5rem]"
+          <motion.div
+            className="flex items-center gap-4 text-white md:gap-5"
             initial={{ opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
           >
-            {SITE.name}
-          </motion.p>
+            <ArcformMark size="lg" className="shrink-0 text-white" />
+            <p className="font-display text-5xl leading-[0.95] tracking-tight sm:text-6xl md:text-7xl lg:text-8xl xl:text-[7.5rem]">
+              {SITE.name}
+            </p>
+          </motion.div>
 
           <motion.h1
             className="max-w-3xl text-2xl leading-tight tracking-tight text-white/70 md:text-4xl"

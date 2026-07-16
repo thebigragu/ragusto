@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+  <!-- Arcform geometric mark: arc + form lattice -->
+  <path
+    class="arcform-arc"
+    d="M12 44 C12 22 22 12 32 12 C42 12 52 22 52 44"
+    stroke="currentColor"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    fill="none"
+  />
+  <path
+    class="arcform-span"
+    d="M18 44 H46"
+    stroke="currentColor"
+    stroke-width="2.2"
+    stroke-linecap="round"
+  />
+  <path
+    class="arcform-lattice"
+    d="M24 44 V28 M32 44 V22 M40 44 V28"
+    stroke="currentColor"
+    stroke-width="1.6"
+    stroke-linecap="round"
+    opacity="0.85"
+  />
+  <circle class="arcform-node" cx="32" cy="18" r="2.2" fill="currentColor" />
+</svg>

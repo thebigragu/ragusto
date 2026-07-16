@@ -12,7 +12,11 @@
     "models:lounge": "blender --background --python blender/build_lounge.py",
     "models:hero": "blender --background --python blender/build_studio_hero.py",
     "models:pavilion": "blender --background --python blender/build_pavilion.py",
-    "models": "npm run models:laptop"
+    "models": "npm run models:laptop",
+    "videos:hero": "blender --background --python blender/render_hero_desk_loop.py",
+    "videos:process": "blender --background --python blender/render_process_atrium_loop.py",
+    "videos:encode": "node scripts/encode-videos.cjs",
+    "videos": "npm run videos:encode"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

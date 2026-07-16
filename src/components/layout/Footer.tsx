@@ -1,4 +1,5 @@
 import { SITE } from "@/lib/seo";
+import { ArcformWordmark } from "@/components/brand/ArcformMark";
 import Link from "next/link";
 
 const columns = [
@@ -25,7 +26,7 @@ export function Footer() {
     <footer className="border-t border-border">
       <div className="container-shell section-pad grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
         <div className="space-y-5">
-          <p className="font-display text-3xl tracking-tight">{SITE.name}</p>
+          <ArcformWordmark markSize="md" textClassName="text-3xl" />
           <p className="max-w-sm text-fg-muted leading-relaxed">{SITE.tagline}</p>
           <a
             href={`mailto:${SITE.email}`}

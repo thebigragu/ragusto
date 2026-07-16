@@ -1,9 +1,11 @@
 "use client";
 
 import { processSteps } from "@/content/process";
+import { AtriumHoloOverlay } from "@/components/ui/HoloOverlay";
+import { CinematicVideo } from "@/components/ui/CinematicVideo";
 import { useEffect, useRef, useState } from "react";
 
-/** Sticky process narrative over studio still — no WebGL overlay */
+/** Sticky process narrative over cinematic atrium loop */
 export function ProcessShowcase() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
@@ -31,11 +33,16 @@ export function ProcessShowcase() {
   return (
     <section id="process" ref={sectionRef} className="relative h-[280vh] scroll-mt-24">
       <div className="sticky top-0 flex min-h-[100svh] items-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-40"
-          style={{ backgroundImage: "url(/images/studio-atrium.jpg)" }}
-          aria-hidden
+        <CinematicVideo
+          srcBase="/videos/process-atrium-loop"
+          poster="/videos/process-atrium-loop-poster.jpg"
+          opacity={0.42}
+          alt=""
+          videoClassName="object-cover object-center"
         />
+        <div className="pointer-events-none absolute inset-0 opacity-50">
+          <AtriumHoloOverlay />
+        </div>
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg via-bg/70 to-bg" />
 
         <div className="container-shell relative z-10 grid w-full gap-12 py-24 lg:grid-cols-[0.9fr_1.1fr]">

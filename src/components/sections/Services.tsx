@@ -6,9 +6,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 
 const accentMap = {
-  blue: "from-accent-blue/20 to-transparent",
-  teal: "from-accent-teal/20 to-transparent",
-  violet: "from-accent-violet/20 to-transparent",
+  blue: "from-accent-blue/15 to-transparent",
+  teal: "from-accent-teal/15 to-transparent",
+  violet: "from-accent-violet/12 to-transparent",
 };
 
 export function Services() {
@@ -36,8 +36,8 @@ export function Services() {
                 type="button"
                 data-cursor="hover"
                 className={cn(
-                  "group relative overflow-hidden rounded-3xl border border-border p-7 text-left transition-colors",
-                  open ? "bg-bg-elevated" : "bg-transparent hover:bg-bg-muted/40",
+                  "group relative overflow-hidden border-b border-border py-7 text-left transition-colors md:rounded-2xl md:border md:p-7",
+                  open ? "md:bg-bg-elevated/80" : "md:hover:bg-bg-muted/30",
                 )}
                 onClick={() => setActive(open ? null : service.id)}
                 onMouseEnter={() => setActive(service.id)}

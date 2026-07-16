@@ -1,13 +1,14 @@
 "use client";
 
-import { TiltInputProvider } from "@/context/TiltInputContext";
+import { PointerFieldProvider, usePointerFieldContext } from "@/context/PointerFieldContext";
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
 import { HeroHoloOverlay } from "@/components/ui/HoloOverlay";
+import { CinematicVideo } from "@/components/ui/CinematicVideo";
 import { MotionEnablePrompt } from "@/components/ui/MotionEnablePrompt";
 import { getHeroLayout, type HeroLayout } from "@/lib/heroLayout";
+import { expSmooth } from "@/lib/smoothTilt";
 import dynamic from "next/dynamic";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const SceneCanvas = dynamic(
   () => import("@/components/three/SceneCanvas").then((m) => m.SceneCanvas),
@@ -19,17 +20,50 @@ const LoungeScene = dynamic(
   { ssr: false },
 );
 
+function ParallaxPlate({ children }: { children: React.ReactNode }) {
+  const { input } = usePointerFieldContext();
+  const ref = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      // Opposite to cursor — plate drifts under the fixed desk MacBook
+      const tx = input.current.x * -18;
+      const ty = input.current.y * -12;
+      pos.current.x = expSmooth(pos.current.x, tx, 14, dt);
+      pos.current.y = expSmooth(pos.current.y, ty, 14, dt);
+      if (ref.current) {
+        ref.current.style.transform = `translate3d(${pos.current.x}px, ${pos.current.y}px, 0) scale(1.08)`;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [input]);
+
+  return (
+    <div ref={ref} className="absolute inset-[-4%] will-change-transform">
+      {children}
+    </div>
+  );
+}
+
 function HeroPlate() {
   return (
-    <div className="absolute inset-0">
-      <Image
-        src="/images/hero-studio-plate.jpg"
-        alt="Arcform luxury design studio"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-center md:object-[55%_center]"
-      />
+    <div className="absolute inset-0 overflow-hidden">
+      <ParallaxPlate>
+        <CinematicVideo
+          srcBase="/videos/hero-desk-loop"
+          poster="/videos/hero-desk-loop-poster.jpg"
+          priority
+          alt="Arcform cinematic design studio"
+          videoClassName="object-cover object-center md:object-[55%_center]"
+        />
+      </ParallaxPlate>
       <div className="absolute inset-0 mix-blend-screen opacity-85">
         <HeroHoloOverlay />
       </div>
@@ -70,13 +104,12 @@ export function HeroCanvas() {
   if (reduced) {
     return (
       <div className="absolute inset-0">
-        <Image
-          src="/images/hero-studio-plate.jpg"
-          alt="Arcform luxury design studio"
-          fill
+        <CinematicVideo
+          srcBase="/videos/hero-desk-loop"
+          poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          sizes="100vw"
-          className="object-cover object-center md:object-[55%_center]"
+          alt="Arcform cinematic design studio"
+          videoClassName="object-cover object-center md:object-[55%_center]"
         />
       </div>
     );
@@ -84,11 +117,10 @@ export function HeroCanvas() {
 
   return (
     <div className="absolute inset-0">
-      <HeroPlate />
-
       {mounted ? (
-        <TiltInputProvider>
+        <PointerFieldProvider>
           <MotionEnablePrompt />
+          <HeroPlate />
           <div className="pointer-events-none absolute inset-0">
             <WebGLErrorBoundary fallback={null}>
               <SceneCanvas
@@ -102,8 +134,16 @@ export function HeroCanvas() {
               </SceneCanvas>
             </WebGLErrorBoundary>
           </div>
-        </TiltInputProvider>
-      ) : null}
+        </PointerFieldProvider>
+      ) : (
+        <CinematicVideo
+          srcBase="/videos/hero-desk-loop"
+          poster="/videos/hero-desk-loop-poster.jpg"
+          priority
+          alt="Arcform cinematic design studio"
+          videoClassName="object-cover object-center md:object-[55%_center]"
+        />
+      )}
     </div>
   );
 }
