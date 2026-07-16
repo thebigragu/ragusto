@@ -10,9 +10,9 @@ export function Hero() {
     <section className="relative flex min-h-[100svh] items-center overflow-hidden pb-20 pt-[calc(var(--nav-height)+1rem)] md:pb-24">
       <div className="absolute inset-0">
         <HeroCanvas />
-        {/* Soft left grade for copy — match reference low-key lighting */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent md:w-[58%]" />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/25" />
+        {/* Soft left grade for copy — keep plant/desk atmosphere readable */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-transparent md:w-[52%]" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/15" />
       </div>
 
       <div className="container-shell relative z-10">

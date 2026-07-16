@@ -2,6 +2,7 @@
 
 import { PointerFieldProvider, usePointerFieldContext } from "@/context/PointerFieldContext";
 import { WebGLErrorBoundary } from "@/components/three/WebGLErrorBoundary";
+import { AmbientGlimmer } from "@/components/ui/AmbientGlimmer";
 import { CinematicVideo } from "@/components/ui/CinematicVideo";
 import { MotionEnablePrompt } from "@/components/ui/MotionEnablePrompt";
 import { getHeroLayout, type HeroLayout } from "@/lib/heroLayout";
@@ -30,13 +31,13 @@ function ParallaxPlate({ children }: { children: React.ReactNode }) {
     const tick = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      // Opposite to cursor — plate drifts under the fixed desk MacBook
-      const tx = input.current.x * -18;
-      const ty = input.current.y * -12;
+      const tx = input.current.x * -12;
+      const ty = input.current.y * -8;
       pos.current.x = expSmooth(pos.current.x, tx, 14, dt);
       pos.current.y = expSmooth(pos.current.y, ty, 14, dt);
       if (ref.current) {
-        ref.current.style.transform = `translate3d(${pos.current.x}px, ${pos.current.y}px, 0) scale(1.08)`;
+        // Keep near 1.0 — previous 1.08 + object crop caused hyper-zoom
+        ref.current.style.transform = `translate3d(${pos.current.x}px, ${pos.current.y}px, 0) scale(1.03)`;
       }
       raf = requestAnimationFrame(tick);
     };
@@ -45,7 +46,7 @@ function ParallaxPlate({ children }: { children: React.ReactNode }) {
   }, [input]);
 
   return (
-    <div ref={ref} className="absolute inset-[-4%] will-change-transform">
+    <div ref={ref} className="absolute inset-[-2%] will-change-transform">
       {children}
     </div>
   );
@@ -53,16 +54,18 @@ function ParallaxPlate({ children }: { children: React.ReactNode }) {
 
 function HeroPlate() {
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden bg-[#0a0a0a]">
       <ParallaxPlate>
         <CinematicVideo
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
+          revision="v4"
           alt="Arcform cinematic design studio"
-          videoClassName="object-cover object-center md:object-[55%_center]"
+          videoClassName="object-cover object-[28%_center] md:object-[32%_center]"
         />
       </ParallaxPlate>
+      <AmbientGlimmer className="absolute inset-0 z-[1] h-full w-full" />
     </div>
   );
 }
@@ -104,8 +107,9 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
+          revision="v4"
           alt="Arcform cinematic design studio"
-          videoClassName="object-cover object-center md:object-[55%_center]"
+          videoClassName="object-cover object-[28%_center] md:object-[32%_center]"
         />
       </div>
     );
@@ -117,7 +121,7 @@ export function HeroCanvas() {
         <PointerFieldProvider>
           <MotionEnablePrompt />
           <HeroPlate />
-          <div className="pointer-events-none absolute inset-0">
+          <div className="pointer-events-none absolute inset-0 z-[2]">
             <WebGLErrorBoundary fallback={null}>
               <SceneCanvas
                 className="h-full w-full"
@@ -136,8 +140,9 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
+          revision="v4"
           alt="Arcform cinematic design studio"
-          videoClassName="object-cover object-center md:object-[55%_center]"
+          videoClassName="object-cover object-[28%_center] md:object-[32%_center]"
         />
       )}
     </div>
