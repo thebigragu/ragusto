@@ -306,12 +306,12 @@ function tuneMacMaterials(
         changed = true;
         return new THREE.MeshStandardMaterial({
           map: screenTex,
-          // No emissiveMap — UI greens were blooming as a green halo
-          emissive: new THREE.Color(0.08, 0.085, 0.09),
-          emissiveIntensity: 0.35,
+          // Brighten the UI without emissiveMap (avoids green bloom)
+          emissive: new THREE.Color(0.22, 0.225, 0.235),
+          emissiveIntensity: 1.05,
           roughness: 0.42,
           metalness: 0,
-          toneMapped: true,
+          toneMapped: false,
         });
       }
 
