@@ -71,8 +71,8 @@ export function AmbientGlimmer({ className }: { className?: string }) {
       const t = now / 1000;
       ctx.clearRect(0, 0, w, h);
 
-      // Soft light shaft shimmer (upper-left) — strong enough to read as breathing light
-      const pulse = 0.14 + 0.11 * Math.sin(t * 0.85);
+      // Soft light shaft shimmer — 30% quieter than prior pass
+      const pulse = 0.098 + 0.077 * Math.sin(t * 0.85);
       const g = ctx.createLinearGradient(0, 0, w * 0.6, h * 0.75);
       g.addColorStop(0, `rgba(255, 210, 160, ${pulse})`);
       g.addColorStop(0.4, `rgba(255, 180, 120, ${pulse * 0.45})`);
@@ -84,7 +84,7 @@ export function AmbientGlimmer({ className }: { className?: string }) {
       const sweep = ((t * 0.1) % 1.4) - 0.2;
       const sg = ctx.createLinearGradient(w * sweep, 0, w * (sweep + 0.28), h * 0.55);
       sg.addColorStop(0, "rgba(255,255,255,0)");
-      sg.addColorStop(0.5, "rgba(255, 230, 190, 0.1)");
+      sg.addColorStop(0.5, "rgba(255, 230, 190, 0.07)");
       sg.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = sg;
       ctx.fillRect(0, 0, w, h);
@@ -101,7 +101,7 @@ export function AmbientGlimmer({ className }: { className?: string }) {
 
         const twinkle = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * s.tw + s.phase));
         ctx.beginPath();
-        ctx.fillStyle = `rgba(255, 236, 210, ${s.a * twinkle})`;
+        ctx.fillStyle = `rgba(255, 236, 210, ${s.a * twinkle * 0.7})`;
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }

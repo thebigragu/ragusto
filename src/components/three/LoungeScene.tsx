@@ -2,7 +2,6 @@
 
 import { usePointerFieldContext } from "@/context/PointerFieldContext";
 import type { HeroLayout } from "@/lib/heroLayout";
-import { heroUiFocus } from "@/lib/heroUiFocus";
 import { expSmooth } from "@/lib/smoothTilt";
 import { ContactShadows, Environment, useGLTF } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
@@ -21,9 +20,6 @@ const STUDIO_HDRI = "/hdri/studio_small_09_1k.hdr";
 
 const UI_W = 1280;
 const UI_H = 832;
-
-/** Shared screen highlight from pointer (normalized 0–1 in screen space). */
-const screenHighlight = { x: 0.55, y: 0.45, strength: 0 };
 
 useGLTF.preload(MACBOOK_MODEL);
 
@@ -243,20 +239,6 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.fillText("68%", 1180, 670);
   ctx.fillText("19%", 1180, 710);
   ctx.fillText("13%", 1180, 750);
-
-  // Soft light halo — stronger when cursor hovers hero copy / CTAs
-  const s = screenHighlight.strength;
-  if (s > 0.01) {
-    const hx = screenHighlight.x * w;
-    const hy = screenHighlight.y * h;
-    const halo = ctx.createRadialGradient(hx, hy, 12, hx, hy, Math.max(w, h) * 0.62);
-    halo.addColorStop(0, `rgba(255, 240, 220, ${0.42 * s})`);
-    halo.addColorStop(0.28, `rgba(190, 220, 255, ${0.16 * s})`);
-    halo.addColorStop(0.65, `rgba(120, 160, 220, ${0.05 * s})`);
-    halo.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = halo;
-    ctx.fillRect(0, 0, w, h);
-  }
 }
 
 function useLiveScreenTexture() {
@@ -307,9 +289,9 @@ function tuneMacMaterials(
         return new THREE.MeshStandardMaterial({
           map: screenTex,
           emissiveMap: screenTex,
-          emissive: new THREE.Color(0.32, 0.34, 0.36),
-          emissiveIntensity: 0.14,
-          roughness: 0.72,
+          emissive: new THREE.Color(0.55, 0.58, 0.6),
+          emissiveIntensity: 0.22,
+          roughness: 0.6,
           metalness: 0,
           toneMapped: true,
         });
@@ -372,8 +354,8 @@ function HeroLaptop({
     const py = input.current.y;
 
     // Planted pose — tiny micro-nod only (desk-bound)
-    const targetRotY = layout.laptopRotY + px * 0.035;
-    const targetRotX = layout.laptopRotX + py * 0.025;
+    const targetRotY = layout.laptopRotY + px * 0.02;
+    const targetRotX = layout.laptopRotX + py * 0.015;
     const breathe = Math.sin(t * 0.7) * 0.004;
     const scrollLift = scrollProgress * 0.015;
 
@@ -402,17 +384,6 @@ function HeroLaptop({
         dt,
       );
     }
-
-    screenHighlight.x = 0.42 + px * 0.1;
-    screenHighlight.y = 0.4 + py * 0.08;
-    const copyBoost = heroUiFocus.copy * 0.72;
-    const pointerBoost = 0.05 + Math.hypot(px, py) * 0.08;
-    screenHighlight.strength = expSmooth(
-      screenHighlight.strength,
-      Math.min(1, pointerBoost + copyBoost),
-      12,
-      dt,
-    );
   });
 
   return (
@@ -429,31 +400,32 @@ function HeroLaptop({
 function CursorKeyLight() {
   const light = useRef<THREE.SpotLight>(null);
   const { input } = usePointerFieldContext();
-  const pos = useRef(new THREE.Vector3(2.2, 2.4, 2.0));
+  // Front-left key so aluminum reads clean when the laptop faces the copy
+  const pos = useRef(new THREE.Vector3(0.2, 2.35, 2.4));
 
   useFrame((_, delta) => {
     if (!light.current) return;
     const dt = Math.min(delta, 0.05);
     const px = input.current.x;
     const py = input.current.y;
-    const tx = 1.6 + px * 1.8;
-    const ty = 2.1 - py * 0.9;
-    const tz = 1.6 + px * 0.4;
+    const tx = 0.15 + px * 1.1;
+    const ty = 2.2 - py * 0.7;
+    const tz = 2.35 + px * 0.2;
     pos.current.x = expSmooth(pos.current.x, tx, 16, dt);
     pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
     pos.current.z = expSmooth(pos.current.z, tz, 16, dt);
     light.current.position.copy(pos.current);
-    light.current.intensity = 1.1 + Math.hypot(px, py) * 0.35;
+    light.current.intensity = 0.95 + Math.hypot(px, py) * 0.25;
   });
 
   return (
     <spotLight
       ref={light}
-      position={[2.2, 2.4, 2.0]}
-      angle={0.55}
-      penumbra={0.9}
-      intensity={1.1}
-      color="#ffd2a8"
+      position={[0.2, 2.35, 2.4]}
+      angle={0.58}
+      penumbra={0.92}
+      intensity={0.95}
+      color="#ffd8b0"
       castShadow
       distance={14}
     />
