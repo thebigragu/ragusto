@@ -32,9 +32,9 @@ export function getHeroLayout(width: number): HeroLayout {
       laptopScale: 0.028,
       laptopBaseY: -0.12,
       laptopBaseZ: 0.05,
+      // Screen faces left toward copy / CTAs (not away to the right)
       laptopRotX: 0.16,
-      // Mostly toward camera; slight lean toward copy
-      laptopRotY: 0.22,
+      laptopRotY: -0.4,
       cameraPosition: [0.05, 0.42, 3.45],
       cameraFov: 42,
       shadowX: 0.28,
@@ -50,9 +50,9 @@ export function getHeroLayout(width: number): HeroLayout {
     laptopScale: 0.046,
     laptopBaseY: -0.28,
     laptopBaseZ: 0.05,
-    // Tip down; face viewer with a light yaw toward the left copy
+    // Tip down; yaw so the display faces Arcform copy + magnetic buttons
     laptopRotX: 0.18,
-    laptopRotY: 0.28,
+    laptopRotY: -0.42,
     cameraPosition: [0.15, 0.48, 3.2],
     cameraFov: 36,
     shadowX: 1.15,
