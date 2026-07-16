@@ -1,16 +1,17 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+import { Magnetic } from "@/components/ui/Magnetic";
 import { HeroCanvas } from "@/components/three/HeroCanvas";
 import { SITE } from "@/lib/seo";
 import { motion } from "framer-motion";
-import Link from "next/link";
 
 export function Hero() {
   return (
     <section className="relative flex min-h-[100svh] items-center overflow-hidden pb-20 pt-[calc(var(--nav-height)+1rem)] md:pb-24">
       <div className="absolute inset-0">
         <HeroCanvas />
-        {/* Soft left grade for copy — match reference low-key lighting */}
+        {/* Soft left grade for copy ? match reference low-key lighting */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent md:w-[58%]" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/25" />
       </div>
@@ -36,16 +37,23 @@ export function Hero() {
           </motion.p>
 
           <motion.div
+            className="flex flex-wrap items-center gap-4"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Link
-              href="/#services"
-              className="inline-block border-b border-white/70 pb-0.5 text-sm tracking-wide text-white transition-colors hover:border-white hover:text-white"
-            >
-              View our work
-            </Link>
+            <Magnetic>
+              <Button href="/contact">Start a project</Button>
+            </Magnetic>
+            <Magnetic>
+              <Button
+                href="/#services"
+                variant="secondary"
+                className="border-white/25 text-white hover:bg-white/10"
+              >
+                View services
+              </Button>
+            </Magnetic>
           </motion.div>
         </div>
       </div>
