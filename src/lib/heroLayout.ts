@@ -32,9 +32,9 @@ export function getHeroLayout(width: number): HeroLayout {
       laptopScale: 0.028,
       laptopBaseY: -0.12,
       laptopBaseZ: 0.05,
-      // 90° left so the screen faces the copy; tip down toward viewer
+      // Opposite of prior -90°: face viewer more (not hard into the copy)
       laptopRotX: 0.16,
-      laptopRotY: -Math.PI / 2,
+      laptopRotY: Math.PI / 2,
       cameraPosition: [0.05, 0.42, 3.45],
       cameraFov: 42,
       shadowX: 0.28,
@@ -50,9 +50,9 @@ export function getHeroLayout(width: number): HeroLayout {
     laptopScale: 0.046,
     laptopBaseY: -0.28,
     laptopBaseZ: 0.05,
-    // 90° left so the screen faces Arcform copy; tip down toward viewer
+    // Opposite of prior -90°: face viewer more (not hard into the copy)
     laptopRotX: 0.18,
-    laptopRotY: -Math.PI / 2,
+    laptopRotY: Math.PI / 2,
     cameraPosition: [0.15, 0.48, 3.2],
     cameraFov: 36,
     shadowX: 1.15,
