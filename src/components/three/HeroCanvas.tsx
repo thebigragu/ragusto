@@ -52,7 +52,7 @@ function ParallaxPlate({ children }: { children: React.ReactNode }) {
   );
 }
 
-const HERO_VIDEO_CLASS = "object-cover object-[30%_40%] md:object-[35%_42%]";
+const HERO_VIDEO_CLASS = "object-cover object-[32%_38%] md:object-[38%_40%]";
 
 function HeroPlate() {
   return (
@@ -62,7 +62,7 @@ function HeroPlate() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="6"
+          revision="7"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
@@ -109,7 +109,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="6"
+          revision="7"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
@@ -142,7 +142,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="6"
+          revision="7"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />

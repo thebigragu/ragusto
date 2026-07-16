@@ -41,16 +41,16 @@ const stillSrc = candidates.find((p) => fs.existsSync(p));
 if (!stillSrc) throw new Error("No hero still found");
 
 const plate = path.join(IMAGES, "hero-theme-atmosphere.jpg");
-// Zoom OUT: blurred full-bleed base + smaller sharp scene (~72%) so room reads wider
+// Zoom OUT further: blurred full-bleed base + ~58% sharp scene so the room reads wider
 run([
   "-y",
   "-i",
   stillSrc,
   "-filter_complex",
   [
-    "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,boxblur=28:8,eq=brightness=-0.18:saturation=0.75[bg]",
-    "[0:v]scale=1380:920:force_original_aspect_ratio=decrease[fg]",
-    "[bg][fg]overlay=(W-w)/2-120:(H-h)/2-40,eq=contrast=1.06:saturation=0.92",
+    "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,boxblur=32:10,eq=brightness=-0.2:saturation=0.7[bg]",
+    "[0:v]scale=1120:748:force_original_aspect_ratio=decrease[fg]",
+    "[bg][fg]overlay=(W-w)/2-160:(H-h)/2-30,eq=contrast=1.05:saturation=0.92",
   ].join(";"),
   "-frames:v",
   "1",
@@ -69,13 +69,13 @@ const mp4 = path.join(VIDEOS, `${basename}.mp4`);
 const webm = path.join(VIDEOS, `${basename}.webm`);
 const poster = path.join(VIDEOS, `${basename}-poster.jpg`);
 
-// Strong pan + unmistakable light breathe
+// Mild overscan pan + light breathe (avoid re-zooming the plate)
 const vf = [
-  "scale=2120:1192",
-  "crop=1920:1080:x='(iw-ow)/2+85*sin(2*PI*t/7)':y='(ih-oh)/2+40*cos(2*PI*t/9)'",
-  "eq=contrast=1.12:brightness='-0.06+0.11*sin(2*PI*t/2.4)':saturation='0.85+0.18*sin(2*PI*t/3.6)'",
-  "vignette=PI/5",
-  "noise=alls=14:allf=t+u",
+  "scale=2000:1125",
+  "crop=1920:1080:x='(iw-ow)/2+55*sin(2*PI*t/8)':y='(ih-oh)/2+28*cos(2*PI*t/10)'",
+  "eq=contrast=1.1:brightness='-0.05+0.1*sin(2*PI*t/2.4)':saturation='0.86+0.16*sin(2*PI*t/3.6)'",
+  "vignette=PI/5.5",
+  "noise=alls=12:allf=t+u",
 ].join(",");
 
 run([
