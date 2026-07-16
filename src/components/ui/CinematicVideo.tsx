@@ -27,7 +27,7 @@ export function CinematicVideo({
   priority = false,
   opacity = 1,
   alt = "",
-  revision = "4",
+  revision = "5",
 }: CinematicVideoProps) {
   const ref = useRef<HTMLVideoElement>(null);
   const [reduced, setReduced] = useState(false);

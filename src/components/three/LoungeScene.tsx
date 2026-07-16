@@ -459,7 +459,7 @@ function MatchCamera({
       ),
       0.06,
     );
-    cam.lookAt(layout.focusX, layout.focusY, 0);
+    cam.lookAt(layout.lookAtX, layout.lookAtY, 0);
   });
   return null;
 }
