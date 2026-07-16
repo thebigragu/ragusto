@@ -21,6 +21,9 @@ const STUDIO_HDRI = "/hdri/studio_small_09_1k.hdr";
 const UI_W = 1280;
 const UI_H = 832;
 
+/** Soft specular glint on the screen — tracks pointer in UV space. */
+const screenGlint = { x: 0.55, y: 0.42 };
+
 useGLTF.preload(MACBOOK_MODEL);
 
 function roundRect(
@@ -118,7 +121,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.lineTo(820, y);
     ctx.stroke();
   }
-  ctx.strokeStyle = "#a3e635";
+  ctx.strokeStyle = "#60a5fa";
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   for (let i = 0; i < 48; i++) {
@@ -143,8 +146,8 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   const cx = 1054;
   const cy = 330;
   const segs = [
-    { c: "#22c55e", p: 0.42 },
-    { c: "#3b82f6", p: 0.28 },
+    { c: "#3b82f6", p: 0.42 },
+    { c: "#6366f1", p: 0.28 },
     { c: "#eab308", p: 0.18 },
     { c: "#6b7280", p: 0.12 },
   ];
@@ -167,8 +170,8 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.fillText("total", cx, cy + 20);
   ctx.textAlign = "left";
   [
-    { l: "Completed", c: "#22c55e" },
-    { l: "In Progress", c: "#3b82f6" },
+    { l: "Completed", c: "#3b82f6" },
+    { l: "In Progress", c: "#6366f1" },
     { l: "Review", c: "#eab308" },
     { l: "Backlog", c: "#6b7280" },
   ].forEach((L, i) => {
@@ -227,7 +230,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   roundRect(ctx, 884, 630, 340, 12, 6);
   ctx.fill();
   const bp = 0.68 + Math.sin(t * 0.3) * 0.02;
-  ctx.fillStyle = "#a3e635";
+  ctx.fillStyle = "#60a5fa";
   roundRect(ctx, 884, 630, 340 * bp, 12, 6);
   ctx.fill();
   ctx.fillStyle = "#9ca3af";
@@ -239,6 +242,20 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.fillText("68%", 1180, 670);
   ctx.fillText("19%", 1180, 710);
   ctx.fillText("13%", 1180, 750);
+
+  // Warm specular reflection — follows mouse across the glass
+  const gx = screenGlint.x * w;
+  const gy = screenGlint.y * h;
+  const glow = ctx.createRadialGradient(gx, gy, 4, gx, gy, Math.min(w, h) * 0.38);
+  glow.addColorStop(0, "rgba(255, 255, 255, 0.28)");
+  glow.addColorStop(0.25, "rgba(255, 236, 214, 0.12)");
+  glow.addColorStop(0.55, "rgba(255, 220, 180, 0.04)");
+  glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+  const prev = ctx.globalCompositeOperation;
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = prev;
 }
 
 function useLiveScreenTexture() {
@@ -288,10 +305,10 @@ function tuneMacMaterials(
         changed = true;
         return new THREE.MeshStandardMaterial({
           map: screenTex,
-          emissiveMap: screenTex,
-          emissive: new THREE.Color(0.55, 0.58, 0.6),
-          emissiveIntensity: 0.22,
-          roughness: 0.6,
+          // No emissiveMap — UI greens were blooming as a green halo
+          emissive: new THREE.Color(0.08, 0.085, 0.09),
+          emissiveIntensity: 0.35,
+          roughness: 0.42,
           metalness: 0,
           toneMapped: true,
         });
@@ -353,14 +370,13 @@ function HeroLaptop({
     const px = input.current.x;
     const py = input.current.y;
 
-    // Planted pose — tiny micro-nod only (desk-bound)
-    const targetRotY = layout.laptopRotY + px * 0.02;
-    const targetRotX = layout.laptopRotX + py * 0.015;
-    const breathe = Math.sin(t * 0.7) * 0.004;
+    // Locked planted pose — no pointer tilt/slant
+    const breathe = Math.sin(t * 0.7) * 0.003;
     const scrollLift = scrollProgress * 0.015;
 
-    group.current.rotation.y = expSmooth(group.current.rotation.y, targetRotY, 10, dt);
-    group.current.rotation.x = expSmooth(group.current.rotation.x, targetRotX, 10, dt);
+    group.current.rotation.x = layout.laptopRotX;
+    group.current.rotation.y = layout.laptopRotY;
+    group.current.rotation.z = 0;
     group.current.position.set(
       layout.focusX,
       layout.laptopBaseY + breathe + scrollLift,
@@ -373,17 +389,21 @@ function HeroLaptop({
     for (const entry of chassis.current) {
       entry.mat.roughness = expSmooth(
         entry.mat.roughness,
-        entry.baseRough * (0.92 + side * 0.12),
+        entry.baseRough * (0.92 + side * 0.1),
         8,
         dt,
       );
       entry.mat.envMapIntensity = expSmooth(
         entry.mat.envMapIntensity,
-        entry.baseEnv * (1.05 + Math.abs(px) * 0.22),
+        entry.baseEnv * (1.02 + Math.abs(px) * 0.15),
         8,
         dt,
       );
     }
+
+    // Screen glass reflection tracks the mouse
+    screenGlint.x = expSmooth(screenGlint.x, 0.5 + px * 0.38, 14, dt);
+    screenGlint.y = expSmooth(screenGlint.y, 0.42 - py * 0.32, 14, dt);
   });
 
   return (
@@ -470,7 +490,7 @@ export function LoungeScene({
       <ambientLight intensity={0.22} />
       <hemisphereLight args={["#c8d4e4", "#0a0a0c", 0.28]} />
       <directionalLight position={[-2.2, 3.5, 1.5]} intensity={0.35} color="#e8eef6" />
-      <pointLight position={[2.2, 0.6, -0.4]} intensity={0.25} color="#5eead4" />
+      <pointLight position={[1.4, 0.8, 0.6]} intensity={0.18} color="#f0e6d8" />
       <CursorKeyLight />
 
       <MatchCamera scrollProgress={scrollProgress} layout={layout} />

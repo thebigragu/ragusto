@@ -16,42 +16,45 @@ export type HeroLayout = {
   shadowX: number;
 };
 
-/** Desk-planted MacBook — same planted sit as before, gently facing hero copy. */
+/**
+ * Desk-planted MacBook — planted flat like the ab87bd5 sit,
+ * yawed toward hero copy (not away / not tilted).
+ */
 export function getHeroLayout(width: number): HeroLayout {
   const mobile = width < 768;
 
   if (mobile) {
     return {
       mobile: true,
-      focusX: 0.32,
+      focusX: 0.28,
       focusY: 0.02,
-      lookAtX: 0.02,
+      lookAtX: 0.0,
       lookAtY: 0.02,
       laptopScale: 0.028,
       laptopBaseY: -0.12,
       laptopBaseZ: 0.05,
-      laptopRotX: 0.08,
-      laptopRotY: -0.16,
-      cameraPosition: [0.05, 0.4, 3.45],
+      laptopRotX: 0.02,
+      laptopRotY: -0.32,
+      cameraPosition: [0.05, 0.42, 3.45],
       cameraFov: 42,
-      shadowX: 0.32,
+      shadowX: 0.28,
     };
   }
 
   return {
     mobile: false,
-    focusX: 1.28,
+    focusX: 1.2,
     focusY: 0.02,
-    lookAtX: 0.28,
+    lookAtX: 0.25,
     lookAtY: 0.04,
     laptopScale: 0.046,
     laptopBaseY: -0.28,
     laptopBaseZ: 0.05,
-    // Same planted pitch as the prior desk pose; mild yaw toward left copy (was +0.42 away)
-    laptopRotX: 0.06,
-    laptopRotY: -0.22,
-    cameraPosition: [0.15, 0.44, 3.15],
+    // Flat on desk (no pitch slant); face left toward ARCFORM copy
+    laptopRotX: 0.02,
+    laptopRotY: -0.4,
+    cameraPosition: [0.12, 0.44, 3.15],
     cameraFov: 36,
-    shadowX: 1.28,
+    shadowX: 1.2,
   };
 }
