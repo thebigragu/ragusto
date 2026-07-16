@@ -376,21 +376,22 @@ function HeroLaptop({
     const px = input.current.x;
     const py = input.current.y;
 
-    // Original sensitive tilt response (gyro on mobile, pointer on desktop)
-    const parallax = layout.mobile ? 0.4 : 0.34;
-    const pitch = layout.mobile ? 0.28 : 0.07;
+    // Mild yaw; pitch adds forward tip toward viewer without big side lean
+    const parallax = layout.mobile ? 0.22 : 0.14;
+    const pitch = layout.mobile ? 0.18 : 0.1;
     const follow = isCoarse ? 52 : 18;
-    const breathe = Math.sin(t * 0.7) * 0.004;
-    const pop = Math.max(0, -py) * (layout.mobile ? 0.04 : 0.03);
-    const slideX = layout.mobile ? 0.055 : 0.05;
-    const slideY = layout.mobile ? 0.04 : 0;
+    const breathe = Math.sin(t * 0.7) * 0.003;
+    const pop = Math.max(0, -py) * (layout.mobile ? 0.03 : 0.02);
+    const slideX = layout.mobile ? 0.04 : 0.03;
+    const slideY = layout.mobile ? 0.025 : 0;
 
     const targetRotY = layout.laptopRotY + px * parallax;
+    // Keep forward bias; damp side-to-side. Clamp so base never rolls.
     const targetRotX = layout.laptopRotX + py * pitch;
     const targetPosX = layout.focusX + px * slideX;
     const targetPosY = layout.laptopBaseY + breathe + scrollProgress * 0.03 + py * slideY;
     const targetPosZ = layout.laptopBaseZ + pop;
-    const targetScale = 1.04 + pop * 0.022;
+    const targetScale = 1.02 + pop * 0.018;
 
     const m = motion.current;
     m.rotY = expSmooth(m.rotY, targetRotY, follow, dt);

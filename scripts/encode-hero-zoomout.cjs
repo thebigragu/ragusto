@@ -33,6 +33,10 @@ function run(args) {
 const candidates = [
   path.join(
     process.env.USERPROFILE || "",
+    ".cursor/projects/c-Users-jacob-Desktop-Website/assets/hero-theme-v3.png",
+  ),
+  path.join(
+    process.env.USERPROFILE || "",
     ".cursor/projects/c-Users-jacob-Desktop-Website/assets/hero-theme-wide.png",
   ),
   path.join(

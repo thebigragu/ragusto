@@ -17,7 +17,7 @@ export type HeroLayout = {
 };
 
 /**
- * Desk-planted MacBook — slight downward tip, yawed toward hero copy.
+ * Desk-planted MacBook — base flat on the desk, screen facing the viewer / copy.
  */
 export function getHeroLayout(width: number): HeroLayout {
   const mobile = width < 768;
@@ -32,8 +32,9 @@ export function getHeroLayout(width: number): HeroLayout {
       laptopScale: 0.028,
       laptopBaseY: -0.12,
       laptopBaseZ: 0.05,
+      // Flat base (no roll). Mild yaw; forward pitch tips screen toward viewer.
       laptopRotX: 0.1,
-      laptopRotY: -0.32,
+      laptopRotY: -0.12,
       cameraPosition: [0.05, 0.42, 3.45],
       cameraFov: 42,
       shadowX: 0.28,
@@ -42,18 +43,18 @@ export function getHeroLayout(width: number): HeroLayout {
 
   return {
     mobile: false,
-    focusX: 1.2,
+    focusX: 1.15,
     focusY: 0.02,
-    lookAtX: 0.25,
-    lookAtY: 0.04,
+    lookAtX: 0.28,
+    lookAtY: 0.02,
     laptopScale: 0.046,
     laptopBaseY: -0.28,
     laptopBaseZ: 0.05,
-    // Slight downward tip toward the desk; face left toward ARCFORM copy
-    laptopRotX: 0.12,
-    laptopRotY: -0.4,
-    cameraPosition: [0.12, 0.44, 3.15],
+    // Flat base (no roll / no side lean). Forward pitch tips the screen toward the viewer.
+    laptopRotX: 0.1,
+    laptopRotY: -0.12,
+    cameraPosition: [0.15, 0.48, 3.2],
     cameraFov: 36,
-    shadowX: 1.2,
+    shadowX: 1.15,
   };
 }

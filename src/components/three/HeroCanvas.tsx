@@ -62,7 +62,7 @@ function HeroPlate() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="9"
+          revision="10"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
@@ -109,7 +109,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="9"
+          revision="10"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
@@ -142,7 +142,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="9"
+          revision="10"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
