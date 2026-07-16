@@ -37,7 +37,7 @@ function ParallaxPlate({ children }: { children: React.ReactNode }) {
       pos.current.x = expSmooth(pos.current.x, tx, 14, dt);
       pos.current.y = expSmooth(pos.current.y, ty, 14, dt);
       if (ref.current) {
-        ref.current.style.transform = `translate3d(${pos.current.x}px, ${pos.current.y}px, 0) scale(1.02)`;
+        ref.current.style.transform = `translate3d(${pos.current.x}px, ${pos.current.y}px, 0) scale(1.01)`;
       }
       raf = requestAnimationFrame(tick);
     };
@@ -46,13 +46,13 @@ function ParallaxPlate({ children }: { children: React.ReactNode }) {
   }, [input]);
 
   return (
-    <div ref={ref} className="absolute inset-[-1%] will-change-transform">
+    <div ref={ref} className="absolute inset-0 will-change-transform">
       {children}
     </div>
   );
 }
 
-const HERO_VIDEO_CLASS = "object-cover object-[32%_38%] md:object-[38%_40%]";
+const HERO_VIDEO_CLASS = "object-cover object-center";
 
 function HeroPlate() {
   return (
@@ -62,7 +62,7 @@ function HeroPlate() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="8"
+          revision="9"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
@@ -109,7 +109,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="8"
+          revision="9"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
@@ -142,7 +142,7 @@ export function HeroCanvas() {
           srcBase="/videos/hero-desk-loop"
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
-          revision="8"
+          revision="9"
           alt="Arcform cinematic design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />

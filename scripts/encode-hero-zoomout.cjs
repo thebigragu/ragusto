@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Zoomed-out cinematic hero loop with obvious ambient light breathe.
- * Composites a smaller scene over a blurred plate so the desk doesn't feel macro-zoomed.
+ * Full-bleed hero loop from generative-expanded atmosphere plate.
+ * Covers the viewport (object-cover style) with mild ambient pan + light breathe.
  */
 const { spawnSync } = require("child_process");
 const fs = require("fs");
@@ -33,6 +33,10 @@ function run(args) {
 const candidates = [
   path.join(
     process.env.USERPROFILE || "",
+    ".cursor/projects/c-Users-jacob-Desktop-Website/assets/hero-theme-wide.png",
+  ),
+  path.join(
+    process.env.USERPROFILE || "",
     ".cursor/projects/c-Users-jacob-Desktop-Website/assets/hero-theme-atmosphere.png",
   ),
   path.join(IMAGES, "hero-theme-atmosphere.jpg"),
@@ -41,17 +45,13 @@ const stillSrc = candidates.find((p) => fs.existsSync(p));
 if (!stillSrc) throw new Error("No hero still found");
 
 const plate = path.join(IMAGES, "hero-theme-atmosphere.jpg");
-// Zoom OUT further: blurred full-bleed base + ~45% sharp scene so the room reads wider
+// Full-frame cover — crop letterbox if present, fill 1920x1080 edge-to-edge
 run([
   "-y",
   "-i",
   stillSrc,
-  "-filter_complex",
-  [
-    "[0:v]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,boxblur=36:12,eq=brightness=-0.22:saturation=0.65[bg]",
-    "[0:v]scale=880:588:force_original_aspect_ratio=decrease[fg]",
-    "[bg][fg]overlay=(W-w)/2-200:(H-h)/2-20,eq=contrast=1.04:saturation=0.9",
-  ].join(";"),
+  "-vf",
+  "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,eq=contrast=1.05:brightness=-0.02:saturation=0.94",
   "-frames:v",
   "1",
   "-update",
@@ -69,13 +69,13 @@ const mp4 = path.join(VIDEOS, `${basename}.mp4`);
 const webm = path.join(VIDEOS, `${basename}.webm`);
 const poster = path.join(VIDEOS, `${basename}-poster.jpg`);
 
-// Mild overscan pan + light breathe (avoid re-zooming the plate)
+// Gentle ambient pan on a full-bleed plate (mild overscan only)
 const vf = [
-  "scale=1980:1114",
-  "crop=1920:1080:x='(iw-ow)/2+40*sin(2*PI*t/8)':y='(ih-oh)/2+22*cos(2*PI*t/10)'",
-  "eq=contrast=1.08:brightness='-0.04+0.09*sin(2*PI*t/2.4)':saturation='0.88+0.14*sin(2*PI*t/3.6)'",
-  "vignette=PI/5.5",
-  "noise=alls=11:allf=t+u",
+  "scale=2000:1125",
+  "crop=1920:1080:x='(iw-ow)/2+48*sin(2*PI*t/9)':y='(ih-oh)/2+24*cos(2*PI*t/11)'",
+  "eq=contrast=1.08:brightness='-0.03+0.08*sin(2*PI*t/2.6)':saturation='0.9+0.12*sin(2*PI*t/4)'",
+  "vignette=PI/6",
+  "noise=alls=10:allf=t+u",
 ].join(",");
 
 run([
@@ -131,4 +131,4 @@ for (const f of [raw, rev, list]) {
     fs.unlinkSync(f);
   } catch {}
 }
-console.log("Encoded", basename);
+console.log("Encoded full-bleed", basename, "from", stillSrc);
