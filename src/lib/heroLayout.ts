@@ -36,7 +36,7 @@ export function getHeroLayout(width: number): HeroLayout {
 
   if (mobile) {
     // Camera/look offsets from original mobile baseY -0.12
-    const laptopBaseY = -0.22;
+    const laptopBaseY = -0.3;
     const lookAtY = laptopBaseY + 0.14;
     return {
       mobile: true,
@@ -56,7 +56,7 @@ export function getHeroLayout(width: number): HeroLayout {
   }
 
   // Camera/look offsets from original desktop baseY -0.28
-  const laptopBaseY = -0.4;
+  const laptopBaseY = -0.48;
   const lookAtY = laptopBaseY + 0.3;
   return {
     mobile: false,
