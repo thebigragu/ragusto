@@ -17,7 +17,7 @@ export type HeroLayout = {
 };
 
 /**
- * Desk-planted MacBook — base flat on the desk, screen facing the viewer / copy.
+ * Desk-planted MacBook — mostly faces the viewer, slight yaw toward Arcform copy.
  */
 export function getHeroLayout(width: number): HeroLayout {
   const mobile = width < 768;
@@ -32,9 +32,9 @@ export function getHeroLayout(width: number): HeroLayout {
       laptopScale: 0.028,
       laptopBaseY: -0.12,
       laptopBaseZ: 0.05,
-      // Opposite of prior -90°: face viewer more (not hard into the copy)
       laptopRotX: 0.16,
-      laptopRotY: Math.PI / 2,
+      // Mostly toward camera; slight lean toward copy
+      laptopRotY: 0.22,
       cameraPosition: [0.05, 0.42, 3.45],
       cameraFov: 42,
       shadowX: 0.28,
@@ -50,9 +50,9 @@ export function getHeroLayout(width: number): HeroLayout {
     laptopScale: 0.046,
     laptopBaseY: -0.28,
     laptopBaseZ: 0.05,
-    // Opposite of prior -90°: face viewer more (not hard into the copy)
+    // Tip down; face viewer with a light yaw toward the left copy
     laptopRotX: 0.18,
-    laptopRotY: Math.PI / 2,
+    laptopRotY: 0.28,
     cameraPosition: [0.15, 0.48, 3.2],
     cameraFov: 36,
     shadowX: 1.15,
