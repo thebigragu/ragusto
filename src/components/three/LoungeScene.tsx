@@ -45,43 +45,43 @@ function roundRect(
 }
 
 function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  // Arcform Overview dashboard — matches reference hero screen
-  ctx.fillStyle = "#111214";
+  // Arcform Overview — clean dark UI with clearer, more vivid accents
+  ctx.fillStyle = "#16181d";
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = "#0c0d10";
+  ctx.fillStyle = "#101218";
   ctx.fillRect(0, 0, 64, h);
   for (let i = 0; i < 6; i++) {
     const y = 70 + i * 52;
     const active = i === 0;
     if (active) {
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillStyle = "rgba(255,255,255,0.1)";
       roundRect(ctx, 10, y - 16, 44, 36, 8);
       ctx.fill();
     }
-    ctx.fillStyle = active ? "#f5f5f4" : "#6b7280";
+    ctx.fillStyle = active ? "#fafafa" : "#8b93a7";
     ctx.beginPath();
     ctx.arc(32, y, 5, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  ctx.fillStyle = "#141518";
+  ctx.fillStyle = "#1a1d24";
   ctx.fillRect(64, 0, w - 64, 56);
-  ctx.fillStyle = "#f5f5f4";
+  ctx.fillStyle = "#fafafa";
   ctx.font = "600 15px system-ui,sans-serif";
   ctx.fillText("ARCFORM", 84, 34);
-  ctx.fillStyle = "#9ca3af";
+  ctx.fillStyle = "#a8b0c0";
   ctx.font = "12px system-ui,sans-serif";
   ctx.fillText("Overview", 180, 34);
 
   ctx.beginPath();
-  ctx.fillStyle = "#3f3f46";
+  ctx.fillStyle = "#4b5563";
   ctx.arc(w - 160, 28, 12, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
+  ctx.fillStyle = "#f3f4f6";
   ctx.font = "12px system-ui,sans-serif";
   ctx.fillText("Alex Morgan", w - 140, 26);
-  ctx.fillStyle = "#71717a";
+  ctx.fillStyle = "#9ca3af";
   ctx.font = "10px system-ui,sans-serif";
   ctx.fillText("Studio Director", w - 140, 40);
 
@@ -93,27 +93,27 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ];
   stats.forEach((s, i) => {
     const x = 84 + i * 288;
-    ctx.fillStyle = "#1a1b1f";
+    ctx.fillStyle = "#22262f";
     roundRect(ctx, x, 76, 272, 88, 12);
     ctx.fill();
-    ctx.fillStyle = "#9ca3af";
+    ctx.fillStyle = "#a8b0c0";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(s.l, x + 18, 100);
-    ctx.fillStyle = "#f5f5f4";
+    ctx.fillStyle = "#fafafa";
     ctx.font = "600 28px system-ui,sans-serif";
     ctx.fillText(s.v, x + 18, 138);
-    ctx.fillStyle = s.d.startsWith("-") ? "#f87171" : "#60a5fa";
+    ctx.fillStyle = s.d.startsWith("-") ? "#fb7185" : "#38bdf8";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(s.d, x + 210, 138);
   });
 
-  ctx.fillStyle = "#1a1b1f";
+  ctx.fillStyle = "#22262f";
   roundRect(ctx, 84, 184, 760, 280, 14);
   ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
+  ctx.fillStyle = "#f3f4f6";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Project Progress", 104, 212);
-  ctx.strokeStyle = "#2a2d35";
+  ctx.strokeStyle = "#343a46";
   ctx.lineWidth = 1;
   for (let g = 0; g < 4; g++) {
     const y = 250 + g * 48;
@@ -122,7 +122,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.lineTo(820, y);
     ctx.stroke();
   }
-  ctx.strokeStyle = "#60a5fa";
+  ctx.strokeStyle = "#38bdf8";
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   for (let i = 0; i < 48; i++) {
@@ -133,24 +133,24 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   }
   ctx.stroke();
   ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"].forEach((m, i) => {
-    ctx.fillStyle = "#6b7280";
+    ctx.fillStyle = "#8b93a7";
     ctx.font = "10px system-ui,sans-serif";
     ctx.fillText(m, 120 + i * 100, 445);
   });
 
-  ctx.fillStyle = "#1a1b1f";
+  ctx.fillStyle = "#22262f";
   roundRect(ctx, 864, 184, 380, 280, 14);
   ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
+  ctx.fillStyle = "#f3f4f6";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Tasks by Status", 884, 212);
   const cx = 1054;
   const cy = 330;
   const segs = [
-    { c: "#3b82f6", p: 0.42 },
-    { c: "#6366f1", p: 0.28 },
-    { c: "#eab308", p: 0.18 },
-    { c: "#6b7280", p: 0.12 },
+    { c: "#38bdf8", p: 0.42 },
+    { c: "#818cf8", p: 0.28 },
+    { c: "#fbbf24", p: 0.18 },
+    { c: "#94a3b8", p: 0.12 },
   ];
   let a0 = -Math.PI / 2;
   segs.forEach((s) => {
@@ -162,34 +162,34 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.stroke();
     a0 = a1;
   });
-  ctx.fillStyle = "#f5f5f4";
+  ctx.fillStyle = "#fafafa";
   ctx.font = "600 22px system-ui,sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("128", cx, cy + 4);
-  ctx.fillStyle = "#9ca3af";
+  ctx.fillStyle = "#a8b0c0";
   ctx.font = "10px system-ui,sans-serif";
   ctx.fillText("total", cx, cy + 20);
   ctx.textAlign = "left";
   [
-    { l: "Completed", c: "#3b82f6" },
-    { l: "In Progress", c: "#6366f1" },
-    { l: "Review", c: "#eab308" },
-    { l: "Backlog", c: "#6b7280" },
+    { l: "Completed", c: "#38bdf8" },
+    { l: "In Progress", c: "#818cf8" },
+    { l: "Review", c: "#fbbf24" },
+    { l: "Backlog", c: "#94a3b8" },
   ].forEach((L, i) => {
     const y = 250 + i * 28;
     ctx.fillStyle = L.c;
     ctx.beginPath();
     ctx.arc(1180, y, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#d1d5db";
+    ctx.fillStyle = "#e5e7eb";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(L.l, 1194, y + 4);
   });
 
-  ctx.fillStyle = "#1a1b1f";
+  ctx.fillStyle = "#22262f";
   roundRect(ctx, 84, 484, 760, 320, 14);
   ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
+  ctx.fillStyle = "#f3f4f6";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Recent Activity", 104, 514);
   const rows = [
@@ -204,42 +204,42 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     const line = rows[(off + i) % rows.length];
     const y = 550 + i * 46;
     ctx.beginPath();
-    ctx.fillStyle = "#3f3f46";
+    ctx.fillStyle = "#4b5563";
     ctx.arc(118, y - 4, 12, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#e5e7eb";
+    ctx.fillStyle = "#f3f4f6";
     ctx.font = "12px system-ui,sans-serif";
     ctx.fillText(line, 144, y);
-    ctx.fillStyle = "#6b7280";
+    ctx.fillStyle = "#8b93a7";
     ctx.font = "10px system-ui,sans-serif";
     ctx.fillText(`${i + 1}h ago`, 760, y);
   });
 
-  ctx.fillStyle = "#1a1b1f";
+  ctx.fillStyle = "#22262f";
   roundRect(ctx, 864, 484, 380, 320, 14);
   ctx.fill();
-  ctx.fillStyle = "#e5e7eb";
+  ctx.fillStyle = "#f3f4f6";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Budget Overview", 884, 514);
-  ctx.fillStyle = "#9ca3af";
+  ctx.fillStyle = "#a8b0c0";
   ctx.font = "11px system-ui,sans-serif";
   ctx.fillText("Q3 remaining", 884, 560);
-  ctx.fillStyle = "#f5f5f4";
+  ctx.fillStyle = "#fafafa";
   ctx.font = "600 32px system-ui,sans-serif";
   ctx.fillText("$128.4k", 884, 600);
-  ctx.fillStyle = "#25262b";
+  ctx.fillStyle = "#2e3440";
   roundRect(ctx, 884, 630, 340, 12, 6);
   ctx.fill();
   const bp = 0.68 + Math.sin(t * 0.3) * 0.02;
-  ctx.fillStyle = "#60a5fa";
+  ctx.fillStyle = "#38bdf8";
   roundRect(ctx, 884, 630, 340 * bp, 12, 6);
   ctx.fill();
-  ctx.fillStyle = "#9ca3af";
+  ctx.fillStyle = "#a8b0c0";
   ctx.font = "11px system-ui,sans-serif";
   ctx.fillText("Utilized", 884, 670);
   ctx.fillText("Reserved", 884, 710);
   ctx.fillText("Available", 884, 750);
-  ctx.fillStyle = "#e5e7eb";
+  ctx.fillStyle = "#f3f4f6";
   ctx.fillText("68%", 1180, 670);
   ctx.fillText("19%", 1180, 710);
   ctx.fillText("13%", 1180, 750);
@@ -306,9 +306,9 @@ function tuneMacMaterials(
         changed = true;
         return new THREE.MeshStandardMaterial({
           map: screenTex,
-          // No emissiveMap — UI greens were blooming as a green halo
-          emissive: new THREE.Color(0.08, 0.085, 0.09),
-          emissiveIntensity: 0.35,
+          // Soft lift so UI colors read clearly without green bloom
+          emissive: new THREE.Color(0.12, 0.125, 0.135),
+          emissiveIntensity: 0.55,
           roughness: 0.42,
           metalness: 0,
           toneMapped: true,
@@ -359,8 +359,9 @@ function HeroLaptop({
     tuneMacMaterials(scene, screenTex, chassis.current);
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
+        // Keep metallic reflections; skip mesh shadows so the deck stays clean
+        child.castShadow = false;
+        child.receiveShadow = false;
       }
     });
     motion.current.rotY = layout.laptopRotY;
@@ -465,7 +466,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
     pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
     pos.current.z = expSmooth(pos.current.z, tz, 16, dt);
     light.current.position.copy(pos.current);
-    light.current.intensity = 0.95 + Math.hypot(px, py) * 0.25;
+    light.current.intensity = 0.72 + Math.hypot(px, py) * 0.18;
   });
 
   return (
@@ -474,7 +475,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
       position={[0.2, keyY, 2.4]}
       angle={0.58}
       penumbra={0.92}
-      intensity={0.95}
+      intensity={0.72}
       color="#ffd8b0"
       castShadow={false}
       distance={14}
@@ -519,17 +520,25 @@ export function LoungeScene({
 
   return (
     <>
-      <ambientLight intensity={0.22} />
-      <hemisphereLight args={["#c8d4e4", "#0a0a0c", 0.28]} />
+      <ambientLight intensity={0.34} />
+      <hemisphereLight args={["#d4dce8", "#12141a", 0.42]} />
       <directionalLight
         position={[-2.2, y + HERO_Y_FROM_BASE.directional, 1.5]}
-        intensity={0.35}
+        intensity={0.28}
         color="#e8eef6"
       />
       <pointLight
         position={[1.4, y + HERO_Y_FROM_BASE.point, 0.6]}
-        intensity={0.18}
-        color="#f0e6d8"
+        intensity={0.28}
+        color="#f5ebe0"
+      />
+      {/* Soft deck fill — lifts harsh black shading on the keyboard without killing metal */}
+      <pointLight
+        position={[layout.focusX - 0.15, y + 0.55, layout.laptopBaseZ + 0.9]}
+        intensity={0.32}
+        color="#fff6ec"
+        distance={4.5}
+        decay={2}
       />
       <CursorKeyLight layout={layout} />
 
