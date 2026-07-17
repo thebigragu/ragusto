@@ -43,7 +43,7 @@ export function getHeroLayout(width: number): HeroLayout {
       lookAtY: 0.02,
       laptopScale: 0.028,
       // Low in frame — camera stays put so this shift is visible
-      laptopBaseY: -0.32,
+      laptopBaseY: -0.24,
       laptopBaseZ: 0.05,
       laptopRotX: 0.2,
       laptopRotY: -0.4,
