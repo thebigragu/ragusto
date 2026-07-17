@@ -48,7 +48,7 @@ export function AmbientGlimmer({ className }: { className?: string }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       if (specks.length === 0) {
-        const count = Math.floor((w * h) / 18000);
+        const count = Math.floor((w * h) / 15000);
         for (let i = 0; i < count; i++) {
           specks.push({
             x: Math.random() * w,
@@ -56,7 +56,7 @@ export function AmbientGlimmer({ className }: { className?: string }) {
             r: 0.6 + Math.random() * 1.8,
             vx: -0.15 + Math.random() * 0.3,
             vy: -0.25 + Math.random() * -0.15,
-            a: 0.15 + Math.random() * 0.55,
+            a: 0.18 + Math.random() * 0.58,
             tw: 0.8 + Math.random() * 1.8,
             phase: Math.random() * Math.PI * 2,
           });
@@ -71,8 +71,8 @@ export function AmbientGlimmer({ className }: { className?: string }) {
       const t = now / 1000;
       ctx.clearRect(0, 0, w, h);
 
-      // Soft light shaft shimmer — quieter dust (-10% from prior)
-      const pulse = 0.088 + 0.069 * Math.sin(t * 0.85);
+      // Soft light shaft shimmer
+      const pulse = 0.105 + 0.082 * Math.sin(t * 0.85);
       const g = ctx.createLinearGradient(0, 0, w * 0.6, h * 0.75);
       g.addColorStop(0, `rgba(255, 210, 160, ${pulse})`);
       g.addColorStop(0.4, `rgba(255, 180, 120, ${pulse * 0.45})`);
@@ -84,7 +84,7 @@ export function AmbientGlimmer({ className }: { className?: string }) {
       const sweep = ((t * 0.1) % 1.4) - 0.2;
       const sg = ctx.createLinearGradient(w * sweep, 0, w * (sweep + 0.28), h * 0.55);
       sg.addColorStop(0, "rgba(255,255,255,0)");
-      sg.addColorStop(0.5, "rgba(255, 230, 190, 0.063)");
+      sg.addColorStop(0.5, "rgba(255, 230, 190, 0.085)");
       sg.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = sg;
       ctx.fillRect(0, 0, w, h);
@@ -101,7 +101,7 @@ export function AmbientGlimmer({ className }: { className?: string }) {
 
         const twinkle = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * s.tw + s.phase));
         ctx.beginPath();
-        ctx.fillStyle = `rgba(255, 236, 210, ${s.a * twinkle * 0.63})`;
+        ctx.fillStyle = `rgba(255, 236, 210, ${s.a * twinkle * 0.78})`;
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
         ctx.fill();
       }
