@@ -538,10 +538,10 @@ export function LoungeScene({
 
       <ContactShadows
         position={[layout.shadowX, y + HERO_Y_FROM_BASE.shadow, 0.08]}
-        opacity={0.22}
+        opacity={0.1}
         scale={5.2}
-        blur={4.2}
-        far={3.2}
+        blur={5.2}
+        far={2.8}
       />
       <Environment files={STUDIO_HDRI} environmentIntensity={0.55} />
     </>
