@@ -244,13 +244,12 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.fillText("19%", 1180, 710);
   ctx.fillText("13%", 1180, 750);
 
-  // Soft specular glint — kept quiet so UI stays readable
+  // Barely-there glass glint — avoid washing out the UI
   const gx = screenGlint.x * w;
   const gy = screenGlint.y * h;
-  const glow = ctx.createRadialGradient(gx, gy, 4, gx, gy, Math.min(w, h) * 0.32);
-  glow.addColorStop(0, "rgba(255, 255, 255, 0.1)");
-  glow.addColorStop(0.3, "rgba(255, 236, 214, 0.04)");
-  glow.addColorStop(0.65, "rgba(255, 220, 180, 0.015)");
+  const glow = ctx.createRadialGradient(gx, gy, 8, gx, gy, Math.min(w, h) * 0.22);
+  glow.addColorStop(0, "rgba(255, 255, 255, 0.035)");
+  glow.addColorStop(0.45, "rgba(255, 236, 214, 0.012)");
   glow.addColorStop(1, "rgba(0, 0, 0, 0)");
   const prev = ctx.globalCompositeOperation;
   ctx.globalCompositeOperation = "screen";
@@ -307,9 +306,9 @@ function tuneMacMaterials(
         return new THREE.MeshStandardMaterial({
           map: screenTex,
           // Soft lift so UI colors read clearly without green bloom
-          emissive: new THREE.Color(0.1, 0.105, 0.11),
-          emissiveIntensity: 0.45,
-          roughness: 0.42,
+          emissive: new THREE.Color(0.07, 0.072, 0.078),
+          emissiveIntensity: 0.32,
+          roughness: 0.55,
           metalness: 0,
           toneMapped: true,
         });
@@ -320,10 +319,10 @@ function tuneMacMaterials(
         return mat;
       }
 
-      // Photographed aluminum via HDRI — slightly softer so deck isn't ink-black
-      mat.metalness = Math.max(mat.metalness, 0.72);
-      mat.roughness = Math.min(Math.max(mat.roughness * 0.72, 0.28), 0.55);
-      mat.envMapIntensity = 0.62;
+      // Aluminum via HDRI — higher roughness kills hard white specular orbs on the deck
+      mat.metalness = Math.max(mat.metalness, 0.68);
+      mat.roughness = Math.min(Math.max(mat.roughness * 0.85, 0.38), 0.62);
+      mat.envMapIntensity = 0.55;
       chassis.push({
         mat,
         baseRough: mat.roughness,
@@ -413,26 +412,26 @@ function HeroLaptop({
     group.current.position.set(m.posX, m.posY, m.posZ);
     group.current.scale.setScalar(m.scale);
 
-    // Specular / roughness nudge toward cursor side
+    // Gentle roughness response — avoid boosting specular into a white hotspot
     const side = (px + 1) * 0.5;
     for (const entry of chassis.current) {
       entry.mat.roughness = expSmooth(
         entry.mat.roughness,
-        entry.baseRough * (0.92 + side * 0.12),
+        entry.baseRough * (0.98 + side * 0.04),
         8,
         dt,
       );
       entry.mat.envMapIntensity = expSmooth(
         entry.mat.envMapIntensity,
-        entry.baseEnv * (1.05 + Math.abs(px) * 0.22),
+        entry.baseEnv * (1.0 + Math.abs(px) * 0.06),
         8,
         dt,
       );
     }
 
-    // Screen glass reflection tracks the mouse / gyro
-    screenGlint.x = expSmooth(screenGlint.x, 0.5 + px * 0.38, 14, dt);
-    screenGlint.y = expSmooth(screenGlint.y, 0.42 - py * 0.32, 14, dt);
+    // Screen glass reflection tracks the mouse / gyro (very subtle)
+    screenGlint.x = expSmooth(screenGlint.x, 0.5 + px * 0.2, 14, dt);
+    screenGlint.y = expSmooth(screenGlint.y, 0.42 - py * 0.16, 14, dt);
   });
 
   return (
@@ -466,7 +465,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
     pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
     pos.current.z = expSmooth(pos.current.z, tz, 16, dt);
     light.current.position.copy(pos.current);
-    light.current.intensity = 0.42 + Math.hypot(px, py) * 0.12;
+    light.current.intensity = 0.28 + Math.hypot(px, py) * 0.08;
   });
 
   return (
@@ -475,7 +474,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
       position={[0.2, keyY, 2.4]}
       angle={0.58}
       penumbra={0.92}
-      intensity={0.42}
+      intensity={0.28}
       color="#ffd8b0"
       castShadow={false}
       distance={14}
@@ -520,32 +519,20 @@ export function LoungeScene({
 
   return (
     <>
-      <ambientLight intensity={0.58} />
-      <hemisphereLight args={["#e4eaf2", "#3a3e48", 0.62]} />
+      <ambientLight intensity={0.62} />
+      <hemisphereLight args={["#e4eaf2", "#4a4e58", 0.68]} />
       <directionalLight
         position={[-2.2, y + HERO_Y_FROM_BASE.directional, 1.5]}
-        intensity={0.18}
+        intensity={0.16}
         color="#e8eef6"
       />
+      {/* Distant soft fill only — close lights created a white specular orb on the deck */}
       <pointLight
-        position={[1.4, y + HERO_Y_FROM_BASE.point, 0.6]}
-        intensity={0.4}
-        color="#f5ebe0"
-      />
-      {/* Strong deck fill — flattens black keyboard shading; metal still from HDRI */}
-      <pointLight
-        position={[layout.focusX, y + 0.35, layout.laptopBaseZ + 0.55]}
-        intensity={0.85}
-        color="#fff8f0"
-        distance={3.2}
-        decay={1.6}
-      />
-      <pointLight
-        position={[layout.focusX + 0.35, y + 0.28, layout.laptopBaseZ + 0.2]}
-        intensity={0.45}
-        color="#eef2f8"
-        distance={2.8}
-        decay={1.8}
+        position={[layout.focusX - 1.2, y + 1.8, layout.laptopBaseZ + 2.2]}
+        intensity={0.22}
+        color="#f0ebe4"
+        distance={8}
+        decay={2}
       />
       <CursorKeyLight layout={layout} />
 
@@ -559,7 +546,7 @@ export function LoungeScene({
         blur={5.2}
         far={2.8}
       />
-      <Environment files={STUDIO_HDRI} environmentIntensity={0.42} />
+      <Environment files={STUDIO_HDRI} environmentIntensity={0.4} />
     </>
   );
 }
