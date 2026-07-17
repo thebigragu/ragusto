@@ -476,7 +476,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
       penumbra={0.92}
       intensity={0.95}
       color="#ffd8b0"
-      castShadow
+      castShadow={false}
       distance={14}
     />
   );
@@ -538,10 +538,10 @@ export function LoungeScene({
 
       <ContactShadows
         position={[layout.shadowX, y + HERO_Y_FROM_BASE.shadow, 0.08]}
-        opacity={0.72}
+        opacity={0.34}
         scale={5.2}
-        blur={2.8}
-        far={4.2}
+        blur={3.6}
+        far={3.6}
       />
       <Environment files={STUDIO_HDRI} environmentIntensity={0.55} />
     </>
