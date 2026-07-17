@@ -45,43 +45,43 @@ function roundRect(
 }
 
 function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  // Arcform Overview — clean dark UI with clearer, more vivid accents
-  ctx.fillStyle = "#16181d";
+  // Arcform Overview — slightly darker, still clear accents
+  ctx.fillStyle = "#12141a";
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = "#101218";
+  ctx.fillStyle = "#0c0e12";
   ctx.fillRect(0, 0, 64, h);
   for (let i = 0; i < 6; i++) {
     const y = 70 + i * 52;
     const active = i === 0;
     if (active) {
-      ctx.fillStyle = "rgba(255,255,255,0.1)";
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
       roundRect(ctx, 10, y - 16, 44, 36, 8);
       ctx.fill();
     }
-    ctx.fillStyle = active ? "#fafafa" : "#8b93a7";
+    ctx.fillStyle = active ? "#f0f0f0" : "#6b7280";
     ctx.beginPath();
     ctx.arc(32, y, 5, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  ctx.fillStyle = "#1a1d24";
+  ctx.fillStyle = "#15171d";
   ctx.fillRect(64, 0, w - 64, 56);
-  ctx.fillStyle = "#fafafa";
+  ctx.fillStyle = "#f0f0f0";
   ctx.font = "600 15px system-ui,sans-serif";
   ctx.fillText("ARCFORM", 84, 34);
-  ctx.fillStyle = "#a8b0c0";
+  ctx.fillStyle = "#8b93a7";
   ctx.font = "12px system-ui,sans-serif";
   ctx.fillText("Overview", 180, 34);
 
   ctx.beginPath();
-  ctx.fillStyle = "#4b5563";
+  ctx.fillStyle = "#3f4654";
   ctx.arc(w - 160, 28, 12, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#f3f4f6";
+  ctx.fillStyle = "#e8e8e8";
   ctx.font = "12px system-ui,sans-serif";
   ctx.fillText("Alex Morgan", w - 140, 26);
-  ctx.fillStyle = "#9ca3af";
+  ctx.fillStyle = "#7a8294";
   ctx.font = "10px system-ui,sans-serif";
   ctx.fillText("Studio Director", w - 140, 40);
 
@@ -93,27 +93,27 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ];
   stats.forEach((s, i) => {
     const x = 84 + i * 288;
-    ctx.fillStyle = "#22262f";
+    ctx.fillStyle = "#1a1d24";
     roundRect(ctx, x, 76, 272, 88, 12);
     ctx.fill();
-    ctx.fillStyle = "#a8b0c0";
+    ctx.fillStyle = "#8b93a7";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(s.l, x + 18, 100);
-    ctx.fillStyle = "#fafafa";
+    ctx.fillStyle = "#f0f0f0";
     ctx.font = "600 28px system-ui,sans-serif";
     ctx.fillText(s.v, x + 18, 138);
-    ctx.fillStyle = s.d.startsWith("-") ? "#fb7185" : "#38bdf8";
+    ctx.fillStyle = s.d.startsWith("-") ? "#e8798a" : "#4aa8e0";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(s.d, x + 210, 138);
   });
 
-  ctx.fillStyle = "#22262f";
+  ctx.fillStyle = "#1a1d24";
   roundRect(ctx, 84, 184, 760, 280, 14);
   ctx.fill();
-  ctx.fillStyle = "#f3f4f6";
+  ctx.fillStyle = "#e4e4e7";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Project Progress", 104, 212);
-  ctx.strokeStyle = "#343a46";
+  ctx.strokeStyle = "#2a2f3a";
   ctx.lineWidth = 1;
   for (let g = 0; g < 4; g++) {
     const y = 250 + g * 48;
@@ -122,7 +122,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.lineTo(820, y);
     ctx.stroke();
   }
-  ctx.strokeStyle = "#38bdf8";
+  ctx.strokeStyle = "#4aa8e0";
   ctx.lineWidth = 2.5;
   ctx.beginPath();
   for (let i = 0; i < 48; i++) {
@@ -133,24 +133,24 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   }
   ctx.stroke();
   ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"].forEach((m, i) => {
-    ctx.fillStyle = "#8b93a7";
+    ctx.fillStyle = "#6b7280";
     ctx.font = "10px system-ui,sans-serif";
     ctx.fillText(m, 120 + i * 100, 445);
   });
 
-  ctx.fillStyle = "#22262f";
+  ctx.fillStyle = "#1a1d24";
   roundRect(ctx, 864, 184, 380, 280, 14);
   ctx.fill();
-  ctx.fillStyle = "#f3f4f6";
+  ctx.fillStyle = "#e4e4e7";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Tasks by Status", 884, 212);
   const cx = 1054;
   const cy = 330;
   const segs = [
-    { c: "#38bdf8", p: 0.42 },
-    { c: "#818cf8", p: 0.28 },
-    { c: "#fbbf24", p: 0.18 },
-    { c: "#94a3b8", p: 0.12 },
+    { c: "#4aa8e0", p: 0.42 },
+    { c: "#6e78d9", p: 0.28 },
+    { c: "#d4a017", p: 0.18 },
+    { c: "#6b7280", p: 0.12 },
   ];
   let a0 = -Math.PI / 2;
   segs.forEach((s) => {
@@ -162,34 +162,34 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.stroke();
     a0 = a1;
   });
-  ctx.fillStyle = "#fafafa";
+  ctx.fillStyle = "#f0f0f0";
   ctx.font = "600 22px system-ui,sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("128", cx, cy + 4);
-  ctx.fillStyle = "#a8b0c0";
+  ctx.fillStyle = "#8b93a7";
   ctx.font = "10px system-ui,sans-serif";
   ctx.fillText("total", cx, cy + 20);
   ctx.textAlign = "left";
   [
-    { l: "Completed", c: "#38bdf8" },
-    { l: "In Progress", c: "#818cf8" },
-    { l: "Review", c: "#fbbf24" },
-    { l: "Backlog", c: "#94a3b8" },
+    { l: "Completed", c: "#4aa8e0" },
+    { l: "In Progress", c: "#6e78d9" },
+    { l: "Review", c: "#d4a017" },
+    { l: "Backlog", c: "#6b7280" },
   ].forEach((L, i) => {
     const y = 250 + i * 28;
     ctx.fillStyle = L.c;
     ctx.beginPath();
     ctx.arc(1180, y, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#e5e7eb";
+    ctx.fillStyle = "#d1d5db";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(L.l, 1194, y + 4);
   });
 
-  ctx.fillStyle = "#22262f";
+  ctx.fillStyle = "#1a1d24";
   roundRect(ctx, 84, 484, 760, 320, 14);
   ctx.fill();
-  ctx.fillStyle = "#f3f4f6";
+  ctx.fillStyle = "#e4e4e7";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Recent Activity", 104, 514);
   const rows = [
@@ -204,53 +204,53 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     const line = rows[(off + i) % rows.length];
     const y = 550 + i * 46;
     ctx.beginPath();
-    ctx.fillStyle = "#4b5563";
+    ctx.fillStyle = "#3f4654";
     ctx.arc(118, y - 4, 12, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#f3f4f6";
+    ctx.fillStyle = "#e4e4e7";
     ctx.font = "12px system-ui,sans-serif";
     ctx.fillText(line, 144, y);
-    ctx.fillStyle = "#8b93a7";
+    ctx.fillStyle = "#6b7280";
     ctx.font = "10px system-ui,sans-serif";
     ctx.fillText(`${i + 1}h ago`, 760, y);
   });
 
-  ctx.fillStyle = "#22262f";
+  ctx.fillStyle = "#1a1d24";
   roundRect(ctx, 864, 484, 380, 320, 14);
   ctx.fill();
-  ctx.fillStyle = "#f3f4f6";
+  ctx.fillStyle = "#e4e4e7";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Budget Overview", 884, 514);
-  ctx.fillStyle = "#a8b0c0";
+  ctx.fillStyle = "#8b93a7";
   ctx.font = "11px system-ui,sans-serif";
   ctx.fillText("Q3 remaining", 884, 560);
-  ctx.fillStyle = "#fafafa";
+  ctx.fillStyle = "#f0f0f0";
   ctx.font = "600 32px system-ui,sans-serif";
   ctx.fillText("$128.4k", 884, 600);
-  ctx.fillStyle = "#2e3440";
+  ctx.fillStyle = "#252830";
   roundRect(ctx, 884, 630, 340, 12, 6);
   ctx.fill();
   const bp = 0.68 + Math.sin(t * 0.3) * 0.02;
-  ctx.fillStyle = "#38bdf8";
+  ctx.fillStyle = "#4aa8e0";
   roundRect(ctx, 884, 630, 340 * bp, 12, 6);
   ctx.fill();
-  ctx.fillStyle = "#a8b0c0";
+  ctx.fillStyle = "#8b93a7";
   ctx.font = "11px system-ui,sans-serif";
   ctx.fillText("Utilized", 884, 670);
   ctx.fillText("Reserved", 884, 710);
   ctx.fillText("Available", 884, 750);
-  ctx.fillStyle = "#f3f4f6";
+  ctx.fillStyle = "#e4e4e7";
   ctx.fillText("68%", 1180, 670);
   ctx.fillText("19%", 1180, 710);
   ctx.fillText("13%", 1180, 750);
 
-  // Warm specular reflection — follows mouse across the glass
+  // Soft specular glint — kept quiet so UI stays readable
   const gx = screenGlint.x * w;
   const gy = screenGlint.y * h;
-  const glow = ctx.createRadialGradient(gx, gy, 4, gx, gy, Math.min(w, h) * 0.38);
-  glow.addColorStop(0, "rgba(255, 255, 255, 0.28)");
-  glow.addColorStop(0.25, "rgba(255, 236, 214, 0.12)");
-  glow.addColorStop(0.55, "rgba(255, 220, 180, 0.04)");
+  const glow = ctx.createRadialGradient(gx, gy, 4, gx, gy, Math.min(w, h) * 0.32);
+  glow.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+  glow.addColorStop(0.3, "rgba(255, 236, 214, 0.04)");
+  glow.addColorStop(0.65, "rgba(255, 220, 180, 0.015)");
   glow.addColorStop(1, "rgba(0, 0, 0, 0)");
   const prev = ctx.globalCompositeOperation;
   ctx.globalCompositeOperation = "screen";
@@ -307,8 +307,8 @@ function tuneMacMaterials(
         return new THREE.MeshStandardMaterial({
           map: screenTex,
           // Soft lift so UI colors read clearly without green bloom
-          emissive: new THREE.Color(0.12, 0.125, 0.135),
-          emissiveIntensity: 0.55,
+          emissive: new THREE.Color(0.1, 0.105, 0.11),
+          emissiveIntensity: 0.45,
           roughness: 0.42,
           metalness: 0,
           toneMapped: true,
@@ -320,10 +320,10 @@ function tuneMacMaterials(
         return mat;
       }
 
-      // Photographed aluminum via HDRI
-      mat.metalness = Math.max(mat.metalness, 0.78);
-      mat.roughness = Math.min(Math.max(mat.roughness * 0.65, 0.22), 0.48);
-      mat.envMapIntensity = 0.85;
+      // Photographed aluminum via HDRI — slightly softer so deck isn't ink-black
+      mat.metalness = Math.max(mat.metalness, 0.72);
+      mat.roughness = Math.min(Math.max(mat.roughness * 0.72, 0.28), 0.55);
+      mat.envMapIntensity = 0.62;
       chassis.push({
         mat,
         baseRough: mat.roughness,
@@ -466,7 +466,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
     pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
     pos.current.z = expSmooth(pos.current.z, tz, 16, dt);
     light.current.position.copy(pos.current);
-    light.current.intensity = 0.72 + Math.hypot(px, py) * 0.18;
+    light.current.intensity = 0.42 + Math.hypot(px, py) * 0.12;
   });
 
   return (
@@ -475,7 +475,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
       position={[0.2, keyY, 2.4]}
       angle={0.58}
       penumbra={0.92}
-      intensity={0.72}
+      intensity={0.42}
       color="#ffd8b0"
       castShadow={false}
       distance={14}
@@ -520,25 +520,32 @@ export function LoungeScene({
 
   return (
     <>
-      <ambientLight intensity={0.34} />
-      <hemisphereLight args={["#d4dce8", "#12141a", 0.42]} />
+      <ambientLight intensity={0.58} />
+      <hemisphereLight args={["#e4eaf2", "#3a3e48", 0.62]} />
       <directionalLight
         position={[-2.2, y + HERO_Y_FROM_BASE.directional, 1.5]}
-        intensity={0.28}
+        intensity={0.18}
         color="#e8eef6"
       />
       <pointLight
         position={[1.4, y + HERO_Y_FROM_BASE.point, 0.6]}
-        intensity={0.28}
+        intensity={0.4}
         color="#f5ebe0"
       />
-      {/* Soft deck fill — lifts harsh black shading on the keyboard without killing metal */}
+      {/* Strong deck fill — flattens black keyboard shading; metal still from HDRI */}
       <pointLight
-        position={[layout.focusX - 0.15, y + 0.55, layout.laptopBaseZ + 0.9]}
-        intensity={0.32}
-        color="#fff6ec"
-        distance={4.5}
-        decay={2}
+        position={[layout.focusX, y + 0.35, layout.laptopBaseZ + 0.55]}
+        intensity={0.85}
+        color="#fff8f0"
+        distance={3.2}
+        decay={1.6}
+      />
+      <pointLight
+        position={[layout.focusX + 0.35, y + 0.28, layout.laptopBaseZ + 0.2]}
+        intensity={0.45}
+        color="#eef2f8"
+        distance={2.8}
+        decay={1.8}
       />
       <CursorKeyLight layout={layout} />
 
@@ -552,7 +559,7 @@ export function LoungeScene({
         blur={5.2}
         far={2.8}
       />
-      <Environment files={STUDIO_HDRI} environmentIntensity={0.55} />
+      <Environment files={STUDIO_HDRI} environmentIntensity={0.42} />
     </>
   );
 }
