@@ -305,9 +305,9 @@ function tuneMacMaterials(
         changed = true;
         return new THREE.MeshStandardMaterial({
           map: screenTex,
-          // Soft lift so UI colors read clearly without green bloom
-          emissive: new THREE.Color(0.07, 0.072, 0.078),
-          emissiveIntensity: 0.32,
+          // Mild screen brightness lift — readable, not washed out
+          emissive: new THREE.Color(0.09, 0.092, 0.1),
+          emissiveIntensity: 0.42,
           roughness: 0.55,
           metalness: 0,
           toneMapped: true,
@@ -322,7 +322,7 @@ function tuneMacMaterials(
       // Aluminum via HDRI — higher roughness kills hard white specular orbs on the deck
       mat.metalness = Math.max(mat.metalness, 0.68);
       mat.roughness = Math.min(Math.max(mat.roughness * 0.85, 0.38), 0.62);
-      mat.envMapIntensity = 0.55;
+      mat.envMapIntensity = 0.62;
       chassis.push({
         mat,
         baseRough: mat.roughness,
@@ -465,7 +465,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
     pos.current.y = expSmooth(pos.current.y, ty, 16, dt);
     pos.current.z = expSmooth(pos.current.z, tz, 16, dt);
     light.current.position.copy(pos.current);
-    light.current.intensity = 0.28 + Math.hypot(px, py) * 0.08;
+    light.current.intensity = 0.36 + Math.hypot(px, py) * 0.1;
   });
 
   return (
@@ -474,7 +474,7 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
       position={[0.2, keyY, 2.4]}
       angle={0.58}
       penumbra={0.92}
-      intensity={0.28}
+      intensity={0.36}
       color="#ffd8b0"
       castShadow={false}
       distance={14}
@@ -519,17 +519,17 @@ export function LoungeScene({
 
   return (
     <>
-      <ambientLight intensity={0.62} />
-      <hemisphereLight args={["#e4eaf2", "#4a4e58", 0.68]} />
+      <ambientLight intensity={0.72} />
+      <hemisphereLight args={["#e8eef6", "#52565f", 0.78]} />
       <directionalLight
         position={[-2.2, y + HERO_Y_FROM_BASE.directional, 1.5]}
-        intensity={0.16}
+        intensity={0.22}
         color="#e8eef6"
       />
       {/* Distant soft fill only — close lights created a white specular orb on the deck */}
       <pointLight
         position={[layout.focusX - 1.2, y + 1.8, layout.laptopBaseZ + 2.2]}
-        intensity={0.22}
+        intensity={0.3}
         color="#f0ebe4"
         distance={8}
         decay={2}
@@ -546,7 +546,7 @@ export function LoungeScene({
         blur={5.2}
         far={2.8}
       />
-      <Environment files={STUDIO_HDRI} environmentIntensity={0.4} />
+      <Environment files={STUDIO_HDRI} environmentIntensity={0.48} />
     </>
   );
 }
