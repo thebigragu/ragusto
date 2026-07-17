@@ -61,7 +61,7 @@ export function getHeroLayout(width: number): HeroLayout {
     lookAtY: 0.02,
     laptopScale: 0.046,
     // Centered in the hero — camera fixed; lights still follow baseY
-    laptopBaseY: -0.58,
+    laptopBaseY: -0.48,
     laptopBaseZ: 0.05,
     laptopRotX: 0.22,
     laptopRotY: -0.42,
