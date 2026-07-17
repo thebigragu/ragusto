@@ -45,43 +45,43 @@ function roundRect(
 }
 
 function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  // Arcform Overview — slightly darker, still clear accents
-  ctx.fillStyle = "#12141a";
+  // Arcform Overview — richer, more vivid UI colors (not emissive wash)
+  ctx.fillStyle = "#171a22";
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = "#0c0e12";
+  ctx.fillStyle = "#12151c";
   ctx.fillRect(0, 0, 64, h);
   for (let i = 0; i < 6; i++) {
     const y = 70 + i * 52;
     const active = i === 0;
     if (active) {
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillStyle = "rgba(96, 165, 250, 0.18)";
       roundRect(ctx, 10, y - 16, 44, 36, 8);
       ctx.fill();
     }
-    ctx.fillStyle = active ? "#f0f0f0" : "#6b7280";
+    ctx.fillStyle = active ? "#ffffff" : "#9aa3b5";
     ctx.beginPath();
     ctx.arc(32, y, 5, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  ctx.fillStyle = "#15171d";
+  ctx.fillStyle = "#1c2029";
   ctx.fillRect(64, 0, w - 64, 56);
-  ctx.fillStyle = "#f0f0f0";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "600 15px system-ui,sans-serif";
   ctx.fillText("ARCFORM", 84, 34);
-  ctx.fillStyle = "#8b93a7";
+  ctx.fillStyle = "#a8b4c8";
   ctx.font = "12px system-ui,sans-serif";
   ctx.fillText("Overview", 180, 34);
 
   ctx.beginPath();
-  ctx.fillStyle = "#3f4654";
+  ctx.fillStyle = "#5b6578";
   ctx.arc(w - 160, 28, 12, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#e8e8e8";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "12px system-ui,sans-serif";
   ctx.fillText("Alex Morgan", w - 140, 26);
-  ctx.fillStyle = "#7a8294";
+  ctx.fillStyle = "#94a0b4";
   ctx.font = "10px system-ui,sans-serif";
   ctx.fillText("Studio Director", w - 140, 40);
 
@@ -93,27 +93,27 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ];
   stats.forEach((s, i) => {
     const x = 84 + i * 288;
-    ctx.fillStyle = "#1a1d24";
+    ctx.fillStyle = "#232836";
     roundRect(ctx, x, 76, 272, 88, 12);
     ctx.fill();
-    ctx.fillStyle = "#8b93a7";
+    ctx.fillStyle = "#a8b4c8";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(s.l, x + 18, 100);
-    ctx.fillStyle = "#f0f0f0";
+    ctx.fillStyle = "#ffffff";
     ctx.font = "600 28px system-ui,sans-serif";
     ctx.fillText(s.v, x + 18, 138);
-    ctx.fillStyle = s.d.startsWith("-") ? "#e8798a" : "#4aa8e0";
+    ctx.fillStyle = s.d.startsWith("-") ? "#ff6b7a" : "#3dd6ff";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(s.d, x + 210, 138);
   });
 
-  ctx.fillStyle = "#1a1d24";
+  ctx.fillStyle = "#232836";
   roundRect(ctx, 84, 184, 760, 280, 14);
   ctx.fill();
-  ctx.fillStyle = "#e4e4e7";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Project Progress", 104, 212);
-  ctx.strokeStyle = "#2a2f3a";
+  ctx.strokeStyle = "#3a4254";
   ctx.lineWidth = 1;
   for (let g = 0; g < 4; g++) {
     const y = 250 + g * 48;
@@ -122,8 +122,8 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.lineTo(820, y);
     ctx.stroke();
   }
-  ctx.strokeStyle = "#4aa8e0";
-  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = "#3db8ff";
+  ctx.lineWidth = 2.75;
   ctx.beginPath();
   for (let i = 0; i < 48; i++) {
     const x = 110 + i * 14.8;
@@ -133,24 +133,24 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   }
   ctx.stroke();
   ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"].forEach((m, i) => {
-    ctx.fillStyle = "#6b7280";
+    ctx.fillStyle = "#8b95a8";
     ctx.font = "10px system-ui,sans-serif";
     ctx.fillText(m, 120 + i * 100, 445);
   });
 
-  ctx.fillStyle = "#1a1d24";
+  ctx.fillStyle = "#232836";
   roundRect(ctx, 864, 184, 380, 280, 14);
   ctx.fill();
-  ctx.fillStyle = "#e4e4e7";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Tasks by Status", 884, 212);
   const cx = 1054;
   const cy = 330;
   const segs = [
-    { c: "#4aa8e0", p: 0.42 },
-    { c: "#6e78d9", p: 0.28 },
-    { c: "#d4a017", p: 0.18 },
-    { c: "#6b7280", p: 0.12 },
+    { c: "#3db8ff", p: 0.42 },
+    { c: "#8b7cff", p: 0.28 },
+    { c: "#ffc53d", p: 0.18 },
+    { c: "#8b95a8", p: 0.12 },
   ];
   let a0 = -Math.PI / 2;
   segs.forEach((s) => {
@@ -162,34 +162,34 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     ctx.stroke();
     a0 = a1;
   });
-  ctx.fillStyle = "#f0f0f0";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "600 22px system-ui,sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("128", cx, cy + 4);
-  ctx.fillStyle = "#8b93a7";
+  ctx.fillStyle = "#a8b4c8";
   ctx.font = "10px system-ui,sans-serif";
   ctx.fillText("total", cx, cy + 20);
   ctx.textAlign = "left";
   [
-    { l: "Completed", c: "#4aa8e0" },
-    { l: "In Progress", c: "#6e78d9" },
-    { l: "Review", c: "#d4a017" },
-    { l: "Backlog", c: "#6b7280" },
+    { l: "Completed", c: "#3db8ff" },
+    { l: "In Progress", c: "#8b7cff" },
+    { l: "Review", c: "#ffc53d" },
+    { l: "Backlog", c: "#8b95a8" },
   ].forEach((L, i) => {
     const y = 250 + i * 28;
     ctx.fillStyle = L.c;
     ctx.beginPath();
     ctx.arc(1180, y, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#d1d5db";
+    ctx.fillStyle = "#e8ecf4";
     ctx.font = "11px system-ui,sans-serif";
     ctx.fillText(L.l, 1194, y + 4);
   });
 
-  ctx.fillStyle = "#1a1d24";
+  ctx.fillStyle = "#232836";
   roundRect(ctx, 84, 484, 760, 320, 14);
   ctx.fill();
-  ctx.fillStyle = "#e4e4e7";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Recent Activity", 104, 514);
   const rows = [
@@ -204,42 +204,42 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
     const line = rows[(off + i) % rows.length];
     const y = 550 + i * 46;
     ctx.beginPath();
-    ctx.fillStyle = "#3f4654";
+    ctx.fillStyle = "#4f5a70";
     ctx.arc(118, y - 4, 12, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#e4e4e7";
+    ctx.fillStyle = "#f2f5fa";
     ctx.font = "12px system-ui,sans-serif";
     ctx.fillText(line, 144, y);
-    ctx.fillStyle = "#6b7280";
+    ctx.fillStyle = "#8b95a8";
     ctx.font = "10px system-ui,sans-serif";
     ctx.fillText(`${i + 1}h ago`, 760, y);
   });
 
-  ctx.fillStyle = "#1a1d24";
+  ctx.fillStyle = "#232836";
   roundRect(ctx, 864, 484, 380, 320, 14);
   ctx.fill();
-  ctx.fillStyle = "#e4e4e7";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "600 13px system-ui,sans-serif";
   ctx.fillText("Budget Overview", 884, 514);
-  ctx.fillStyle = "#8b93a7";
+  ctx.fillStyle = "#a8b4c8";
   ctx.font = "11px system-ui,sans-serif";
   ctx.fillText("Q3 remaining", 884, 560);
-  ctx.fillStyle = "#f0f0f0";
+  ctx.fillStyle = "#ffffff";
   ctx.font = "600 32px system-ui,sans-serif";
   ctx.fillText("$128.4k", 884, 600);
-  ctx.fillStyle = "#252830";
+  ctx.fillStyle = "#2e3545";
   roundRect(ctx, 884, 630, 340, 12, 6);
   ctx.fill();
   const bp = 0.68 + Math.sin(t * 0.3) * 0.02;
-  ctx.fillStyle = "#4aa8e0";
+  ctx.fillStyle = "#3db8ff";
   roundRect(ctx, 884, 630, 340 * bp, 12, 6);
   ctx.fill();
-  ctx.fillStyle = "#8b93a7";
+  ctx.fillStyle = "#a8b4c8";
   ctx.font = "11px system-ui,sans-serif";
   ctx.fillText("Utilized", 884, 670);
   ctx.fillText("Reserved", 884, 710);
   ctx.fillText("Available", 884, 750);
-  ctx.fillStyle = "#e4e4e7";
+  ctx.fillStyle = "#f2f5fa";
   ctx.fillText("68%", 1180, 670);
   ctx.fillText("19%", 1180, 710);
   ctx.fillText("13%", 1180, 750);
@@ -305,12 +305,13 @@ function tuneMacMaterials(
         changed = true;
         return new THREE.MeshStandardMaterial({
           map: screenTex,
-          // Mild screen brightness lift — readable, not washed out
-          emissive: new THREE.Color(0.09, 0.092, 0.1),
-          emissiveIntensity: 0.42,
+          // Tint multiplies painted colors — no white emissive wash
+          color: new THREE.Color(1.12, 1.12, 1.14),
+          emissive: new THREE.Color(0, 0, 0),
+          emissiveIntensity: 0,
           roughness: 0.55,
           metalness: 0,
-          toneMapped: true,
+          toneMapped: false,
         });
       }
 
