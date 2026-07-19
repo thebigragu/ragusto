@@ -69,6 +69,15 @@ body {
   overflow-x: hidden;
 }
 
+html.hero-lock,
+html.hero-lock body,
+body.hero-lock {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
 ::selection {
   background: color-mix(in oklab, var(--accent-teal) 35%, transparent);
   color: var(--fg);

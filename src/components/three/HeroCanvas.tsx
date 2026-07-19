@@ -79,6 +79,7 @@ export function HeroCanvas() {
   const [layout, setLayout] = useState<HeroLayout>(() =>
     getHeroLayout(typeof window !== "undefined" ? window.innerWidth : 1280),
   );
+  const progressRef = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -92,15 +93,44 @@ export function HeroCanvas() {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // Wheel / touch drives lid close — page itself does not scroll
   useEffect(() => {
-    const onScroll = () => {
-      const max = window.innerHeight * 0.9;
-      setProgress(Math.min(1, Math.max(0, window.scrollY / max)));
+    if (reduced) return;
+
+    const apply = (delta: number) => {
+      progressRef.current = Math.min(1, Math.max(0, progressRef.current + delta));
+      setProgress(progressRef.current);
     };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+
+    const onWheel = (e: WheelEvent) => {
+      if ((e.target as HTMLElement | null)?.closest?.('[role="dialog"]')) return;
+      e.preventDefault();
+      apply(e.deltaY * 0.00115);
+    };
+
+    let touchY = 0;
+    const onTouchStart = (e: TouchEvent) => {
+      touchY = e.touches[0]?.clientY ?? 0;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if ((e.target as HTMLElement | null)?.closest?.('[role="dialog"]')) return;
+      const y = e.touches[0]?.clientY ?? touchY;
+      const dy = touchY - y;
+      touchY = y;
+      if (Math.abs(dy) < 0.5) return;
+      e.preventDefault();
+      apply(dy * 0.0045);
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [reduced]);
 
   if (reduced) {
     return (

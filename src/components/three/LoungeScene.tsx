@@ -22,6 +22,11 @@ const STUDIO_HDRI = "/hdri/studio_small_09_1k.hdr";
 const UI_W = 1280;
 const UI_H = 832;
 
+/** Display / lid assembly in macbook-m3-16.glb */
+const LID_NODE = "VCQqxpxkUlzqcJI_62";
+/** Radians from open resting pose → fully closed on the deck */
+const LID_CLOSE_RAD = 1.82;
+
 /** Soft specular glint on the screen — tracks pointer in UV space. */
 const screenGlint = { x: 0.55, y: 0.42 };
 
@@ -339,7 +344,7 @@ function tuneMacMaterials(
   });
 }
 
-/** Desk-planted MacBook — pointer/gyro tilt like the earlier hero, base faces copy. */
+/** Desk-planted MacBook — pointer/gyro tilt; scrollProgress closes the lid. */
 function HeroLaptop({
   scrollProgress,
   layout,
@@ -350,6 +355,8 @@ function HeroLaptop({
   const { scene: srcScene } = useGLTF(MACBOOK_MODEL);
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
+  const lid = useRef<THREE.Object3D | null>(null);
+  const lidAngle = useRef(0);
   const chassis = useRef<ChassisMat[]>([]);
   const motion = useRef({ rotY: 0, rotX: 0, posX: 0, posY: 0, posZ: 0, scale: 1 });
   const { input, isCoarse } = usePointerFieldContext();
@@ -357,6 +364,11 @@ function HeroLaptop({
 
   useEffect(() => {
     tuneMacMaterials(scene, screenTex, chassis.current);
+    lid.current = scene.getObjectByName(LID_NODE) ?? null;
+    if (lid.current) {
+      lid.current.rotation.order = "XYZ";
+      lidAngle.current = lid.current.rotation.x;
+    }
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         // Keep metallic reflections; skip mesh shadows so the deck stays clean
@@ -392,10 +404,9 @@ function HeroLaptop({
     const slideY = layout.mobile ? 0.025 : 0;
 
     const targetRotY = layout.laptopRotY + px * parallax;
-    // Keep forward bias; damp side-to-side. Clamp so base never rolls.
     const targetRotX = layout.laptopRotX + py * pitch;
     const targetPosX = layout.focusX + px * slideX;
-    const targetPosY = layout.laptopBaseY + breathe + scrollProgress * 0.03 + py * slideY;
+    const targetPosY = layout.laptopBaseY + breathe + py * slideY;
     const targetPosZ = layout.laptopBaseZ + pop;
     const targetScale = 1.02 + pop * 0.018;
 
@@ -407,13 +418,18 @@ function HeroLaptop({
     m.posZ = expSmooth(m.posZ, targetPosZ, follow, dt);
     m.scale = expSmooth(m.scale, targetScale, follow, dt);
 
-    // YXZ + z=0: tip and yaw only — base stays perfectly level
     group.current.rotation.order = "YXZ";
     group.current.rotation.set(m.rotX, m.rotY, 0);
     group.current.position.set(m.posX, m.posY, m.posZ);
     group.current.scale.setScalar(m.scale);
 
-    // Gentle roughness response — avoid boosting specular into a white hotspot
+    // Scroll → lid closes onto the keyboard
+    if (lid.current) {
+      const targetLid = LID_CLOSE_RAD * scrollProgress;
+      lidAngle.current = expSmooth(lidAngle.current, targetLid, 14, dt);
+      lid.current.rotation.x = lidAngle.current;
+    }
+
     const side = (px + 1) * 0.5;
     for (const entry of chassis.current) {
       entry.mat.roughness = expSmooth(
@@ -430,7 +446,6 @@ function HeroLaptop({
       );
     }
 
-    // Screen glass reflection tracks the mouse / gyro (very subtle)
     screenGlint.x = expSmooth(screenGlint.x, 0.5 + px * 0.2, 14, dt);
     screenGlint.y = expSmooth(screenGlint.y, 0.42 - py * 0.16, 14, dt);
   });
@@ -483,24 +498,16 @@ function CursorKeyLight({ layout }: { layout: HeroLayout }) {
   );
 }
 
-function MatchCamera({
-  scrollProgress,
-  layout,
-}: {
-  scrollProgress: number;
-  layout: HeroLayout;
-}) {
+function MatchCamera({ layout }: { layout: HeroLayout }) {
   useFrame((state) => {
-    const p = scrollProgress;
     const cam = state.camera as THREE.PerspectiveCamera;
     cam.fov = THREE.MathUtils.lerp(cam.fov, layout.cameraFov, 0.08);
     cam.updateProjectionMatrix();
-
     cam.position.lerp(
       new THREE.Vector3(
-        THREE.MathUtils.lerp(layout.cameraPosition[0], layout.cameraPosition[0] + 0.12, p),
-        THREE.MathUtils.lerp(layout.cameraPosition[1], layout.cameraPosition[1] + 0.1, p),
-        THREE.MathUtils.lerp(layout.cameraPosition[2], layout.cameraPosition[2] - 0.28, p),
+        layout.cameraPosition[0],
+        layout.cameraPosition[1],
+        layout.cameraPosition[2],
       ),
       0.06,
     );
@@ -537,7 +544,7 @@ export function LoungeScene({
       />
       <CursorKeyLight layout={layout} />
 
-      <MatchCamera scrollProgress={scrollProgress} layout={layout} />
+      <MatchCamera layout={layout} />
       <HeroLaptop scrollProgress={scrollProgress} layout={layout} />
 
       <ContactShadows

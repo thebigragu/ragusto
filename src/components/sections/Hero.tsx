@@ -1,22 +1,37 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { ContactModal } from "@/components/ui/ContactModal";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { HeroCanvas } from "@/components/three/HeroCanvas";
 import { SITE } from "@/lib/seo";
 import { motion } from "framer-motion";
+import { useCallback, useEffect, useState } from "react";
 
 export function Hero() {
+  const [contactOpen, setContactOpen] = useState(false);
+  const closeContact = useCallback(() => setContactOpen(false), []);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    html.classList.add("hero-lock");
+    body.classList.add("hero-lock");
+    return () => {
+      html.classList.remove("hero-lock");
+      body.classList.remove("hero-lock");
+    };
+  }, []);
+
   return (
-    <section className="relative flex min-h-[100svh] items-center overflow-hidden pb-20 pt-[calc(var(--nav-height)+1rem)] md:pb-24">
+    <section className="relative h-[100svh] w-full overflow-hidden">
       <div className="absolute inset-0">
         <HeroCanvas />
-        {/* Soft left grade for copy ? match reference low-key lighting */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-transparent md:w-[58%]" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/25" />
       </div>
 
-      <div className="container-shell relative z-10">
+      <div className="container-shell relative z-10 flex h-full items-center pb-16 pt-16 md:pb-20">
         <div className="max-w-xl space-y-6 md:space-y-7">
           <motion.h1
             className="font-serif text-5xl leading-[0.95] tracking-tight text-white sm:text-6xl md:text-7xl lg:text-[5.5rem]"
@@ -43,20 +58,15 @@ export function Hero() {
             transition={{ delay: 0.22, duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           >
             <Magnetic>
-              <Button href="/contact">Start a project</Button>
-            </Magnetic>
-            <Magnetic>
-              <Button
-                href="/#services"
-                variant="secondary"
-                className="border-white/25 text-white hover:bg-white/10"
-              >
-                View services
+              <Button type="button" onClick={() => setContactOpen(true)}>
+                Get in touch
               </Button>
             </Magnetic>
           </motion.div>
         </div>
       </div>
+
+      <ContactModal open={contactOpen} onClose={closeContact} />
     </section>
   );
 }
