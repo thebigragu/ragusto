@@ -1,6 +1,6 @@
 import { Hero } from "@/components/sections/Hero";
 
-/** Single-viewport hero — scroll only closes the laptop lid. */
+/** Single-viewport hero — no page scroll. */
 export default function Home() {
   return <Hero />;
 }

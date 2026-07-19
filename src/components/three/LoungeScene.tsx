@@ -22,11 +22,6 @@ const STUDIO_HDRI = "/hdri/studio_small_09_1k.hdr";
 const UI_W = 1280;
 const UI_H = 832;
 
-/** Display / lid assembly in macbook-m3-16.glb */
-const LID_NODE = "VCQqxpxkUlzqcJI_62";
-/** Radians from open resting pose → fully closed on the deck */
-const LID_CLOSE_RAD = 1.82;
-
 /** Soft specular glint on the screen — tracks pointer in UV space. */
 const screenGlint = { x: 0.55, y: 0.42 };
 
@@ -344,19 +339,11 @@ function tuneMacMaterials(
   });
 }
 
-/** Desk-planted MacBook — pointer/gyro tilt; scrollProgress closes the lid. */
-function HeroLaptop({
-  scrollProgress,
-  layout,
-}: {
-  scrollProgress: number;
-  layout: HeroLayout;
-}) {
+/** Desk-planted MacBook — pointer/gyro tilt like the earlier hero. */
+function HeroLaptop({ layout }: { layout: HeroLayout }) {
   const { scene: srcScene } = useGLTF(MACBOOK_MODEL);
   const scene = useMemo(() => srcScene.clone(true), [srcScene]);
   const group = useRef<THREE.Group>(null);
-  const lid = useRef<THREE.Object3D | null>(null);
-  const lidAngle = useRef(0);
   const chassis = useRef<ChassisMat[]>([]);
   const motion = useRef({ rotY: 0, rotX: 0, posX: 0, posY: 0, posZ: 0, scale: 1 });
   const { input, isCoarse } = usePointerFieldContext();
@@ -364,11 +351,6 @@ function HeroLaptop({
 
   useEffect(() => {
     tuneMacMaterials(scene, screenTex, chassis.current);
-    lid.current = scene.getObjectByName(LID_NODE) ?? null;
-    if (lid.current) {
-      lid.current.rotation.order = "XYZ";
-      lidAngle.current = lid.current.rotation.x;
-    }
     scene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
         // Keep metallic reflections; skip mesh shadows so the deck stays clean
@@ -422,13 +404,6 @@ function HeroLaptop({
     group.current.rotation.set(m.rotX, m.rotY, 0);
     group.current.position.set(m.posX, m.posY, m.posZ);
     group.current.scale.setScalar(m.scale);
-
-    // Scroll → lid closes onto the keyboard
-    if (lid.current) {
-      const targetLid = LID_CLOSE_RAD * scrollProgress;
-      lidAngle.current = expSmooth(lidAngle.current, targetLid, 14, dt);
-      lid.current.rotation.x = lidAngle.current;
-    }
 
     const side = (px + 1) * 0.5;
     for (const entry of chassis.current) {
@@ -516,13 +491,7 @@ function MatchCamera({ layout }: { layout: HeroLayout }) {
   return null;
 }
 
-export function LoungeScene({
-  scrollProgress = 0,
-  layout,
-}: {
-  scrollProgress?: number;
-  layout: HeroLayout;
-}) {
+export function LoungeScene({ layout }: { layout: HeroLayout }) {
   const y = layout.laptopBaseY;
 
   return (
@@ -545,7 +514,7 @@ export function LoungeScene({
       <CursorKeyLight layout={layout} />
 
       <MatchCamera layout={layout} />
-      <HeroLaptop scrollProgress={scrollProgress} layout={layout} />
+      <HeroLaptop layout={layout} />
 
       <ContactShadows
         position={[layout.shadowX, y + HERO_Y_FROM_BASE.shadow, 0.08]}
