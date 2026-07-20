@@ -45,7 +45,7 @@ function roundRect(
 }
 
 function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: number) {
-  // Arcform Overview — richer, more vivid UI colors (not emissive wash)
+  // Ragusto Overview — richer, more vivid UI colors (not emissive wash)
   ctx.fillStyle = "#171a22";
   ctx.fillRect(0, 0, w, h);
 
@@ -69,7 +69,7 @@ function paintAppUI(ctx: CanvasRenderingContext2D, w: number, h: number, t: numb
   ctx.fillRect(64, 0, w - 64, 56);
   ctx.fillStyle = "#ffffff";
   ctx.font = "600 15px system-ui,sans-serif";
-  ctx.fillText("ARCFORM", 84, 34);
+  ctx.fillText("RAGUSTO", 84, 34);
   ctx.fillStyle = "#a8b4c8";
   ctx.font = "12px system-ui,sans-serif";
   ctx.fillText("Overview", 180, 34);

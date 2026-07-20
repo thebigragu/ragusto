@@ -45,7 +45,7 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
-          Arcform
+          Ragusto
         </motion.p>
         <div className="h-px w-full overflow-hidden bg-border">
           <motion.div

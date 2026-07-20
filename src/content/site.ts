@@ -12,7 +12,7 @@ export const faqs: Faq[] = [
   {
     question: "Do you build both websites and applications?",
     answer:
-      "Yes. Arcform covers cinematic marketing sites, SaaS products, dashboards, AI integrations, and full custom platforms — often as one continuous engagement.",
+      "Yes. Ragusto covers cinematic marketing sites, SaaS products, dashboards, AI integrations, and full custom platforms — often as one continuous engagement.",
   },
   {
     question: "How long does a typical engagement take?",
@@ -39,7 +39,7 @@ export const faqs: Faq[] = [
 export const testimonials = [
   {
     quote:
-      "Arcform turned a tangled product story into a platform that finally felt as sharp as the engineering behind it. Investors and customers both noticed.",
+      "Ragusto turned a tangled product story into a platform that finally felt as sharp as the engineering behind it. Investors and customers both noticed.",
     name: "Maya Chen",
     role: "CEO, Signal Analytics",
   },

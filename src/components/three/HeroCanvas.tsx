@@ -63,7 +63,7 @@ function HeroPlate() {
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
           revision="10"
-          alt="Arcform cinematic design studio"
+          alt="Ragusto AI web design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
       </ParallaxPlate>
@@ -99,7 +99,7 @@ export function HeroCanvas() {
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
           revision="10"
-          alt="Arcform cinematic design studio"
+          alt="Ragusto AI web design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
       </div>
@@ -132,7 +132,7 @@ export function HeroCanvas() {
           poster="/videos/hero-desk-loop-poster.jpg"
           priority
           revision="10"
-          alt="Arcform cinematic design studio"
+          alt="Ragusto AI web design studio"
           videoClassName={HERO_VIDEO_CLASS}
         />
       )}

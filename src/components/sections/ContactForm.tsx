@@ -54,7 +54,7 @@ export function ContactForm() {
     // Client-side stub until Resend/SMTP is wired.
     // Opens a prepared mailto as a reliable fallback.
     const subject = encodeURIComponent(
-      `Arcform project inquiry — ${String(form.get("name"))}`,
+      `Ragusto project inquiry — ${String(form.get("name"))}`,
     );
     const body = encodeURIComponent(
       [

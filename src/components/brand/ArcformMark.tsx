@@ -83,7 +83,7 @@ export function ArcformWordmark({
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <ArcformMark size={markSize} />
-      <span className={cn("font-display tracking-tight", textClassName)}>Arcform</span>
+      <span className={cn("font-display tracking-tight", textClassName)}>Ragusto</span>
     </span>
   );
 }

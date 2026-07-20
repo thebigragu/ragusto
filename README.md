@@ -1,6 +1,6 @@
-# Arcform
+# Ragusto
 
-Luxury digital studio — cinematic single-page site with Blender-authored 3D lounge hero.
+AI web design and app creation — cinematic single-page site with a WebGL MacBook hero.
 
 ## Stack
 
@@ -8,14 +8,6 @@ Luxury digital studio — cinematic single-page site with Blender-authored 3D lo
 - React Three Fiber / Drei / postprocessing
 - Framer Motion + Lenis
 - Blender headless model pipeline
-
-## 3D pipeline
-
-```bash
-npm run models:lounge
-```
-
-Builds `public/models/arcform-lounge.glb` (room, table, holographic screen frames). The Poly Haven armchair loads separately in the hero. Screen meshes named `Screen_A/B/C` get live canvas UI textures in R3F (waveforms, logs, bars).
 
 ## Develop
 

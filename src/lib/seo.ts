@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 
 export const SITE = {
-  name: "Arcform",
-  tagline: "Engineering digital products that scale.",
+  name: "Ragusto",
+  tagline: "AI web design and app creation.",
   heroLine: "Digital experiences, crafted with clarity and purpose.",
   description:
-    "Arcform is a luxury digital studio building AI systems, custom applications, and cinematic web experiences with atelier-level craft.",
-  url: "https://arcform.dev",
-  email: "hello@arcform.dev",
-  twitter: "@arcform",
+    "Ragusto is an AI web design and app creation studio building cinematic sites, custom applications, and product experiences with atelier-level craft.",
+  url: "https://ragusto.com",
+  email: "hello@ragusto.com",
+  twitter: "@ragusto",
 } as const;
 
 export const defaultMetadata: Metadata = {
@@ -20,13 +20,14 @@ export const defaultMetadata: Metadata = {
   description: SITE.description,
   applicationName: SITE.name,
   keywords: [
+    "AI web design",
     "AI application development",
     "custom software",
     "web design",
     "full stack development",
     "SaaS",
     "UI/UX design",
-    "business automation",
+    "app creation",
   ],
   authors: [{ name: SITE.name }],
   creator: SITE.name,
@@ -61,11 +62,13 @@ export function organizationSchema() {
     slogan: SITE.tagline,
     areaServed: "Worldwide",
     serviceType: [
+      "AI Web Design",
       "AI Application Development",
       "Custom Software",
       "Web Design",
       "Full Stack Development",
       "UI/UX Design",
+      "App Creation",
     ],
   };
 }
