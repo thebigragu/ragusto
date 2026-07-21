@@ -804,17 +804,26 @@ function BeatCard({
               }}
             />
 
-            {/* Chrome rim — inset only, no outer glow */}
-            <div
+            {/* Gold breathing border */}
+            <motion.div
               aria-hidden
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: radius,
                 boxShadow: `
-                  inset 0 0 0 1px rgba(255,248,230,0.4),
-                  inset 0 0 0 2px rgba(0,0,0,0.3)
+                  inset 0 0 0 1px rgba(196,165,116,0.55),
+                  0 0 0 1px rgba(196,165,116,0.4)
                 `,
               }}
+              animate={{
+                opacity: [0.4, 0.95, 0.4],
+                boxShadow: [
+                  "inset 0 0 0 1px rgba(196,165,116,0.35), 0 0 0 1px rgba(196,165,116,0.22)",
+                  "inset 0 0 0 1px rgba(240,226,196,0.75), 0 0 0 1px rgba(196,165,116,0.55)",
+                  "inset 0 0 0 1px rgba(196,165,116,0.35), 0 0 0 1px rgba(196,165,116,0.22)",
+                ],
+              }}
+              transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
             />
 
             {/* Traveling specular sheen — clipped, no blur spill */}
