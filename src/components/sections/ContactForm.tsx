@@ -14,14 +14,6 @@ const projectTypes = [
   "Not sure yet",
 ];
 
-const budgets = [
-  "Under $15k",
-  "$15k – $40k",
-  "$40k – $80k",
-  "$80k+",
-  "Prefer to discuss",
-];
-
 type Status = "idle" | "submitting" | "success" | "error";
 
 export function ContactForm() {
@@ -62,7 +54,6 @@ export function ContactForm() {
         `Email: ${form.get("email")}`,
         `Company: ${form.get("company") || "—"}`,
         `Project type: ${form.get("projectType")}`,
-        `Budget: ${form.get("budget")}`,
         "",
         String(form.get("message")),
       ].join("\n"),
@@ -128,26 +119,15 @@ export function ContactForm() {
         <input name="company" className={inputClass} placeholder="Optional" />
       </Field>
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Project type">
-          <select name="projectType" className={inputClass} defaultValue={projectTypes[0]}>
-            {projectTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Budget range">
-          <select name="budget" className={inputClass} defaultValue={budgets[4]}>
-            {budgets.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
+      <Field label="Project type">
+        <select name="projectType" className={inputClass} defaultValue={projectTypes[0]}>
+          {projectTypes.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </Field>
 
       <Field label="Project details" error={errors.message}>
         <textarea

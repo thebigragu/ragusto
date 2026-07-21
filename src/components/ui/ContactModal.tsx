@@ -40,7 +40,7 @@ export function ContactModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="contact-modal-title"
-            className="relative z-10 max-h-[min(94svh,960px)] w-full max-w-4xl overflow-hidden rounded-3xl border border-white/10 bg-[#12141a]/95 p-8 shadow-2xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark md:max-w-5xl md:p-12"
+            className="relative z-10 max-h-[min(94svh,960px)] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-3xl border border-white/10 bg-[#12141a]/95 p-8 shadow-2xl dark md:max-w-5xl md:overflow-hidden md:p-12 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
