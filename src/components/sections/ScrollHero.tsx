@@ -693,49 +693,36 @@ function BeatCard({
         />
 
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Back plate — present but soft-edged; less descriptive than the front */}
+          {/* Soft rear plane — no CSS blur (blur paints a rectangular ghost when yawing) */}
+          <div
+            aria-hidden
+            className="absolute inset-[3px]"
+            style={{
+              ...faceStyle,
+              background: `radial-gradient(ellipse 80% 74% at 50% 46%,
+                rgba(48,50,58,0.72) 0%,
+                rgba(24,26,32,0.45) 48%,
+                rgba(10,11,14,0.18) 78%,
+                transparent 100%)`,
+              transform: `translateZ(${-halfT}px)`,
+              opacity: 0.75,
+            }}
+          />
+
+          {/* Single mid-depth fill — bridges volume without stacked rectangular slabs */}
           <div
             aria-hidden
             className="absolute inset-[2px]"
             style={{
               ...faceStyle,
-              background: `radial-gradient(ellipse 78% 72% at 50% 45%,
-                rgba(56,58,66,0.92) 0%,
-                rgba(28,30,36,0.78) 42%,
-                rgba(12,13,16,0.45) 72%,
-                rgba(8,9,11,0.15) 100%)`,
-              boxShadow: "inset 0 0 48px rgba(0,0,0,0.55)",
-              filter: "blur(1.4px)",
-              opacity: 0.82,
-              transform: `translateZ(${-halfT}px)`,
+              background: `linear-gradient(180deg,
+                ${v.depthTint.replace(/[\d.]+\)$/, "0.16)")} 0%,
+                rgba(24,26,32,0.88) 45%,
+                rgba(10,11,14,0.55) 100%)`,
+              transform: "translateZ(0px)",
+              opacity: 0.9,
             }}
           />
-
-          {/* Depth bridge slabs — solid prism core that eases toward the rear */}
-          {(
-            [
-              [0.42, 0.95, "0px"],
-              [0.12, 0.78, "1px"],
-              [-0.22, 0.5, "2px"],
-              [-0.52, 0.28, "3px"],
-            ] as const
-          ).map(([zFrac, alpha, inset]) => (
-            <div
-              key={zFrac}
-              aria-hidden
-              className="absolute"
-              style={{
-                inset,
-                borderRadius: radius,
-                background: `linear-gradient(180deg,
-                  ${v.depthTint.replace(/[\d.]+\)$/, `${0.18 * alpha})`)} 0%,
-                  rgba(28,30,36,${0.95 * alpha}) 40%,
-                  rgba(10,11,14,${0.75 * alpha}) 100%)`,
-                transform: `translateZ(${halfT * zFrac}px)`,
-                backfaceVisibility: "hidden",
-              }}
-            />
-          ))}
 
           {/* Right wall — solid front connection, soft fade at rear */}
           <div
@@ -829,8 +816,7 @@ function BeatCard({
                   inset 0 -1px 0 rgba(0,0,0,0.5),
                   inset 18px 0 28px -18px rgba(255,248,230,0.08),
                   inset -18px 0 28px -18px rgba(0,0,0,0.35),
-                  0 0 0 1px ${v.rim},
-                  0 18px 36px rgba(0,0,0,0.4)
+                  0 0 0 1px ${v.rim}
                 `,
               }}
             />
