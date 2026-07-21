@@ -896,17 +896,16 @@ export function ScrollHero() {
 
   // Layout polish only — keep this off the video path so frames aren't lagged/bunched
   const sprungProgress = useSpring(scrollYProgress, {
-    stiffness: isMobile ? 260 : 200,
-    damping: isMobile ? 38 : 34,
-    mass: isMobile ? 0.12 : 0.14,
+    stiffness: isMobile ? 280 : 200,
+    damping: isMobile ? 36 : 34,
+    mass: isMobile ? 0.1 : 0.14,
     restDelta: 0.00005,
     restSpeed: 0.00005,
   });
-  const driveProgress = sprungProgress;
+  const driveProgress = isMobile ? scrollYProgress : sprungProgress;
 
-  // Video scrub: mobile eases toward scroll so flings play through frames;
-  // desktop stays 1:1 with Lenis wheel smoothing.
-  const videoProgressRaw = useTransform(scrollYProgress, (p) => {
+  // Video scrub tracks scroll directly on mobile (no soft spring lag)
+  const videoProgressRaw = useTransform(driveProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
     }
@@ -914,13 +913,13 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
   const videoProgressSmooth = useSpring(videoProgressRaw, {
-    stiffness: isMobile ? 110 : 400,
-    damping: isMobile ? 30 : 42,
-    mass: isMobile ? 0.32 : 0.08,
+    stiffness: 380,
+    damping: 42,
+    mass: 0.08,
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
-  const videoProgress = isMobile ? videoProgressSmooth : videoProgressRaw;
+  const videoProgress = isMobile ? videoProgressRaw : videoProgressSmooth;
 
   // Hero lifts only ~halfway — remaining lower frame stays visible under contact
   const stickyLift = useTransform(
@@ -1008,8 +1007,8 @@ export function ScrollHero() {
 
     /**
      * Both desktop + mobile assets are 24fps all-intra H.264 — every frame is a
-     * keyframe. On mobile, advance at most one frame per display tick so fast
-     * flicks play through the sequence instead of skipping.
+     * keyframe. Mobile allows a few frames per tick so flicks stay responsive
+     * without hard-skipping the whole scrub.
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
@@ -1023,9 +1022,9 @@ export function ScrollHero() {
       const prev = lastFrameIndex.current;
       if (prev >= 0 && isMobile) {
         const delta = targetFrame - prev;
-        // 1 frame / raf ≈ realtime playback ceiling during a fling catch-up
-        if (Math.abs(delta) > 1) {
-          frameIndex = prev + Math.sign(delta);
+        const maxStep = 3;
+        if (Math.abs(delta) > maxStep) {
+          frameIndex = prev + Math.sign(delta) * maxStep;
         }
       }
 
