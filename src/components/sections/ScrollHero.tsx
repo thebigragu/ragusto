@@ -219,7 +219,11 @@ function AsyncWord({
   return (
     <motion.span
       style={{ opacity, y, filter }}
-      className={`inline-block overflow-visible ${emph ? "px-[0.06em] pe-[0.28em] pb-[0.12em]" : "pe-[0.06em] pb-[0.08em]"}`}
+      className={`inline-block overflow-visible ${
+        emph
+          ? "px-[0.08em] pe-[0.38em] pt-[0.06em] pb-[0.14em]"
+          : "pe-[0.08em] pb-[0.1em]"
+      }`}
     >
       <span
         className={
@@ -287,9 +291,9 @@ function BeatCard({
     return 1;
   });
 
-  // Resting tilt so prism depth reads while held; exit flips/twists diagonally away
-  const restY = -exitDir * 16;
-  const restX = 7;
+  // Resting tilt so prism depth reads while held; keep mild so type stays clear of folds
+  const restY = -exitDir * 10;
+  const restX = 5;
 
   // Diagonal opposite orbit: left → up/right, right → up/left
   const orbitX = useTransform(progress, (p) => {
@@ -558,13 +562,17 @@ function BeatCard({
             />
 
             <div
-              className="relative overflow-visible px-7 py-7 md:px-10 md:py-9"
+              className={`relative overflow-visible py-8 md:py-10 ${
+                beat.side === "left"
+                  ? "ps-7 pe-11 md:ps-10 md:pe-14"
+                  : "ps-11 pe-7 md:ps-14 md:pe-10"
+              }`}
               style={{ transform: `translateZ(${T * 0.45}px)` }}
             >
-              <p className="overflow-visible font-serif text-3xl leading-[1.35] tracking-normal text-white sm:text-4xl md:text-[2.75rem] md:leading-[1.32]">
+              <p className="overflow-visible font-serif text-3xl leading-[1.4] tracking-normal text-white sm:text-4xl md:text-[2.75rem] md:leading-[1.38]">
                 {beat.words.map((w, i) => (
                   <span key={`${w.t}-${i}`} className="inline overflow-visible">
-                    {i > 0 ? " " : null}
+                    {i > 0 ? "\u00A0" : null}
                     <AsyncWord
                       text={w.t}
                       emph={w.emph}
@@ -576,7 +584,7 @@ function BeatCard({
                   </span>
                 ))}
               </p>
-              <p className="mt-3.5 overflow-visible text-sm tracking-[0.18em] text-white/60 uppercase md:text-[0.95rem] md:leading-relaxed">
+              <p className="mt-4 overflow-visible text-sm tracking-[0.16em] text-white/60 uppercase md:text-[0.95rem] md:leading-relaxed">
                 {subTokens.map((part, i) => {
                   if (/^\s+$/.test(part)) return <span key={i}>{part}</span>;
                   const clean = part.replace(/[.—,]/g, "");
