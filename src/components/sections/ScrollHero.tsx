@@ -547,15 +547,16 @@ function BeatCard({
     return 0;
   });
 
-  // Wide soft band — no hard specular spike
+  // Wide metallic specular band
   const shimmerBackground = useMotionTemplate`linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
       transparent ${shimmerPos}%,
-      rgba(255,255,255,0.03) calc(${shimmerPos}% + 4%),
-      rgba(255,255,255,0.14) calc(${shimmerPos}% + 12%),
-      rgba(240,226,196,0.1) calc(${shimmerPos}% + 18%),
-      rgba(255,255,255,0.05) calc(${shimmerPos}% + 26%),
-      transparent calc(${shimmerPos}% + 36%),
+      rgba(255,255,255,0.05) calc(${shimmerPos}% + 3%),
+      rgba(255,252,245,0.55) calc(${shimmerPos}% + 10%),
+      rgba(240,226,196,0.42) calc(${shimmerPos}% + 16%),
+      rgba(196,165,116,0.28) calc(${shimmerPos}% + 22%),
+      rgba(255,255,255,0.12) calc(${shimmerPos}% + 28%),
+      transparent calc(${shimmerPos}% + 38%),
       transparent 100%)`;
 
   const sideClass = isMobile
@@ -567,32 +568,64 @@ function BeatCard({
   const radius = isMobile ? "1.05rem" : v.radius;
   // Tiny inset only — sides must meet the rounded faces to read as one volume
   const edgeInset = isMobile ? 3 : 4;
-  const softGlow = v.edgeGlow.replace(/[\d.]+\)$/, "0.35)");
-  // Continuous metal: bright at the front lip → mid body → solid rear (matches back plate)
+  const softGlow = v.edgeGlow.replace(/[\d.]+\)$/, "0.45)");
+  // Continuous metal: bright chrome lip → brass body → dark steel rear
   const metalRight = `linear-gradient(90deg,
-    rgba(255,248,230,0.95) 0%,
-    ${v.depthTint} 12%,
-    ${v.edgeGlow} 28%,
-    rgba(120,100,72,0.75) 48%,
-    rgba(36,34,40,0.92) 72%,
-    rgba(12,12,16,0.98) 100%)`;
+    rgba(255,252,245,1) 0%,
+    rgba(236,220,180,0.98) 8%,
+    ${v.depthTint} 18%,
+    ${v.edgeGlow} 32%,
+    rgba(140,118,78,0.95) 48%,
+    rgba(72,64,52,1) 68%,
+    rgba(28,26,30,1) 86%,
+    rgba(10,10,12,1) 100%)`;
   const metalLeft = `linear-gradient(270deg,
-    rgba(255,248,230,0.7) 0%,
+    rgba(255,250,240,0.92) 0%,
     ${v.depthTint} 14%,
-    rgba(100,88,70,0.7) 40%,
-    rgba(28,28,34,0.92) 72%,
-    rgba(10,10,14,0.98) 100%)`;
+    rgba(160,135,90,0.9) 34%,
+    rgba(70,62,50,1) 58%,
+    rgba(24,24,28,1) 82%,
+    rgba(8,8,10,1) 100%)`;
   const metalTop = `linear-gradient(0deg,
-    rgba(255,252,240,0.98) 0%,
-    ${v.depthTint} 16%,
-    ${v.edgeGlow} 36%,
-    rgba(70,60,48,0.7) 62%,
-    rgba(18,18,22,0.96) 100%)`;
+    rgba(255,255,250,1) 0%,
+    rgba(245,235,210,1) 10%,
+    ${v.depthTint} 22%,
+    ${v.edgeGlow} 40%,
+    rgba(110,95,68,0.95) 62%,
+    rgba(32,30,34,1) 88%,
+    rgba(12,12,14,1) 100%)`;
   const metalBottom = `linear-gradient(180deg,
-    rgba(255,248,230,0.35) 0%,
-    rgba(60,54,46,0.75) 30%,
-    rgba(22,22,28,0.94) 70%,
-    rgba(10,10,14,0.98) 100%)`;
+    rgba(255,248,230,0.55) 0%,
+    rgba(90,78,58,0.95) 22%,
+    rgba(36,34,38,1) 55%,
+    rgba(14,14,16,1) 100%)`;
+
+  // Front face: solid brushed metal (steel body + gold specular bands)
+  const faceMetal = `
+    linear-gradient(118deg,
+      transparent 0%,
+      rgba(255,255,255,0.22) 12%,
+      transparent 22%,
+      transparent 48%,
+      rgba(240,226,196,0.18) 61%,
+      transparent 74%),
+    linear-gradient(155deg,
+      rgba(210,205,198,1) 0%,
+      rgba(120,118,122,1) 14%,
+      ${v.glass} 32%,
+      rgba(42,44,50,1) 52%,
+      rgba(18,19,22,1) 78%,
+      rgba(8,9,11,1) 100%)
+  `;
+  const faceMetalSheen = `
+    linear-gradient(${v.shimmerAngle}deg,
+      transparent 0%,
+      rgba(255,255,255,0.08) 28%,
+      rgba(255,248,230,0.28) 46%,
+      rgba(196,165,116,0.2) 52%,
+      rgba(255,255,255,0.06) 58%,
+      transparent 78%)
+  `;
 
   const faceStyle: CSSProperties = {
     borderRadius: radius,
@@ -649,17 +682,18 @@ function BeatCard({
         />
 
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Back plate — solid slab */}
+          {/* Back plate — brushed steel */}
           <div
             aria-hidden
             className="absolute inset-0"
             style={{
               ...faceStyle,
               background: `linear-gradient(165deg,
-                rgba(48,50,58,1) 0%,
-                ${v.glass} 45%,
+                rgba(88,90,98,1) 0%,
+                rgba(42,44,50,1) 35%,
+                ${v.glass} 60%,
                 rgba(6,7,10,1) 100%)`,
-              boxShadow: `inset 0 0 36px rgba(0,0,0,0.55), 0 0 0 1px ${v.rim}`,
+              boxShadow: `inset 0 0 40px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px ${v.rim}`,
               transform: `translateZ(${-halfT}px)`,
             }}
           />
@@ -671,8 +705,8 @@ function BeatCard({
             style={{
               borderRadius: radius,
               background: `linear-gradient(180deg,
-                ${v.depthTint.replace(/[\d.]+\)$/, "0.22)")} 0%,
-                rgba(18,20,26,0.98) 50%,
+                ${v.depthTint.replace(/[\d.]+\)$/, "0.28)")} 0%,
+                rgba(24,24,28,1) 45%,
                 rgba(8,9,12,1) 100%)`,
               transform: "translateZ(0px)",
               backfaceVisibility: "hidden",
@@ -689,7 +723,7 @@ function BeatCard({
               transform: `translateZ(${-halfT}px) rotateY(-90deg)`,
               borderRadius: 2,
               background: metalRight,
-              boxShadow: `inset 0 0 12px rgba(255,255,255,0.12), 0 0 10px ${v.edgeGlow}`,
+              boxShadow: `inset 0 0 16px rgba(255,252,240,0.28), inset 0 0 6px rgba(196,165,116,0.35), 0 0 14px ${v.edgeGlow}`,
             }}
           />
 
@@ -703,7 +737,7 @@ function BeatCard({
               transform: `translateZ(${-halfT}px) rotateY(90deg)`,
               borderRadius: 2,
               background: metalLeft,
-              boxShadow: "inset 0 0 10px rgba(255,255,255,0.06)",
+              boxShadow: "inset 0 0 12px rgba(255,255,255,0.12)",
             }}
           />
 
@@ -720,7 +754,7 @@ function BeatCard({
               transform: `translateZ(${-halfT}px) rotateX(90deg)`,
               borderRadius: 2,
               background: metalTop,
-              boxShadow: `inset 0 0 14px rgba(255,255,255,0.18), 0 0 8px ${v.edgeGlow}`,
+              boxShadow: `inset 0 0 18px rgba(255,252,240,0.35), 0 0 12px ${v.edgeGlow}`,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
@@ -751,41 +785,52 @@ function BeatCard({
               transformStyle: "preserve-3d",
             }}
           >
-            {/* Front face — solid polished slab with a soft highlight wash */}
+            {/* Front face — brushed metal slab */}
             <div
               aria-hidden
               className="absolute inset-0 overflow-hidden"
               style={{
                 ...faceStyle,
-                background: `linear-gradient(155deg,
-                  rgba(255,255,255,0.14) 0%,
-                  ${v.glass} 22%,
-                  rgba(14,16,20,1) 62%,
-                  rgba(6,7,10,1) 100%)`,
+                background: faceMetal,
                 boxShadow: `
-                  inset 0 1px 0 rgba(255,255,255,0.18),
-                  inset 0 -1px 0 rgba(0,0,0,0.45),
-                  inset 18px 0 28px -18px rgba(255,255,255,0.06),
-                  inset -18px 0 28px -18px rgba(0,0,0,0.35),
+                  inset 0 1px 0 rgba(255,255,255,0.38),
+                  inset 0 -1px 0 rgba(0,0,0,0.55),
+                  inset 22px 0 36px -20px rgba(255,248,230,0.12),
+                  inset -22px 0 36px -20px rgba(0,0,0,0.4),
                   0 0 0 1px ${v.rim},
-                  0 28px 64px rgba(0,0,0,0.5),
-                  0 0 48px ${softGlow}
+                  0 28px 64px rgba(0,0,0,0.55),
+                  0 0 56px ${softGlow}
                 `,
               }}
             />
 
-            {/* Thin metallic rim only */}
+            {/* Resting metallic specular wash */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 overflow-hidden"
+              style={{
+                borderRadius: radius,
+                background: faceMetalSheen,
+                mixBlendMode: "overlay",
+                opacity: 0.85,
+              }}
+            />
+
+            {/* Chrome rim — bright outer lip + dark inner bevel */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: radius,
-                boxShadow: `inset 0 0 0 1px ${v.rim}`,
-                opacity: 0.75,
+                boxShadow: `
+                  inset 0 0 0 1px rgba(255,248,230,0.45),
+                  inset 0 0 0 2px rgba(0,0,0,0.35),
+                  0 0 0 1px ${v.rim}
+                `,
               }}
             />
 
-            {/* Edge-only sheen travel */}
+            {/* Traveling specular sheen */}
             <motion.div
               aria-hidden
               className="pointer-events-none absolute inset-0"
@@ -793,14 +838,10 @@ function BeatCard({
                 opacity: shimmerOpacity,
                 borderRadius: radius,
                 background: shimmerBackground,
-                mixBlendMode: "soft-light",
-                filter: "blur(8px)",
+                mixBlendMode: "screen",
+                filter: "blur(5px)",
                 transform: shimmerLayerTransform,
                 transformStyle: "preserve-3d",
-                maskImage:
-                  "radial-gradient(ellipse 70% 65% at 50% 50%, transparent 0%, transparent 55%, black 78%, black 100%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 70% 65% at 50% 50%, transparent 0%, transparent 55%, black 78%, black 100%)",
               }}
             />
 
