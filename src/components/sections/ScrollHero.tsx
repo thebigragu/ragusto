@@ -770,7 +770,7 @@ export function ScrollHero() {
           </p>
           <h2 className="mt-5 font-serif text-4xl tracking-tight text-white md:text-6xl lg:text-7xl">
             Ready to build something{" "}
-            <span className="bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text italic text-transparent">
+            <span className="inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text pe-[0.18em] italic text-transparent">
               exceptional
             </span>
             ?
