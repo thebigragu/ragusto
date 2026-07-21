@@ -1116,38 +1116,51 @@ export function ScrollHero() {
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
     ["0%", "-28%", "-50%"],
   );
+  // Dark join wash — delayed + long ramp so it arrives with contact, not ahead of it
   const featherOpacity = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START - 0.06, SCRUB_HANDOFF_START + 0.08, 1],
-    [0, 0.4, 0.55],
+    [
+      SCRUB_HANDOFF_START,
+      SCRUB_HANDOFF_START + 0.08,
+      SCRUB_HANDOFF_START + 0.16,
+      0.96,
+      1,
+    ],
+    [0, 0.12, 0.32, 0.5, 0.55],
   );
-  // Mask stays fully opaque through the scrub so the video isn’t pre-dimmed;
-  // bottom feather only dissolves in as contact approaches.
+  // Mask stays fully solid until contact begins, then dissolves the bottom gradually
   const heroMask = useTransform(
     driveProgress,
-    [0, SCRUB_HANDOFF_START - 0.08, SCRUB_HANDOFF_START + 0.06, 1],
+    [
+      0,
+      SCRUB_HANDOFF_START,
+      SCRUB_HANDOFF_START + 0.1,
+      SCRUB_HANDOFF_START + 0.18,
+      1,
+    ],
     [
       "linear-gradient(to bottom, #000 0%, #000 100%, #000 100%, #000 100%, #000 100%, #000 100%)",
       "linear-gradient(to bottom, #000 0%, #000 100%, #000 100%, #000 100%, #000 100%, #000 100%)",
-      "linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,0.85) 58%, rgba(0,0,0,0.45) 74%, rgba(0,0,0,0.12) 88%, transparent 100%)",
+      "linear-gradient(to bottom, #000 0%, #000 72%, rgba(0,0,0,0.92) 84%, rgba(0,0,0,0.55) 93%, rgba(0,0,0,0.18) 98%, transparent 100%)",
+      "linear-gradient(to bottom, #000 0%, #000 52%, rgba(0,0,0,0.88) 68%, rgba(0,0,0,0.5) 82%, rgba(0,0,0,0.15) 93%, transparent 100%)",
       "linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,0.85) 58%, rgba(0,0,0,0.45) 74%, rgba(0,0,0,0.12) 88%, transparent 100%)",
     ],
   );
   const videoFade = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
-    [1, 0.85, 0.7],
+    [SCRUB_HANDOFF_START + 0.04, SCRUB_HANDOFF_START + 0.18, 1],
+    [1, 0.88, 0.72],
   );
   // Contact parallax: rises into the lower half only (never into the upper hero band)
   const contactParallax = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
-    ["42vh", "12vh", "0vh"],
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
+    ["42vh", "10vh", "0vh"],
   );
   const contactOpacity = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START - 0.02, SCRUB_HANDOFF_START + 0.08, 1],
-    [0, 1, 1],
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, SCRUB_HANDOFF_START + 0.18, 1],
+    [0, 0.55, 1, 1],
   );
 
   useMotionValueEvent(videoProgress, "change", (p) => {
@@ -1326,13 +1339,13 @@ export function ScrollHero() {
               isMobile={isMobile}
             />
 
-            {/* Soft darkening toward the join — still on the hero layer only */}
+            {/* Soft darkening toward the join — eases in with contact */}
             <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[48%] md:h-[50%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[42%] md:h-[44%]"
               style={{
                 opacity: featherOpacity,
                 background:
-                  "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.1) 35%, rgba(8,9,11,0.35) 65%, rgba(8,9,11,0.55) 100%)",
+                  "linear-gradient(to bottom, transparent 0%, transparent 18%, rgba(8,9,11,0.08) 42%, rgba(8,9,11,0.28) 70%, rgba(8,9,11,0.5) 100%)",
               }}
             />
           </motion.div>
