@@ -337,15 +337,17 @@ function BeatCard({
   const depthOnLeft = beat.side === "left";
 
   const enterY = useTransform(progress, (p) => {
+    // Numeric px only — string units (vh) crash mobile WAAPI via Framer bindings
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
     const t = beatT(p, beat);
-    if (p < beat.start) return isMobile ? "70vh" : "110vh";
-    if (p >= beat.end) return isMobile ? "-30vh" : "-40vh";
+    if (p < beat.start) return isMobile ? 0.7 * vh : 1.1 * vh;
+    if (p >= beat.end) return isMobile ? -0.3 * vh : -0.4 * vh;
     if (t < ENTER_END) {
       const eased = smoothstep(t / ENTER_END);
-      const from = isMobile ? 70 : 110;
-      return `${from - from * eased}vh`;
+      const from = isMobile ? 0.7 * vh : 1.1 * vh;
+      return from - from * eased;
     }
-    return "0vh";
+    return 0;
   });
 
   const opacity = useTransform(progress, (p) => {
@@ -1012,19 +1014,29 @@ export function ScrollHero() {
   const videoProgress = isMobile ? videoProgressRaw : videoProgressSmooth;
 
   // Hero lifts only ~halfway — remaining lower frame stays visible under contact
-  const stickyLift = useTransform(
-    driveProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
-    ["0%", "-28%", "-50%"],
-  );
+  // Numeric px — percentage strings crash mobile Chromium WAAPI
+  const stickyLift = useTransform(driveProgress, (p) => {
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const a = SCRUB_HANDOFF_START;
+    const b = SCRUB_HANDOFF_START + 0.12;
+    if (p <= a) return 0;
+    if (p >= 1) return -0.5 * vh;
+    if (p <= b) {
+      const t = smoothstep((p - a) / (b - a));
+      return -0.28 * vh * t;
+    }
+    const t = smoothstep((p - b) / (1 - b));
+    return (-0.28 + (-0.5 + 0.28) * t) * vh;
+  });
   // Dark join wash — taller + denser so contact copy sits on a dark field
+  // Input offsets MUST be strictly increasing (mobile WAAPI crashes otherwise)
   const featherOpacity = useTransform(
     driveProgress,
     [
       SCRUB_HANDOFF_START + 0.06,
       SCRUB_HANDOFF_START + 0.12,
-      SCRUB_HANDOFF_START + 0.18,
       0.92,
+      0.96,
       1,
     ],
     [0, 0.08, 0.22, 0.48, 0.58],
@@ -1056,11 +1068,22 @@ export function ScrollHero() {
   );
   // Contact parallax: rises into the lower half only (never into the upper hero band)
   // Mobile settles a bit higher so copy sits nearer mid-viewport
-  const contactParallax = useTransform(
-    driveProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
-    isMobile ? ["36vh", "4vh", "-8vh"] : ["42vh", "10vh", "0vh"],
-  );
+  const contactParallax = useTransform(driveProgress, (p) => {
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const a = SCRUB_HANDOFF_START;
+    const b = SCRUB_HANDOFF_START + 0.14;
+    const from = (isMobile ? 0.36 : 0.42) * vh;
+    const mid = (isMobile ? 0.04 : 0.1) * vh;
+    const to = (isMobile ? -0.08 : 0) * vh;
+    if (p <= a) return from;
+    if (p >= 1) return to;
+    if (p <= b) {
+      const t = smoothstep((p - a) / (b - a));
+      return from + (mid - from) * t;
+    }
+    const t = smoothstep((p - b) / (1 - b));
+    return mid + (to - mid) * t;
+  });
   const contactOpacity = useTransform(
     driveProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, SCRUB_HANDOFF_START + 0.2, 1],
