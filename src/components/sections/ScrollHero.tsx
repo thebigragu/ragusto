@@ -925,7 +925,7 @@ export function ScrollHero() {
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
     ["0%", "-28%", "-50%"],
   );
-  // Dark join wash — very long, quiet ramp (barely perceptible until late)
+  // Dark join wash — taller + denser so contact copy sits on a dark field
   const featherOpacity = useTransform(
     driveProgress,
     [
@@ -935,7 +935,7 @@ export function ScrollHero() {
       0.92,
       1,
     ],
-    [0, 0.05, 0.14, 0.28, 0.36],
+    [0, 0.08, 0.22, 0.48, 0.58],
   );
   // Mask dissolves only the tip at first, then slowly opens — no hard step
   const heroMask = useTransform(
@@ -1172,13 +1172,13 @@ export function ScrollHero() {
               isMobile={isMobile}
             />
 
-            {/* Soft darkening toward the join — quiet, late, low contrast */}
+            {/* Soft darkening toward the join — taller field behind contact / Begin */}
             <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[34%] md:h-[36%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[52%] md:h-[56%]"
               style={{
                 opacity: featherOpacity,
                 background:
-                  "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(8,9,11,0.06) 58%, rgba(8,9,11,0.16) 78%, rgba(8,9,11,0.32) 100%)",
+                  "linear-gradient(to bottom, transparent 0%, transparent 18%, rgba(8,9,11,0.1) 38%, rgba(8,9,11,0.28) 55%, rgba(8,9,11,0.55) 72%, rgba(8,9,11,0.78) 88%, rgba(8,9,11,0.92) 100%)",
               }}
             />
           </motion.div>
@@ -1194,13 +1194,13 @@ export function ScrollHero() {
             className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[46dvh] flex-col justify-end px-5 pb-6 md:max-h-[58dvh] md:px-6 md:pb-12"
             style={{ y: contactParallax, opacity: contactOpacity }}
           >
-            {/* Background fades slower than the copy — soft join, not a hard band */}
+            {/* Tall dark backdrop — solid field behind Begin / headline */}
             <motion.div
               className="pointer-events-none absolute inset-x-0 bottom-0 top-0"
               style={{
                 opacity: contactBgOpacity,
                 background:
-                  "linear-gradient(to bottom, transparent 0%, transparent 22%, rgba(8,9,11,0.08) 40%, rgba(8,9,11,0.32) 58%, rgba(8,9,11,0.7) 76%, #08090b 92%, #08090b 100%)",
+                  "linear-gradient(to bottom, transparent 0%, transparent 8%, rgba(8,9,11,0.12) 22%, rgba(8,9,11,0.45) 38%, rgba(8,9,11,0.78) 52%, #08090b 68%, #08090b 100%)",
               }}
             />
             <motion.div
