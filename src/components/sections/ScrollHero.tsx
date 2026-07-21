@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { ContactModal } from "@/components/ui/ContactModal";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { useIsMobile } from "@/hooks/useIsMobile";
+import { useHeroMobileVideo, useIsMobile } from "@/hooks/useIsMobile";
 import { SITE } from "@/lib/seo";
 import {
   motion,
@@ -884,7 +884,10 @@ export function ScrollHero() {
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
-  const videoSrc = isMobile ? "/videos/hero-kling-mobile.mp4" : "/videos/hero-kling.mp4";
+  const useMobileVideo = useHeroMobileVideo();
+  const videoSrc = useMobileVideo
+    ? "/videos/hero-kling-mobile.mp4"
+    : "/videos/hero-kling.mp4";
 
   const { scrollYProgress } = useScroll({
     target: scrubRef,
