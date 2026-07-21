@@ -61,13 +61,13 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 520,
       radius: "1.4rem",
-      glass: "rgba(255,255,255,0.1)",
-      rim: "rgba(255,255,255,0.22)",
-      edgeGlow: "rgba(196,165,116,0.3)",
+      glass: "rgba(255,255,255,0.08)",
+      rim: "rgba(255,255,255,0.18)",
+      edgeGlow: "rgba(196,165,116,0.38)",
       shimmerAngle: 118,
       top: "68%",
       topMobile: "58%",
-      thickness: 48,
+      thickness: 82,
     },
   },
   {
@@ -84,13 +84,13 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 560,
       radius: "1.15rem",
-      glass: "rgba(210,230,240,0.09)",
-      rim: "rgba(230,245,255,0.2)",
-      edgeGlow: "rgba(150,200,210,0.28)",
+      glass: "rgba(210,230,240,0.07)",
+      rim: "rgba(230,245,255,0.16)",
+      edgeGlow: "rgba(150,200,210,0.35)",
       shimmerAngle: 64,
       top: "34%",
       topMobile: "40%",
-      thickness: 52,
+      thickness: 88,
     },
   },
   {
@@ -107,13 +107,13 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 500,
       radius: "1.7rem",
-      glass: "rgba(255,248,235,0.1)",
-      rim: "rgba(196,165,116,0.24)",
-      edgeGlow: "rgba(196,165,116,0.38)",
+      glass: "rgba(255,248,235,0.08)",
+      rim: "rgba(196,165,116,0.2)",
+      edgeGlow: "rgba(196,165,116,0.42)",
       shimmerAngle: 108,
       top: "50%",
       topMobile: "50%",
-      thickness: 46,
+      thickness: 78,
     },
   },
   {
@@ -130,13 +130,13 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 580,
       radius: "1rem",
-      glass: "rgba(255,255,255,0.11)",
-      rim: "rgba(255,255,255,0.22)",
-      edgeGlow: "rgba(240,226,196,0.32)",
+      glass: "rgba(255,255,255,0.09)",
+      rim: "rgba(255,255,255,0.18)",
+      edgeGlow: "rgba(240,226,196,0.4)",
       shimmerAngle: 52,
       top: "60%",
       topMobile: "56%",
-      thickness: 54,
+      thickness: 90,
     },
   },
 ];
@@ -211,8 +211,10 @@ function AsyncWord({
     const t = beatT(p, beat);
     if (t < EXIT_START) return 0;
     const local = (t - EXIT_START) / EXIT_LEN;
+    // Delay word blur until late in exit
+    if (local < 0.4) return 0;
     const start = delay;
-    const e = Math.min(1, Math.max(0, (local - start) / 0.3));
+    const e = Math.min(1, Math.max(0, (local - 0.4 - start * 0.5) / 0.35));
     return e * 8;
   });
   const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
@@ -333,7 +335,7 @@ function BeatCard({
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
   const orbitScale = isMobile ? 0.42 : 1;
   const tiltScale = isMobile ? 0.55 : 1;
-  const T = Math.max(12, isMobile ? Math.round(v.thickness * 0.55) : v.thickness);
+  const T = Math.max(16, isMobile ? Math.round(v.thickness * 0.62) : v.thickness);
   const halfT = T / 2;
   const restTop = isMobile ? v.topMobile : v.top;
 
@@ -359,9 +361,16 @@ function BeatCard({
   const blur = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 18;
     const t = beatT(p, beat);
-    if (t < ENTER_END) return 18 * (1 - smoothstep(t / ENTER_END));
-    if (t > EXIT_START) return 16 * smoothstep((t - EXIT_START) / EXIT_LEN);
-    return 0;
+    // Unblur quickly on enter (clear by ~45% of enter window)
+    if (t < ENTER_END) {
+      const clearBy = ENTER_END * 0.42;
+      if (t >= clearBy) return 0;
+      return 18 * (1 - smoothstep(t / clearBy));
+    }
+    // Delay exit blur — stay sharp until late in the leave
+    const blurStart = EXIT_START + EXIT_LEN * 0.42;
+    if (t <= blurStart) return 0;
+    return 16 * smoothstep((t - blurStart) / (1 - blurStart));
   });
   // blur(0) still creates a filter containing block that clips glyph overhangs
   const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
@@ -377,7 +386,10 @@ function BeatCard({
     return 1;
   });
 
-  // Flat at rest — angle only on enter settle and exit tumble
+  // Subtle prism pose at rest so depth edges read; stronger angles only on enter/exit
+  const restY = -exitDir * (isMobile ? 7 : 11);
+  const restX = isMobile ? 3 : 5;
+
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
@@ -396,26 +408,26 @@ function BeatCard({
 
   const orbitZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return isMobile ? 28 : 56;
+    if (t <= EXIT_START) return isMobile ? 36 : 72;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     const theta = e * Math.PI * 0.92;
-    return (isMobile ? 28 : 56) - v.orbitR * orbitScale * Math.sin(theta) * 1.05;
+    return (isMobile ? 36 : 72) - v.orbitR * orbitScale * Math.sin(theta) * 1.05;
   });
 
   const rotateX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return (1 - smoothstep(t / ENTER_END)) * 22 * tiltScale;
-    if (t <= EXIT_START) return 0;
+    if (t < ENTER_END) return restX + (1 - smoothstep(t / ENTER_END)) * 20 * tiltScale;
+    if (t <= EXIT_START) return restX;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return -e * 78 * tiltScale;
+    return restX - e * 78 * tiltScale;
   });
 
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return exitDir * (1 - smoothstep(t / ENTER_END)) * 32 * tiltScale;
-    if (t <= EXIT_START) return 0;
+    if (t < ENTER_END) return restY + exitDir * (1 - smoothstep(t / ENTER_END)) * 28 * tiltScale;
+    if (t <= EXIT_START) return restY;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * e * 118 * tiltScale;
+    return restY + exitDir * e * 118 * tiltScale;
   });
 
   const rotateZ = useTransform(progress, (p) => {
@@ -439,12 +451,12 @@ function BeatCard({
   const shimmerZ = useTransform(layerBoost, (b) => halfT + 8 * b);
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
 
-  const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 14 : 22) * b);
+  const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 18 : 30) * b);
   const contentRx = useTransform(rotateX, (rx) => rx * 0.18);
   const contentRy = useTransform(rotateY, (ry) => ry * 0.22);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 20 : 32) * b);
+  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 26 : 40) * b);
   const lineRx = useTransform(rotateX, (rx) => rx * 0.25);
   const lineRy = useTransform(rotateY, (ry) => ry * 0.18);
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
@@ -550,6 +562,18 @@ function BeatCard({
 
           <div
             aria-hidden
+            className="absolute inset-[3px]"
+            style={{
+              borderRadius: radius,
+              background: `linear-gradient(145deg, ${v.glass}, rgba(255,255,255,0.03) 50%, transparent)`,
+              transform: "translateZ(0px)",
+              boxShadow: `inset 0 0 40px ${v.edgeGlow}`,
+              opacity: 0.55,
+            }}
+          />
+
+          <div
+            aria-hidden
             className="absolute"
             style={{
               width: T,
@@ -560,9 +584,10 @@ function BeatCard({
               transform: "rotateY(-90deg) translateZ(0)",
               borderRadius: `0 ${radius} ${radius} 0`,
               background: `linear-gradient(180deg,
-                rgba(255,255,255,0.35) 0%,
-                ${v.edgeGlow} 24%,
-                rgba(255,255,255,0.1) 55%,
+                rgba(255,255,255,0.48) 0%,
+                ${v.edgeGlow} 16%,
+                rgba(255,255,255,0.14) 40%,
+                rgba(40,44,54,0.35) 68%,
                 rgba(0,0,0,0.55) 100%)`,
             }}
           />
@@ -635,27 +660,33 @@ function BeatCard({
               className="absolute inset-0"
               style={{
                 ...faceStyle,
-                backdropFilter: isMobile ? "blur(16px) saturate(1.1)" : "blur(26px) saturate(1.15)",
+                background: `linear-gradient(155deg,
+                  rgba(255,255,255,0.14) 0%,
+                  ${v.glass} 28%,
+                  rgba(255,255,255,0.04) 62%,
+                  rgba(8,10,14,0.25) 100%)`,
+                backdropFilter: isMobile
+                  ? "blur(20px) saturate(1.25) brightness(1.05)"
+                  : "blur(34px) saturate(1.35) brightness(1.08)",
                 WebkitBackdropFilter: isMobile
-                  ? "blur(16px) saturate(1.1)"
-                  : "blur(26px) saturate(1.15)",
+                  ? "blur(20px) saturate(1.25) brightness(1.05)"
+                  : "blur(34px) saturate(1.35) brightness(1.08)",
                 boxShadow: `
-                  inset 0 1px 0 rgba(255,255,255,0.22),
-                  inset 0 -20px 36px rgba(0,0,0,0.16),
-                  0 28px 64px rgba(0,0,0,0.42),
-                  0 0 0 1px rgba(255,255,255,0.04),
-                  0 0 56px ${v.edgeGlow}
+                  inset 0 18px 42px rgba(255,255,255,0.1),
+                  inset 0 -28px 48px rgba(0,0,0,0.22),
+                  0 32px 72px rgba(0,0,0,0.48),
+                  0 0 64px ${v.edgeGlow}
                 `,
               }}
             />
 
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-1/2"
+              className="pointer-events-none absolute inset-0"
               style={{
-                borderRadius: `${radius} ${radius} 0 0`,
+                borderRadius: radius,
                 background:
-                  "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 42%, transparent 100%)",
+                  "linear-gradient(125deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 22%, transparent 48%)",
               }}
             />
 
