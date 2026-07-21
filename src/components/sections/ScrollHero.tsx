@@ -1280,11 +1280,11 @@ export function ScrollHero() {
 
             {/* Soft darkening toward the join — taller field behind contact / Begin */}
             <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[52%] md:h-[56%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[62%] md:h-[66%]"
               style={{
                 opacity: featherOpacity,
                 background:
-                  "linear-gradient(to bottom, transparent 0%, transparent 18%, rgba(8,9,11,0.1) 38%, rgba(8,9,11,0.28) 55%, rgba(8,9,11,0.55) 72%, rgba(8,9,11,0.78) 88%, rgba(8,9,11,0.92) 100%)",
+                  "linear-gradient(to bottom, transparent 0%, transparent 12%, rgba(8,9,11,0.08) 28%, rgba(8,9,11,0.22) 45%, rgba(8,9,11,0.48) 62%, rgba(8,9,11,0.72) 80%, rgba(8,9,11,0.9) 92%, rgba(8,9,11,0.96) 100%)",
               }}
             />
           </motion.div>
