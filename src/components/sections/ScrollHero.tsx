@@ -1177,9 +1177,8 @@ export function ScrollHero() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const targetTime = useRef(0);
   const rafRef = useRef(0);
-  const seekingRef = useRef(false);
-  const pendingFrame = useRef<number | null>(null);
-  const frameDurRef = useRef(1 / 30);
+  const fpsRef = useRef(24);
+  const lastFrameIndex = useRef(-1);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
@@ -1190,8 +1189,7 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  // Light spring damps micro-jitter from touch sampling / video seeks.
-  // Mobile stays snappy (high stiffness) so it doesn't fight Lenis inertia.
+  // Layout polish only — keep this off the video path so frames aren't lagged/bunched
   const sprungProgress = useSpring(scrollYProgress, {
     stiffness: isMobile ? 260 : 200,
     damping: isMobile ? 38 : 34,
@@ -1201,23 +1199,15 @@ export function ScrollHero() {
   });
   const driveProgress = sprungProgress;
 
-  const videoProgressRaw = useTransform(driveProgress, (p) => {
+  // Video scrub tracks scroll 1:1 (Lenis already eases the page). No second spring —
+  // that was skipping/bunching frames and reading as jumps.
+  const videoProgress = useTransform(scrollYProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
     }
     const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
-
-  // Extra scrub polish — slightly softer on mobile to hide frame-seek chatter
-  const sprungVideoProgress = useSpring(videoProgressRaw, {
-    stiffness: isMobile ? 240 : 380,
-    damping: isMobile ? 36 : 42,
-    mass: isMobile ? 0.11 : 0.08,
-    restDelta: 0.00001,
-    restSpeed: 0.00001,
-  });
-  const videoProgress = sprungVideoProgress;
 
   // Hero lifts only ~halfway — remaining lower frame stays visible under contact
   const stickyLift = useTransform(
@@ -1277,52 +1267,45 @@ export function ScrollHero() {
       /* ignore */
     }
 
+    /**
+     * Both desktop + mobile assets are 24fps all-intra H.264 — every frame is a
+     * keyframe, so we can seek every frame index directly. Avoid seeked-queueing
+     * (drops intermediate frames) and avoid coarse time thresholds (skips frames).
+     */
     const applyTime = (t: number) => {
       const v = videoRef.current;
       if (!v || !Number.isFinite(v.duration) || v.duration <= 0) return;
-      const frameDur = frameDurRef.current;
-      const framed =
-        Math.round(Math.min(v.duration - 0.001, Math.max(0, t)) / frameDur) * frameDur;
-      // Slightly wider skip on mobile — fewer seeks = less scrub chatter
-      if (Math.abs(v.currentTime - framed) < frameDur * (isMobile ? 0.55 : 0.35)) return;
 
-      // Mobile: set time directly — seeked-queueing lags behind the fling
-      if (isMobile) {
-        try {
-          v.currentTime = framed;
-        } catch {
-          /* ignore */
-        }
-        return;
-      }
+      const fps = fpsRef.current;
+      const maxFrame = Math.max(0, Math.round(v.duration * fps) - 1);
+      const frameIndex = Math.min(maxFrame, Math.max(0, Math.round(t * fps)));
+      if (frameIndex === lastFrameIndex.current) return;
+      lastFrameIndex.current = frameIndex;
 
-      if (seekingRef.current) {
-        pendingFrame.current = framed;
-        return;
-      }
-      seekingRef.current = true;
-      const onSeeked = () => {
-        seekingRef.current = false;
-        v.removeEventListener("seeked", onSeeked);
-        const pending = pendingFrame.current;
-        pendingFrame.current = null;
-        if (pending !== null && Math.abs(v.currentTime - pending) >= frameDur * 0.4) {
-          applyTime(pending);
-        }
-      };
-      v.addEventListener("seeked", onSeeked);
+      const framed = Math.min(v.duration - 0.001, frameIndex / fps);
       try {
         v.currentTime = framed;
       } catch {
-        seekingRef.current = false;
-        v.removeEventListener("seeked", onSeeked);
+        /* ignore */
+      }
+    };
+
+    const detectFps = () => {
+      const d = video.duration;
+      if (!(d > 0)) return;
+      // Prefer exact 24fps when duration aligns (hero-kling*), else 30, else 24 fallback
+      if (Math.abs(d * 24 - Math.round(d * 24)) < 0.08) {
+        fpsRef.current = 24;
+      } else if (Math.abs(d * 30 - Math.round(d * 30)) < 0.08) {
+        fpsRef.current = 30;
+      } else {
+        fpsRef.current = 24;
       }
     };
 
     const onMeta = () => {
-      // Prefer ~30fps quantize; finer if duration suggests 24fps asset
-      const d = video.duration;
-      frameDurRef.current = d > 0 && Math.abs(d * 24 - Math.round(d * 24)) < 0.08 ? 1 / 24 : 1 / 30;
+      detectFps();
+      lastFrameIndex.current = -1;
       const t = Math.min(
         video.duration - 0.001,
         Math.max(0, videoProgress.get()) * video.duration,
@@ -1333,7 +1316,7 @@ export function ScrollHero() {
     if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
 
-    // Spring already smooths target — RAF only commits on frame boundaries
+    // Commit at display refresh — one seek per changed frame index
     const tick = () => {
       applyTime(targetTime.current);
       rafRef.current = requestAnimationFrame(tick);
@@ -1343,10 +1326,9 @@ export function ScrollHero() {
     return () => {
       video.removeEventListener("loadedmetadata", onMeta);
       cancelAnimationFrame(rafRef.current);
-      seekingRef.current = false;
-      pendingFrame.current = null;
+      lastFrameIndex.current = -1;
     };
-  }, [videoProgress, videoSrc, isMobile]);
+  }, [videoProgress, videoSrc]);
 
   return (
     <>
