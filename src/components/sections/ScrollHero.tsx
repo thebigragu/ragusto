@@ -541,28 +541,55 @@ function BeatCard({
   );
 }
 
-function ScrollCue({ progress }: { progress: MotionValue<number> }) {
+function ScrollCue({
+  progress,
+  scrollProgress,
+}: {
+  progress: MotionValue<number>;
+  scrollProgress: MotionValue<number>;
+}) {
+  // Softens near the end of the video timeline
   const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.45, 0.15]);
+
+  // Glide from laptop-screen center → bottom-right with early scroll wheel travel
+  const left = useTransform(scrollProgress, [0, 0.14], [47, 94]);
+  const top = useTransform(scrollProgress, [0, 0.14], [40, 91]);
+  const leftPct = useMotionTemplate`${left}%`;
+  const topPct = useMotionTemplate`${top}%`;
+  const anchorX = useTransform(scrollProgress, [0, 0.14], [-50, -100]);
+  const anchorY = useTransform(scrollProgress, [0, 0.14], [-50, -100]);
+
+  // Match open MacBook lid (yaw left, pitch back) — flatten as it parks in the corner
+  const rotateX = useTransform(scrollProgress, [0, 0.14], [16, 0]);
+  const rotateY = useTransform(scrollProgress, [0, 0.14], [-26, 0]);
+  const rotateZ = useTransform(scrollProgress, [0, 0.14], [-4, 0]);
+  const scale = useTransform(scrollProgress, [0, 0.14], [0.86, 1]);
+  const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) scale(${scale})`;
 
   return (
     <motion.div
-      className="pointer-events-none absolute right-5 bottom-7 z-40 md:right-10 md:bottom-10"
-      style={{ opacity }}
-      initial={{ y: 14 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      className="pointer-events-none absolute z-40"
+      style={{
+        left: leftPct,
+        top: topPct,
+        opacity,
+        transform: cueTransform,
+        transformPerspective: 1100,
+        transformStyle: "preserve-3d",
+      }}
       aria-hidden
     >
       <motion.div
         className="flex flex-col items-center gap-3"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        style={{ transformStyle: "preserve-3d" }}
       >
         <span className="text-[11px] font-medium tracking-[0.42em] text-[#e8d5b0] uppercase drop-shadow-[0_0_12px_rgba(196,165,116,0.55)] md:text-xs">
           Scroll
         </span>
 
-        <div className="relative">
+        <div className="relative" style={{ transform: "translateZ(12px)" }}>
           <motion.div
             className="absolute -inset-3 rounded-full bg-[#c4a574]/25 blur-md"
             animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.92, 1.08, 0.92] }}
@@ -770,7 +797,7 @@ export function ScrollHero() {
             <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
           ))}
 
-          <ScrollCue progress={videoProgress} />
+          <ScrollCue progress={videoProgress} scrollProgress={scrollYProgress} />
         </div>
       </section>
 
