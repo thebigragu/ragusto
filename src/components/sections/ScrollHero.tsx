@@ -529,6 +529,7 @@ function ScrollCue({ progress }: { progress: MotionValue<number> }) {
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const bleedRef = useRef<HTMLVideoElement>(null);
   const targetTime = useRef(0);
   const rafRef = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
@@ -538,6 +539,9 @@ export function ScrollHero() {
     target: scrubRef,
     offset: ["start start", "end end"],
   });
+
+  // Soften sticky bottom veil near the end so the last frame can bleed through
+  const bottomVeilOpacity = useTransform(scrollYProgress, [0.7, 0.92, 1], [0.9, 0.35, 0.05]);
 
   // Direct scroll → time (no spring lag that feels like pausing)
   useMotionValueEvent(scrollYProgress, "change", (p) => {
@@ -553,14 +557,29 @@ export function ScrollHero() {
     video.pause();
     video.playsInline = true;
 
+    const syncBleed = () => {
+      const bleed = bleedRef.current;
+      if (!bleed || !Number.isFinite(video.duration) || video.duration <= 0) return;
+      bleed.pause();
+      try {
+        bleed.currentTime = Math.max(0, video.duration - 0.04);
+      } catch {
+        /* ignore */
+      }
+    };
+
     const onMeta = () => {
       targetTime.current = Math.min(
         video.duration - 0.001,
         Math.max(0, scrollYProgress.get()) * video.duration,
       );
+      syncBleed();
     };
     if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
+
+    const bleed = bleedRef.current;
+    bleed?.addEventListener("loadedmetadata", syncBleed);
 
     // rAF seek loop: every display frame maps to the scroll-driven target
     let seeking = false;
@@ -589,6 +608,7 @@ export function ScrollHero() {
 
     return () => {
       video.removeEventListener("loadedmetadata", onMeta);
+      bleed?.removeEventListener("loadedmetadata", syncBleed);
       cancelAnimationFrame(rafRef.current);
     };
   }, [scrollYProgress]);
@@ -607,8 +627,11 @@ export function ScrollHero() {
             aria-hidden
           />
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/35" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-black/35" />
+          <motion.div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-black via-black/55 to-transparent"
+            style={{ opacity: bottomVeilOpacity }}
+          />
 
           <div className="absolute top-0 left-0 z-30 p-4 md:p-6">
             <Magnetic strength={0.14}>
@@ -631,10 +654,41 @@ export function ScrollHero() {
         </div>
       </section>
 
+      {/* Last-frame bleed into contact */}
+      <section aria-hidden className="relative -mt-[30vh] h-[min(78vh,700px)] overflow-hidden">
+        <video
+          ref={bleedRef}
+          className="absolute inset-0 h-full w-full scale-[1.12] object-cover object-center blur-2xl brightness-[0.82] saturate-[1.08]"
+          src="/videos/hero-kling.mp4"
+          muted
+          playsInline
+          preload="auto"
+          tabIndex={-1}
+        />
+        <div className="absolute inset-0 bg-black/15 backdrop-blur-2xl" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(8,9,11,0.2) 25%, rgba(8,9,11,0.58) 55%, rgba(8,9,11,0.9) 78%, #08090b 100%)",
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 95% 65% at 50% 18%, rgba(196,165,116,0.16), transparent 62%)",
+            maskImage: "linear-gradient(to bottom, black 0%, black 40%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 40%, transparent 100%)",
+          }}
+        />
+      </section>
+
       <section
         id="contact"
-        className="relative overflow-hidden border-t border-white/10 bg-[#08090b] px-6 py-28 md:py-36"
+        className="relative -mt-28 overflow-hidden bg-[#08090b] px-6 pt-6 pb-28 md:-mt-36 md:pt-8 md:pb-36"
       >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-transparent via-[#08090b]/65 to-[#08090b]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(196,165,116,0.12),transparent_55%)]" />
         <div className="pointer-events-none absolute inset-0 ambient-grid opacity-20" />
 
