@@ -1236,11 +1236,16 @@ export function ScrollHero() {
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
     [1, 0.85, 0.7],
   );
-  // Contact rises into the lower half over the lingering hero
+  // Contact parallax: rises into the lower half only (never into the upper hero band)
   const contactParallax = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
-    ["36vh", "14vh", "0vh"],
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
+    ["42vh", "12vh", "0vh"],
+  );
+  const contactOpacity = useTransform(
+    driveProgress,
+    [SCRUB_HANDOFF_START - 0.02, SCRUB_HANDOFF_START + 0.06, 1],
+    [0, 0.85, 1],
   );
 
   useMotionValueEvent(videoProgress, "change", (p) => {
@@ -1423,75 +1428,72 @@ export function ScrollHero() {
               }}
             />
           </motion.div>
+
+          {/*
+            Contact lives inside the sticky frame so it can only rise into the lower
+            half over the remaining ~50% hero — same on mobile and desktop. Scroll
+            ends with the scrub, so contact can’t keep climbing and leave a gap
+            under the CTA.
+          */}
+          <motion.div
+            id="contact"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[58dvh] flex-col justify-end px-5 pb-8 md:max-h-[55dvh] md:px-6 md:pb-12"
+            style={{ y: contactParallax, opacity: contactOpacity }}
+          >
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 top-0"
+              style={{
+                background:
+                  "linear-gradient(to bottom, transparent 0%, rgba(196,165,116,0.04) 22%, rgba(196,165,116,0.07) 36%, rgba(8,9,11,0.35) 58%, rgba(8,9,11,0.82) 82%, #08090b 100%)",
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-full"
+              style={{
+                background:
+                  "radial-gradient(ellipse 95% 50% at 50% 30%, rgba(196,165,116,0.1) 0%, rgba(196,165,116,0.04) 40%, transparent 72%)",
+              }}
+            />
+
+            <div className="pointer-events-auto relative mx-auto w-full max-w-3xl pb-1 text-center md:pb-2">
+              <p className="text-[10.5pt] tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-[13pt]">
+                Begin
+              </p>
+              <h2 className="mt-3 font-serif text-[1.85rem] leading-tight tracking-tight text-white sm:text-4xl md:mt-4 md:text-6xl lg:text-7xl">
+                Ready to build something{" "}
+                <span className="inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text pe-[0.28em] pb-[0.08em] italic text-transparent">
+                  exceptional
+                </span>
+                ?
+              </h2>
+              <p className="mx-auto mt-4 max-w-xl text-[0.9rem] leading-relaxed text-white/60 md:mt-5 md:text-lg">
+                {SITE.description.split(" ").map((word, i, arr) => {
+                  const clean = word.replace(/[.,]/g, "");
+                  const emph = ["cinematic", "atelier-level", "craft"].includes(clean);
+                  return (
+                    <span key={`${word}-${i}`}>
+                      {emph ? <span className="text-[#c4a574]">{word}</span> : word}
+                      {i < arr.length - 1 ? " " : ""}
+                    </span>
+                  );
+                })}
+              </p>
+
+              <div className="mt-6 flex justify-center md:mt-8">
+                <Magnetic>
+                  <Button
+                    type="button"
+                    onClick={() => setContactOpen(true)}
+                    className="bg-[#c4a574] text-base text-[#0c0c0e] hover:bg-[#d4b888] hover:text-[#0c0c0e] md:text-lg"
+                  >
+                    Get in touch
+                  </Button>
+                </Magnetic>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
-
-      {/* Parallax contact over the remaining ~50% hero — transparent top, no black gap */}
-      <motion.section
-        id="contact"
-        className="relative z-30 -mt-[52vh] bg-transparent px-5 pt-[8vh] pb-14 md:-mt-[54vh] md:px-6 md:pt-[10vh] md:pb-20"
-        style={{ y: contactParallax }}
-      >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[48vh] md:h-[52vh]"
-          style={{
-            background:
-              "linear-gradient(to bottom, transparent 0%, transparent 18%, rgba(196,165,116,0.04) 32%, rgba(196,165,116,0.07) 42%, rgba(8,9,11,0.22) 58%, rgba(8,9,11,0.55) 78%, rgba(8,9,11,0.88) 100%)",
-          }}
-        />
-        <div className="pointer-events-none absolute inset-x-0 top-[42vh] bottom-0 bg-[#08090b] md:top-[46vh]" />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[55vh]"
-          style={{
-            background:
-              "radial-gradient(ellipse 95% 55% at 50% 28%, rgba(196,165,116,0.1) 0%, rgba(196,165,116,0.04) 40%, transparent 72%)",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-[28vh] bottom-0 ambient-grid opacity-10"
-          style={{
-            maskImage: "linear-gradient(to bottom, transparent 0%, black 32%)",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 32%)",
-          }}
-        />
-
-        <div className="relative mx-auto max-w-3xl text-center">
-          <p className="text-[10.5pt] tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-[13pt]">
-            Begin
-          </p>
-          <h2 className="mt-4 font-serif text-[2rem] leading-tight tracking-tight text-white sm:text-4xl md:mt-5 md:text-6xl lg:text-7xl">
-            Ready to build something{" "}
-            <span className="inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text pe-[0.28em] pb-[0.08em] italic text-transparent">
-              exceptional
-            </span>
-            ?
-          </h2>
-          <p className="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-white/60 md:mt-6 md:text-lg">
-            {SITE.description.split(" ").map((word, i, arr) => {
-              const clean = word.replace(/[.,]/g, "");
-              const emph = ["cinematic", "atelier-level", "craft"].includes(clean);
-              return (
-                <span key={`${word}-${i}`}>
-                  {emph ? <span className="text-[#c4a574]">{word}</span> : word}
-                  {i < arr.length - 1 ? " " : ""}
-                </span>
-              );
-            })}
-          </p>
-
-          <div className="mt-8 flex justify-center md:mt-10">
-            <Magnetic>
-              <Button
-                type="button"
-                onClick={() => setContactOpen(true)}
-                className="bg-[#c4a574] text-base text-[#0c0c0e] hover:bg-[#d4b888] hover:text-[#0c0c0e] md:text-lg"
-              >
-                Get in touch
-              </Button>
-            </Magnetic>
-          </div>
-        </div>
-      </motion.section>
 
       <ContactModal open={contactOpen} onClose={closeContact} />
     </>
