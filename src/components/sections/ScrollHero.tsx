@@ -618,35 +618,10 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Floating prism: front face + soft depth stack + one near-side edge.
-          No bottom wall (that read as a flat platform) and no rear plate /
-          filter blur (those painted rectangular ghosts behind rounded corners).
+          Subtle prism: front face + one continuous near-side edge + slim top bevel.
+          No stacked mid-plates (those read as a deck of panes) and no bottom wall.
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Soft depth plates — complementary tint, fade toward rear */}
-          {[0.22, 0.42, 0.62, 0.82].map((t, i) => {
-            const z = halfT - t * T;
-            const fade = 1 - t;
-            return (
-              <div
-                key={`depth-${i}`}
-                aria-hidden
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  borderRadius: radius,
-                  transform: `translateZ(${z}px)`,
-                  background: `linear-gradient(${depthOnLeft ? 95 : 265}deg,
-                    ${v.depthTint} 0%,
-                    rgba(210,200,185,0.55) 28%,
-                    ${v.glass} 58%,
-                    rgba(12,13,16,0.55) 100%)`,
-                  opacity: 0.18 + fade * 0.28,
-                  boxShadow: `inset 0 0 0 1px rgba(255,255,255,${0.04 + fade * 0.06})`,
-                }}
-              />
-            );
-          })}
-
           <div
             className="relative"
             style={{
@@ -655,7 +630,7 @@ function BeatCard({
               transformStyle: "preserve-3d",
             }}
           >
-          {/* Near-side thickness edge — gradient softens toward rear + vertical fade */}
+          {/* Continuous thickness edge — solid prism wall, softens toward rear */}
           <div
             aria-hidden
             className="pointer-events-none absolute"
@@ -668,26 +643,26 @@ function BeatCard({
                 : { right: 0, transformOrigin: "right center", transform: "rotateY(-90deg)" }),
               background: depthOnLeft
                 ? `linear-gradient(90deg,
-                    rgba(255,248,230,0.55) 0%,
-                    ${v.depthTint} 14%,
-                    rgba(160,145,120,0.7) 42%,
-                    rgba(40,38,42,0.55) 72%,
-                    rgba(8,9,11,0.15) 100%)`
+                    rgba(255,248,230,0.5) 0%,
+                    ${v.depthTint} 12%,
+                    rgba(150,138,118,0.85) 38%,
+                    rgba(48,46,50,0.92) 68%,
+                    rgba(14,15,18,0.88) 100%)`
                 : `linear-gradient(270deg,
-                    rgba(255,248,230,0.55) 0%,
-                    ${v.depthTint} 14%,
-                    rgba(160,145,120,0.7) 42%,
-                    rgba(40,38,42,0.55) 72%,
-                    rgba(8,9,11,0.15) 100%)`,
+                    rgba(255,248,230,0.5) 0%,
+                    ${v.depthTint} 12%,
+                    rgba(150,138,118,0.85) 38%,
+                    rgba(48,46,50,0.92) 68%,
+                    rgba(14,15,18,0.88) 100%)`,
               WebkitMaskImage:
-                "linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%)",
+                "linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
               maskImage:
-                "linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%)",
-              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px ${v.edgeGlow}`,
+                "linear-gradient(to bottom, transparent 0%, #000 8%, #000 92%, transparent 100%)",
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.35)`,
             }}
           />
 
-          {/* Slim top bevel — reads as glass edge without a bottom platform */}
+          {/* Slim top bevel — glass rim without a bottom platform */}
           <div
             aria-hidden
             className="pointer-events-none absolute"
@@ -695,18 +670,18 @@ function BeatCard({
               left: 0,
               right: 0,
               top: 0,
-              height: Math.max(10, Math.round(T * 0.28)),
+              height: Math.max(8, Math.round(T * 0.22)),
               transformOrigin: "top center",
               transform: "rotateX(-90deg)",
               background: `linear-gradient(to bottom,
-                rgba(255,255,255,0.42) 0%,
-                ${v.depthTint} 35%,
-                rgba(40,38,42,0.35) 100%)`,
+                rgba(255,255,255,0.38) 0%,
+                ${v.depthTint} 40%,
+                rgba(40,38,42,0.55) 100%)`,
               WebkitMaskImage:
-                "linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)",
+                "linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%)",
               maskImage:
-                "linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)",
-              opacity: 0.85,
+                "linear-gradient(to right, transparent 0%, #000 10%, #000 90%, transparent 100%)",
+              opacity: 0.9,
             }}
           />
 
