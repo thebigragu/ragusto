@@ -342,7 +342,8 @@ function BeatCard({
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
   const orbitScale = isMobile ? 0.42 : 1;
   const tiltScale = isMobile ? 0.55 : 1;
-  const T = Math.max(22, isMobile ? Math.round(v.thickness * 0.72) : v.thickness);
+  // Slim continuous rim — depth without a chunky multi-pane stack
+  const T = Math.max(14, isMobile ? Math.round(v.thickness * 0.38) : Math.round(v.thickness * 0.48));
   const halfT = T / 2;
   const restTop = isMobile ? v.topMobile : v.top;
 
@@ -556,53 +557,19 @@ function BeatCard({
       : "right-4 origin-center md:right-10 lg:right-16";
 
   const radius = isMobile ? "1.05rem" : v.radius;
-  // Flush to the faces so thickness walls meet front/rear as one prism
-  const edgeInset = 0;
-  // Side walls carry the volume: solid through the body, soften only at the rear lip
-  const metalRight = `linear-gradient(90deg,
-    rgba(255,252,245,1) 0%,
-    rgba(236,220,180,1) 5%,
-    ${v.depthTint} 14%,
-    ${v.edgeGlow} 26%,
-    rgba(120,100,70,1) 40%,
-    rgba(52,48,44,1) 58%,
-    rgba(28,28,32,1) 74%,
-    rgba(16,16,18,0.75) 88%,
-    rgba(10,10,12,0.25) 100%)`;
-  const metalLeft = `linear-gradient(270deg,
-    rgba(255,250,240,1) 0%,
-    ${v.depthTint} 12%,
-    rgba(150,128,88,1) 28%,
-    rgba(56,50,42,1) 48%,
-    rgba(28,28,32,1) 70%,
-    rgba(16,16,18,0.7) 88%,
-    rgba(10,10,12,0.22) 100%)`;
-  const metalTop = `linear-gradient(0deg,
-    rgba(255,255,250,1) 0%,
-    rgba(245,235,210,1) 8%,
-    ${v.depthTint} 18%,
-    ${v.edgeGlow} 32%,
-    rgba(90,78,56,1) 50%,
-    rgba(30,30,34,1) 72%,
-    rgba(16,16,18,0.7) 88%,
-    rgba(10,10,12,0.22) 100%)`;
-  const metalBottom = `linear-gradient(180deg,
-    rgba(255,248,230,0.75) 0%,
-    rgba(90,78,58,1) 16%,
-    rgba(40,38,42,1) 40%,
-    rgba(24,24,28,1) 68%,
-    rgba(14,14,16,0.65) 88%,
-    rgba(10,10,12,0.2) 100%)`;
-
-  // Keep walls fully present through most of the depth; dissolve only near the rear
-  const wallFadeRight =
-    "linear-gradient(90deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
-  const wallFadeLeft =
-    "linear-gradient(270deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
-  const wallFadeTop =
-    "linear-gradient(0deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
-  const wallFadeBottom =
-    "linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
+  // Continuous edge metal: bright front lip → dark body → soft dissolve (no hard rear pane)
+  const metalEdge = (deg: number) =>
+    `linear-gradient(${deg}deg,
+      rgba(255,250,240,0.95) 0%,
+      ${v.depthTint} 18%,
+      rgba(70,62,52,0.95) 48%,
+      rgba(28,28,32,0.85) 72%,
+      rgba(12,12,14,0.35) 90%,
+      transparent 100%)`;
+  const metalRight = metalEdge(90);
+  const metalLeft = metalEdge(270);
+  const metalTop = metalEdge(0);
+  const metalBottom = metalEdge(180);
 
   // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
   const sheenAngle = beat.side === "left" ? 118 : 62;
@@ -646,12 +613,12 @@ function BeatCard({
     WebkitBackfaceVisibility: "hidden",
   };
 
-  // Side walls: origin on the card edge, shifted so thickness spans −halfT…+halfT
+  // Edge walls span full thickness; origin on the card perimeter
   const sideWallBase: CSSProperties = {
     position: "absolute",
     width: T,
-    top: edgeInset,
-    bottom: edgeInset,
+    top: 1,
+    bottom: 1,
     backfaceVisibility: "hidden",
     WebkitBackfaceVisibility: "hidden",
   };
@@ -674,30 +641,11 @@ function BeatCard({
         className="relative"
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
-        <motion.div
-          className="relative"
-          style={{ transformStyle: "preserve-3d" }}
-          animate={{ y: [0, -5, 0] }}
-          transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
-        >
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Soft rear plane — fades at the lip; connection is the thickness walls */}
-          <div
-            aria-hidden
-            className="absolute inset-[4px]"
-            style={{
-              ...faceStyle,
-              background: `radial-gradient(ellipse 82% 76% at 50% 46%,
-                rgba(42,44,52,0.55) 0%,
-                rgba(20,22,28,0.32) 50%,
-                rgba(10,11,14,0.1) 78%,
-                transparent 100%)`,
-              transform: `translateZ(${-halfT}px)`,
-              opacity: 0.7,
-            }}
-          />
-
-          {/* Right thickness wall — joins front lip to rear */}
+          {/*
+            Seamless rim: four continuous edge faces only — no rear plate, no mid fills.
+            Material fades out at the back so depth reads as one extrusion.
+          */}
           <div
             aria-hidden
             style={{
@@ -705,15 +653,9 @@ function BeatCard({
               right: 0,
               transformOrigin: "right center",
               transform: `translateZ(${-halfT}px) rotateY(-90deg)`,
-              borderRadius: 0,
               background: metalRight,
-              boxShadow: "inset 0 0 10px rgba(255,252,240,0.14)",
-              maskImage: wallFadeRight,
-              WebkitMaskImage: wallFadeRight,
             }}
           />
-
-          {/* Left thickness wall */}
           <div
             aria-hidden
             style={{
@@ -721,52 +663,37 @@ function BeatCard({
               left: 0,
               transformOrigin: "left center",
               transform: `translateZ(${-halfT}px) rotateY(90deg)`,
-              borderRadius: 0,
               background: metalLeft,
-              boxShadow: "inset 0 0 8px rgba(255,255,255,0.06)",
-              maskImage: wallFadeLeft,
-              WebkitMaskImage: wallFadeLeft,
             }}
           />
-
-          {/* Top thickness wall */}
           <div
             aria-hidden
             style={{
               position: "absolute",
               height: T,
               top: 0,
-              left: edgeInset,
-              right: edgeInset,
+              left: 1,
+              right: 1,
               transformOrigin: "center top",
               transform: `translateZ(${-halfT}px) rotateX(90deg)`,
-              borderRadius: 0,
               background: metalTop,
-              boxShadow: "inset 0 0 10px rgba(255,252,240,0.14)",
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
-              maskImage: wallFadeTop,
-              WebkitMaskImage: wallFadeTop,
             }}
           />
-
-          {/* Bottom thickness wall */}
           <div
             aria-hidden
             style={{
               position: "absolute",
               height: T,
               bottom: 0,
-              left: edgeInset,
-              right: edgeInset,
+              left: 1,
+              right: 1,
               transformOrigin: "center bottom",
               transform: `translateZ(${-halfT}px) rotateX(-90deg)`,
-              borderRadius: 0,
               background: metalBottom,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
-              maskImage: wallFadeBottom,
-              WebkitMaskImage: wallFadeBottom,
             }}
           />
 
@@ -777,7 +704,7 @@ function BeatCard({
               transformStyle: "preserve-3d",
             }}
           >
-            {/* Front face — brushed metal slab */}
+            {/* Front face — the only full pane */}
             <div
               aria-hidden
               className="absolute inset-0 overflow-hidden"
@@ -789,7 +716,8 @@ function BeatCard({
                   inset 0 -1px 0 rgba(0,0,0,0.5),
                   inset 18px 0 28px -18px rgba(255,248,230,0.08),
                   inset -18px 0 28px -18px rgba(0,0,0,0.35),
-                  0 0 0 1px ${v.rim}
+                  0 0 0 1px ${v.rim},
+                  0 12px 28px rgba(0,0,0,0.35)
                 `,
               }}
             />
@@ -925,7 +853,6 @@ function BeatCard({
             </motion.div>
           </div>
         </div>
-        </motion.div>
       </motion.div>
     </motion.div>
   );
