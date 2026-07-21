@@ -781,16 +781,14 @@ export function ScrollHero() {
           />
 
           <div className="absolute top-10 left-10 z-30 md:top-14 md:left-14">
-            <Magnetic strength={0.14}>
-              <Image
-                src="/brand/ragusto-logo.png"
-                alt="Ragusto"
-                width={200}
-                height={240}
-                priority
-                className="h-14 w-auto opacity-95 transition duration-500 hover:opacity-100 md:h-16 lg:h-[4.5rem]"
-              />
-            </Magnetic>
+            <Image
+              src="/brand/ragusto-logo.png"
+              alt="Ragusto"
+              width={220}
+              height={260}
+              priority
+              className="h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
+            />
           </div>
 
           {BEATS.map((beat) => (
