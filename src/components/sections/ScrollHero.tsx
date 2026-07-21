@@ -864,21 +864,47 @@ export function ScrollHero() {
     <>
       <div className="pointer-events-auto fixed top-10 left-10 z-50 md:top-14 md:left-14">
         <div className="relative inline-flex items-center justify-center">
-          <span
+          {/* Outer breath — soft gold bloom */}
+          <motion.span
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[140%] w-[160%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-2xl"
+            className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[200%] w-[220%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
             style={{
               background:
-                "radial-gradient(ellipse 55% 50% at 50% 45%, rgba(196,165,116,0.45) 0%, rgba(196,165,116,0.18) 38%, rgba(240,226,196,0.06) 58%, transparent 72%)",
+                "radial-gradient(ellipse 58% 52% at 50% 45%, rgba(196,165,116,0.7) 0%, rgba(196,165,116,0.35) 32%, rgba(240,226,196,0.14) 52%, transparent 72%)",
             }}
+            animate={{
+              opacity: [0.55, 1, 0.55],
+              scale: [0.92, 1.12, 0.92],
+            }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
           />
-          <span
+          {/* Mid breath — warmer core */}
+          <motion.span
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[40%] -z-10 h-[100%] w-[115%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-xl"
+            className="pointer-events-none absolute left-1/2 top-[40%] -z-10 h-[150%] w-[165%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
             style={{
               background:
-                "radial-gradient(circle at 50% 42%, rgba(240,226,196,0.35) 0%, rgba(196,165,116,0.12) 45%, transparent 68%)",
+                "radial-gradient(circle at 50% 42%, rgba(240,226,196,0.65) 0%, rgba(196,165,116,0.35) 38%, rgba(196,165,116,0.1) 62%, transparent 76%)",
             }}
+            animate={{
+              opacity: [0.5, 0.95, 0.5],
+              scale: [0.96, 1.08, 0.96],
+            }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 0.15 }}
+          />
+          {/* Inner pulse — tight halo on the emblem */}
+          <motion.span
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-[38%] -z-10 h-[95%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 40%, rgba(255,240,210,0.55) 0%, rgba(196,165,116,0.28) 45%, transparent 70%)",
+            }}
+            animate={{
+              opacity: [0.45, 0.9, 0.45],
+              scale: [1, 1.06, 1],
+            }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
           />
           <Image
             src="/brand/ragusto-logo.png"
