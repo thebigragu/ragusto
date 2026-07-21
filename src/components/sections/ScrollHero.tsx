@@ -1246,8 +1246,8 @@ export function ScrollHero() {
   );
   const contactOpacity = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START - 0.02, SCRUB_HANDOFF_START + 0.06, 1],
-    [0, 0.85, 1],
+    [SCRUB_HANDOFF_START - 0.02, SCRUB_HANDOFF_START + 0.08, 1],
+    [0, 1, 1],
   );
 
   useMotionValueEvent(videoProgress, "change", (p) => {
