@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono, Syne } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
+import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { Providers } from "@/components/motion/Providers";
 import { defaultMetadata, organizationSchema } from "@/lib/seo";
 import "./globals.css";
@@ -46,17 +47,19 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema()) }}
         />
         <Providers>
-          <AppShell>
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[120] focus:rounded-full focus:bg-fg focus:px-4 focus:py-2 focus:text-bg"
-            >
-              Skip to content
-            </a>
-            <main id="main" className="flex-1">
-              {children}
-            </main>
-          </AppShell>
+          <SmoothScroll>
+            <AppShell>
+              <a
+                href="#main"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[120] focus:rounded-full focus:bg-fg focus:px-4 focus:py-2 focus:text-bg"
+              >
+                Skip to content
+              </a>
+              <main id="main" className="flex-1">
+                {children}
+              </main>
+            </AppShell>
+          </SmoothScroll>
         </Providers>
       </body>
     </html>

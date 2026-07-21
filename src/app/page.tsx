@@ -1,6 +1,6 @@
-import { Hero } from "@/components/sections/Hero";
+import { ScrollHero } from "@/components/sections/ScrollHero";
 
-/** Single-viewport hero — no page scroll. */
+/** Scroll-scrub cinematic hero → luxury contact CTA */
 export default function Home() {
-  return <Hero />;
+  return <ScrollHero />;
 }
