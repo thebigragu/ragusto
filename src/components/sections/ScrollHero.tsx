@@ -184,45 +184,65 @@ function makeGoldDust(seed: string, count: number): DustSpec[] {
     const r = hashSeed(`${seed}-dust-${i}`);
     const r2 = hashSeed(`${seed}-dust2-${i}`);
     const r3 = hashSeed(`${seed}-dust3-${i}`);
-    // Bias particles to a soft halo around the box (edges more than dead-center)
-    const ring = 0.12 + r * 0.76;
-    const sideBias = r2 > 0.5 ? ring : 1 - ring;
+    // Ellipse ring outside the card face — halo, not face overlay
+    const angle = r * Math.PI * 2;
+    const radiusX = 46 + r2 * 22; // % from center
+    const radiusY = 48 + r3 * 24;
+    const left = 50 + Math.cos(angle) * radiusX;
+    const bottom = 42 + Math.sin(angle) * radiusY * 0.72;
     return {
       id: i,
-      left: `${sideBias * 100}%`,
-      bottom: `${-12 + r3 * 55}%`,
-      size: 1.1 + r * 2.2,
-      duration: 4.2 + r2 * 4.8,
-      delay: r * 6.2,
-      drift: (r2 - 0.5) * 32,
-      peak: 0.22 + r3 * 0.38,
-      blur: r > 0.65 ? 1.4 : 0.35,
+      left: `${left}%`,
+      bottom: `${bottom}%`,
+      size: 1.2 + r * 2.6,
+      duration: 4.6 + r2 * 5.2,
+      delay: r * 6.5,
+      drift: Math.cos(angle) * (10 + r2 * 18),
+      peak: 0.28 + r3 * 0.4,
+      blur: r > 0.55 ? 1.8 : 0.5,
     };
   });
 }
 
-/** Subtle gold glitter rising around a beat bubble — rides the same transforms. */
-function GoldDustAura({ seed, isMobile }: { seed: string; isMobile: boolean }) {
+/** Gold glitter halo behind the bubble — outside the glass, not on the face. */
+function GoldDustAura({
+  seed,
+  isMobile,
+  depth,
+}: {
+  seed: string;
+  isMobile: boolean;
+  depth: number;
+}) {
   const specs = useMemo(
-    () => makeGoldDust(seed, isMobile ? 14 : 20),
+    () => makeGoldDust(seed, isMobile ? 16 : 24),
     [seed, isMobile],
   );
 
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -inset-[22%] z-[1] overflow-visible md:-inset-[26%]"
-      style={{ transform: "translateZ(28px)" }}
+      className="pointer-events-none absolute -inset-[34%] overflow-visible md:-inset-[40%]"
+      style={{
+        transform: `translateZ(${-depth - 40}px)`,
+        transformStyle: "preserve-3d",
+        // Keep motes in the outer halo; punch out the card silhouette
+        maskImage:
+          "radial-gradient(ellipse 42% 38% at 50% 48%, transparent 0%, transparent 62%, black 78%)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse 42% 38% at 50% 48%, transparent 0%, transparent 62%, black 78%)",
+      }}
     >
-      {/* Soft gold breath that frames the box */}
+      {/* Soft gold breath from behind */}
       <motion.div
-        className="absolute inset-[12%] rounded-[2rem]"
+        className="absolute inset-[8%] rounded-[2.5rem]"
         style={{
           background:
-            "radial-gradient(ellipse 70% 60% at 50% 55%, rgba(196,165,116,0.14) 0%, rgba(196,165,116,0.04) 42%, transparent 72%)",
+            "radial-gradient(ellipse 75% 65% at 50% 50%, rgba(196,165,116,0.22) 0%, rgba(196,165,116,0.08) 38%, rgba(240,226,196,0.03) 58%, transparent 78%)",
+          filter: "blur(14px)",
         }}
-        animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.96, 1.04, 0.96] }}
-        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ opacity: [0.4, 0.85, 0.4], scale: [0.94, 1.06, 0.94] }}
+        transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {specs.map((p) => {
@@ -230,8 +250,8 @@ function GoldDustAura({ seed, isMobile }: { seed: string; isMobile: boolean }) {
           p.id % 3 === 0
             ? "rgba(240,226,196,0.95)"
             : p.id % 3 === 1
-              ? "rgba(196,165,116,0.88)"
-              : "rgba(255,248,230,0.9)";
+              ? "rgba(196,165,116,0.9)"
+              : "rgba(255,248,230,0.92)";
         return (
           <motion.span
             key={p.id}
@@ -245,15 +265,15 @@ function GoldDustAura({ seed, isMobile }: { seed: string; isMobile: boolean }) {
               background: tone,
               boxShadow:
                 p.size > 2
-                  ? "0 0 5px rgba(196,165,116,0.55), 0 0 10px rgba(240,226,196,0.28)"
-                  : "0 0 3px rgba(196,165,116,0.45)",
+                  ? "0 0 6px rgba(196,165,116,0.6), 0 0 14px rgba(240,226,196,0.3)"
+                  : "0 0 4px rgba(196,165,116,0.5)",
               filter: p.blur > 0.8 ? `blur(${p.blur}px)` : undefined,
             }}
             animate={{
-              y: [0, -(55 + Math.abs(p.drift) * 0.4), -(120 + Math.abs(p.drift) * 0.85)],
-              x: [0, p.drift * 0.4, p.drift * 0.95],
-              opacity: [0, p.peak, p.peak * 0.55, 0],
-              scale: [0.55, 1.2, 0.9, 0.35],
+              y: [0, -(40 + Math.abs(p.drift) * 0.35), -(95 + Math.abs(p.drift) * 0.7)],
+              x: [0, p.drift * 0.35, p.drift * 0.9],
+              opacity: [0, p.peak, p.peak * 0.5, 0],
+              scale: [0.5, 1.15, 0.85, 0.35],
             }}
             transition={{
               duration: p.duration,
@@ -739,7 +759,7 @@ function BeatCard({
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
         >
-        <GoldDustAura seed={beat.id} isMobile={isMobile} />
+        <GoldDustAura seed={beat.id} isMobile={isMobile} depth={halfT} />
 
         <motion.div
           aria-hidden
