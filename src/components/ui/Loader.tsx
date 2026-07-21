@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 export function Loader({ onComplete }: { onComplete: () => void }) {
@@ -23,7 +24,7 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
         const next = Math.min(100, p + (frame < 12 ? 7 : 3));
         if (next >= 100) {
           window.clearInterval(id);
-          window.setTimeout(onComplete, 280);
+          window.setTimeout(onComplete, 320);
         }
         return next;
       });
@@ -34,29 +35,86 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-bg"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#08090b]"
       initial={{ opacity: 1 }}
-      exit={{ opacity: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }}
+      exit={{ opacity: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } }}
     >
-      <div className="flex w-full max-w-sm flex-col items-center gap-8 px-6">
-        <motion.p
-          className="font-display text-3xl tracking-tight"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(196,165,116,0.08),transparent_55%)]" />
+
+      <div className="relative flex w-full max-w-xs flex-col items-center gap-10 px-6">
+        <motion.div
+          className="relative flex items-center justify-center"
+          initial={{ opacity: 0, scale: 0.92, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          Ragusto
-        </motion.p>
-        <div className="h-px w-full overflow-hidden bg-border">
-          <motion.div
-            className="h-full bg-fg"
-            style={{ width: `${progress}%` }}
-            transition={{ duration: 0.2 }}
+          <span
+            aria-hidden
+            className="absolute left-1/2 top-[42%] -z-10 h-[150%] w-[170%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+            style={{
+              background:
+                "radial-gradient(ellipse 55% 50% at 50% 45%, rgba(196,165,116,0.4) 0%, rgba(196,165,116,0.14) 42%, transparent 70%)",
+            }}
           />
+          <Image
+            src="/brand/ragusto-logo.png"
+            alt="Ragusto"
+            width={220}
+            height={260}
+            priority
+            className="relative h-20 w-auto md:h-24"
+          />
+        </motion.div>
+
+        {/* Cinematic dual-rail progress */}
+        <div className="w-full space-y-3">
+          <div className="relative h-[2px] w-full overflow-hidden rounded-full bg-white/[0.08]">
+            <motion.div
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{
+                width: `${progress}%`,
+                background:
+                  "linear-gradient(90deg, rgba(138,115,80,0.5) 0%, #c4a574 45%, #f0e2c4 78%, #c4a574 100%)",
+                boxShadow: "0 0 16px rgba(196,165,116,0.55)",
+              }}
+              transition={{ duration: 0.15 }}
+            />
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-0 w-16"
+              style={{
+                left: `calc(${progress}% - 2rem)`,
+                background:
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent)",
+                opacity: progress > 4 && progress < 98 ? 0.85 : 0,
+              }}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] tracking-[0.35em] text-white/35 uppercase">
+              Loading
+            </span>
+            <span className="font-mono text-[10px] tracking-[0.2em] text-[#c4a574]/90">
+              {String(Math.round(progress)).padStart(3, "0")}
+              <span className="text-white/30">%</span>
+            </span>
+          </div>
+
+          {/* Subtle tick marks */}
+          <div className="flex justify-between px-0.5" aria-hidden>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span
+                key={i}
+                className="h-1 w-px bg-white/20"
+                style={{
+                  opacity: progress >= i * 25 ? 0.7 : 0.2,
+                  backgroundColor: progress >= i * 25 ? "#c4a574" : undefined,
+                }}
+              />
+            ))}
+          </div>
         </div>
-        <p className="font-mono text-xs tracking-[0.3em] text-fg-muted">
-          {String(progress).padStart(3, "0")}%
-        </p>
       </div>
     </motion.div>
   );
