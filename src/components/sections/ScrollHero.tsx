@@ -56,14 +56,14 @@ const BEATS: Beat[] = [
     start: 0.02,
     end: 0.24,
     variant: {
-      orbitR: 380,
+      orbitR: 520,
       radius: "1.4rem",
       glass: "rgba(255,255,255,0.1)",
-      rim: "rgba(255,255,255,0.35)",
+      rim: "rgba(255,255,255,0.22)",
       edgeGlow: "rgba(196,165,116,0.3)",
       shimmerAngle: 118,
       top: "58%",
-      thickness: 18,
+      thickness: 34,
     },
   },
   {
@@ -78,14 +78,14 @@ const BEATS: Beat[] = [
     start: 0.26,
     end: 0.48,
     variant: {
-      orbitR: 420,
+      orbitR: 560,
       radius: "1.15rem",
       glass: "rgba(210,230,240,0.09)",
-      rim: "rgba(230,245,255,0.36)",
+      rim: "rgba(230,245,255,0.2)",
       edgeGlow: "rgba(150,200,210,0.28)",
       shimmerAngle: 64,
       top: "52%",
-      thickness: 20,
+      thickness: 36,
     },
   },
   {
@@ -100,14 +100,14 @@ const BEATS: Beat[] = [
     start: 0.5,
     end: 0.72,
     variant: {
-      orbitR: 360,
+      orbitR: 500,
       radius: "1.7rem",
       glass: "rgba(255,248,235,0.1)",
-      rim: "rgba(196,165,116,0.42)",
+      rim: "rgba(196,165,116,0.24)",
       edgeGlow: "rgba(196,165,116,0.38)",
       shimmerAngle: 108,
       top: "56%",
-      thickness: 16,
+      thickness: 32,
     },
   },
   {
@@ -122,14 +122,14 @@ const BEATS: Beat[] = [
     start: 0.74,
     end: 0.96,
     variant: {
-      orbitR: 440,
+      orbitR: 580,
       radius: "1rem",
       glass: "rgba(255,255,255,0.11)",
-      rim: "rgba(255,255,255,0.38)",
+      rim: "rgba(255,255,255,0.22)",
       edgeGlow: "rgba(240,226,196,0.32)",
       shimmerAngle: 52,
       top: "54%",
-      thickness: 22,
+      thickness: 38,
     },
   },
 ];
@@ -276,17 +276,21 @@ function BeatCard({
     if (t < ENTER_END) return 0.96 + 0.04 * smoothstep(t / ENTER_END);
     if (t > EXIT_START) {
       const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-      return 1 + 0.08 * Math.sin(e * Math.PI) - e * 0.12;
+      return 1 + 0.14 * Math.sin(e * Math.PI) - e * 0.22;
     }
     return 1;
   });
 
-  // Diagonal opposite orbit: left → up/right, right → up/left, with tumble
+  // Resting tilt so prism depth reads while held; exit flips/twists diagonally away
+  const restY = -exitDir * 16;
+  const restX = 7;
+
+  // Diagonal opposite orbit: left → up/right, right → up/left
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.78;
+    const theta = e * Math.PI * 0.92;
     return exitDir * v.orbitR * Math.sin(theta);
   });
 
@@ -294,37 +298,45 @@ function BeatCard({
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.78;
-    return -v.orbitR * (1 - Math.cos(theta)) - e * 260;
+    const theta = e * Math.PI * 0.92;
+    return -v.orbitR * (1 - Math.cos(theta)) - e * 340;
   });
 
   const orbitZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
+    if (t <= EXIT_START) return 40;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.78;
-    return -v.orbitR * Math.sin(theta) * 0.7;
+    const theta = e * Math.PI * 0.92;
+    return 40 - v.orbitR * Math.sin(theta) * 1.05;
   });
 
   const rotateX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
+    if (t < ENTER_END) {
+      return restX + (1 - smoothstep(t / ENTER_END)) * 18;
+    }
+    if (t <= EXIT_START) return restX;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return -e * 28;
+    // Flip back as it climbs the arc
+    return restX - e * 78;
   });
 
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
+    if (t < ENTER_END) {
+      return restY + exitDir * (1 - smoothstep(t / ENTER_END)) * 28;
+    }
+    if (t <= EXIT_START) return restY;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * e * 48;
+    // Twist toward exit direction — nearly edge-on mid-flight
+    return restY + exitDir * e * 118;
   });
 
   const rotateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
+    if (t <= EXIT_START) return exitDir * -3;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * e * 22;
+    return exitDir * (-3 + e * 42);
   });
 
   const orbitTransform = useMotionTemplate`translate3d(${orbitX}px, ${orbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
@@ -372,7 +384,8 @@ function BeatCard({
   const faceStyle: CSSProperties = {
     borderRadius: v.radius,
     background: `linear-gradient(145deg, ${v.glass} 0%, rgba(255,255,255,0.06) 45%, rgba(255,255,255,0.03) 100%)`,
-    border: `1px solid ${v.rim}`,
+    border: "none",
+    outline: "none",
   };
 
   return (
@@ -384,7 +397,7 @@ function BeatCard({
         y: enterY,
         filter,
         scale,
-        perspective: 1400,
+        perspective: 1600,
         transformStyle: "preserve-3d",
       }}
     >
@@ -398,14 +411,14 @@ function BeatCard({
           className="pointer-events-none absolute left-[8%] right-[8%] top-[92%] h-10 rounded-[100%]"
           style={{
             opacity: shadowOpacity,
-            transform: `translateZ(${-T - 20}px) rotateX(82deg)`,
+            transform: `translateZ(${-T - 28}px) rotateX(82deg)`,
             background:
-              "radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 50%, transparent 70%)",
-            filter: "blur(8px)",
+              "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 50%, transparent 70%)",
+            filter: "blur(10px)",
           }}
         />
 
-        {/* Prism: front / back / sides / top — no hairline artifacts */}
+        {/* Thick glass prism — soft edges only, no hairline borders */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
           {/* Back face */}
           <div
@@ -414,13 +427,13 @@ function BeatCard({
             style={{
               ...faceStyle,
               background:
-                "linear-gradient(160deg, rgba(30,34,42,0.92), rgba(8,10,14,0.98))",
-              border: "1px solid rgba(255,255,255,0.06)",
+                "linear-gradient(160deg, rgba(36,40,50,0.96), rgba(6,8,12,0.99))",
+              boxShadow: `inset 0 0 40px rgba(0,0,0,0.45), 0 0 24px rgba(0,0,0,0.25)`,
               transform: `translateZ(${-T}px)`,
             }}
           />
 
-          {/* Right prism face */}
+          {/* Right prism face — lit edge */}
           <div
             aria-hidden
             className="absolute top-0 bottom-0"
@@ -428,13 +441,18 @@ function BeatCard({
               width: T,
               right: 0,
               transformOrigin: "right center",
-              transform: `rotateY(90deg) translateZ(0px)`,
+              transform: "rotateY(90deg) translateZ(0px)",
               borderRadius: `0 ${v.radius} ${v.radius} 0`,
-              background: `linear-gradient(180deg, rgba(255,255,255,0.22) 0%, ${v.edgeGlow} 40%, rgba(0,0,0,0.45) 100%)`,
+              background: `linear-gradient(180deg,
+                rgba(255,255,255,0.38) 0%,
+                ${v.edgeGlow} 28%,
+                rgba(255,255,255,0.12) 55%,
+                rgba(0,0,0,0.55) 100%)`,
+              boxShadow: `inset -2px 0 12px rgba(255,255,255,0.15)`,
             }}
           />
 
-          {/* Left prism face */}
+          {/* Left prism face — shadowed volume */}
           <div
             aria-hidden
             className="absolute top-0 bottom-0"
@@ -442,13 +460,16 @@ function BeatCard({
               width: T,
               left: 0,
               transformOrigin: "left center",
-              transform: `rotateY(-90deg) translateZ(0px)`,
+              transform: "rotateY(-90deg) translateZ(0px)",
               borderRadius: `${v.radius} 0 0 ${v.radius}`,
-              background: `linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.4) 100%)`,
+              background: `linear-gradient(180deg,
+                rgba(255,255,255,0.14) 0%,
+                rgba(40,44,54,0.55) 40%,
+                rgba(0,0,0,0.65) 100%)`,
             }}
           />
 
-          {/* Top prism face */}
+          {/* Top prism face — bright bevel */}
           <div
             aria-hidden
             className="absolute inset-x-0"
@@ -456,20 +477,47 @@ function BeatCard({
               height: T,
               top: 0,
               transformOrigin: "center top",
-              transform: `rotateX(-90deg) translateZ(0px)`,
+              transform: "rotateX(-90deg) translateZ(0px)",
               borderRadius: `${v.radius} ${v.radius} 0 0`,
-              background: `linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.28), rgba(255,255,255,0.08))`,
+              background: `linear-gradient(90deg,
+                rgba(255,255,255,0.06),
+                rgba(255,255,255,0.42),
+                ${v.edgeGlow},
+                rgba(255,255,255,0.42),
+                rgba(255,255,255,0.06))`,
             }}
           />
 
-          {/* Front glass face — overflow visible so italics aren't clipped */}
+          {/* Bottom prism face */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0"
+            style={{
+              height: T,
+              bottom: 0,
+              transformOrigin: "center bottom",
+              transform: "rotateX(90deg) translateZ(0px)",
+              borderRadius: `0 0 ${v.radius} ${v.radius}`,
+              background: `linear-gradient(90deg,
+                rgba(0,0,0,0.55),
+                rgba(20,22,28,0.7),
+                rgba(0,0,0,0.55))`,
+            }}
+          />
+
+          {/* Front glass face — soft glow rim, no stroke outline */}
           <div
             className="relative p-6 md:p-8"
             style={{
               ...faceStyle,
-              backdropFilter: "blur(24px) saturate(1.15)",
-              WebkitBackdropFilter: "blur(24px) saturate(1.15)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.28)",
+              backdropFilter: "blur(28px) saturate(1.2)",
+              WebkitBackdropFilter: "blur(28px) saturate(1.2)",
+              boxShadow: `
+                inset 0 18px 36px rgba(255,255,255,0.07),
+                inset 0 -24px 40px rgba(0,0,0,0.18),
+                0 22px 56px rgba(0,0,0,0.38),
+                0 0 48px ${v.edgeGlow}
+              `,
               transform: "translateZ(0px)",
               transformStyle: "preserve-3d",
             }}
@@ -479,7 +527,7 @@ function BeatCard({
               style={{
                 borderRadius: v.radius,
                 background:
-                  "linear-gradient(125deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.05) 28%, transparent 52%)",
+                  "linear-gradient(125deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.06) 28%, transparent 52%)",
               }}
             />
 
@@ -495,7 +543,10 @@ function BeatCard({
               }}
             />
 
-            <div className="relative overflow-visible" style={{ transform: `translateZ(${T * 0.35}px)` }}>
+            <div
+              className="relative overflow-visible"
+              style={{ transform: `translateZ(${T * 0.45}px)` }}
+            >
               <p className="font-serif text-3xl leading-[1.2] tracking-tight text-white sm:text-4xl md:text-[2.75rem]">
                 {beat.words.map((w, i) => (
                   <span key={`${w.t}-${i}`} className="inline">
