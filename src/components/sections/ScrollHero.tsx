@@ -517,11 +517,10 @@ function BeatCard({
     return 1;
   });
 
-  // At rest: left panes aim right across the hero; right panes aim left.
-  // Positive rotateY brings the right edge forward — so left cards use +yaw to face right.
+  // At rest: left panes aim right across the hero; right panes aim left (subtle).
   const restY =
-    beat.side === "left" ? (isMobile ? 34 : 48) : isMobile ? -34 : -48;
-  const restX = isMobile ? 5 : 8;
+    beat.side === "left" ? (isMobile ? 16 : 22) : isMobile ? -16 : -22;
+  const restX = isMobile ? 3 : 5;
   const twistAmp = (isMobile ? 22 : 30) * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
