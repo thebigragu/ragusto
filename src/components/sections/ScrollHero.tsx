@@ -286,11 +286,22 @@ function BeatCard({
     return 1;
   });
 
+  // Depth-of-field: soft on approach, sharp on hold, soft again as they orbit out
   const blur = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 14;
+    if (p < beat.start || p >= beat.end) return 22;
     const t = beatT(p, beat);
-    if (t < 0.08) return 14 * (1 - t / 0.08);
-    if (t > 0.9) return 10 * ((t - 0.9) / 0.1);
+    if (t < 0.16) {
+      // Ease out of blur as the pane settles into place
+      const e = t / 0.16;
+      const smooth = e * e * (3 - 2 * e);
+      return 22 * (1 - smooth);
+    }
+    if (t > 0.76) {
+      // Ramp blur back up through the exit / orbit
+      const e = (t - 0.76) / 0.24;
+      const smooth = e * e * (3 - 2 * e);
+      return 20 * smooth;
+    }
     return 0;
   });
   const filter = useMotionTemplate`blur(${blur}px)`;
