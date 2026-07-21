@@ -13,7 +13,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 type BeatVariant = {
   /** Orbit arc radius in px during exit */
@@ -56,14 +56,14 @@ const BEATS: Beat[] = [
     start: 0.02,
     end: 0.24,
     variant: {
-      orbitR: 340,
+      orbitR: 380,
       radius: "1.4rem",
       glass: "rgba(255,255,255,0.1)",
       rim: "rgba(255,255,255,0.35)",
       edgeGlow: "rgba(196,165,116,0.3)",
       shimmerAngle: 118,
       top: "58%",
-      thickness: 14,
+      thickness: 18,
     },
   },
   {
@@ -78,14 +78,14 @@ const BEATS: Beat[] = [
     start: 0.26,
     end: 0.48,
     variant: {
-      orbitR: 380,
+      orbitR: 420,
       radius: "1.15rem",
       glass: "rgba(210,230,240,0.09)",
       rim: "rgba(230,245,255,0.36)",
       edgeGlow: "rgba(150,200,210,0.28)",
       shimmerAngle: 64,
       top: "52%",
-      thickness: 16,
+      thickness: 20,
     },
   },
   {
@@ -100,14 +100,14 @@ const BEATS: Beat[] = [
     start: 0.5,
     end: 0.72,
     variant: {
-      orbitR: 320,
+      orbitR: 360,
       radius: "1.7rem",
       glass: "rgba(255,248,235,0.1)",
       rim: "rgba(196,165,116,0.42)",
       edgeGlow: "rgba(196,165,116,0.38)",
       shimmerAngle: 108,
       top: "56%",
-      thickness: 12,
+      thickness: 16,
     },
   },
   {
@@ -122,14 +122,14 @@ const BEATS: Beat[] = [
     start: 0.74,
     end: 0.96,
     variant: {
-      orbitR: 400,
+      orbitR: 440,
       radius: "1rem",
       glass: "rgba(255,255,255,0.11)",
       rim: "rgba(255,255,255,0.38)",
       edgeGlow: "rgba(240,226,196,0.32)",
       shimmerAngle: 52,
       top: "54%",
-      thickness: 18,
+      thickness: 22,
     },
   },
 ];
@@ -215,7 +215,7 @@ function AsyncWord({
   }
 
   return (
-    <motion.span style={{ opacity, y, filter }} className="inline-block">
+    <motion.span style={{ opacity, y, filter }} className="inline-block pe-[0.12em]">
       <span
         className={
           emph
@@ -237,14 +237,15 @@ function BeatCard({
   progress: MotionValue<number>;
 }) {
   const v = beat.variant;
-  const dir = beat.side === "left" ? -1 : 1;
+  // Left panes exit up/right; right panes exit up/left (diagonally opposite)
+  const exitDir = beat.side === "left" ? 1 : -1;
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
+  const T = Math.max(10, v.thickness);
 
-  // Rise from below → hold flat → orbital exit
   const enterY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (p < beat.start) return "110vh";
-    if (p >= beat.end) return "-30vh";
+    if (p >= beat.end) return "-40vh";
     if (t < ENTER_END) {
       const eased = smoothstep(t / ENTER_END);
       return `${110 - 110 * eased}vh`;
@@ -255,22 +256,16 @@ function BeatCard({
   const opacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < ENTER_END * 0.5) return t / (ENTER_END * 0.5);
-    if (t > 0.94) return Math.max(0, (1 - t) / 0.06);
+    if (t < ENTER_END * 0.45) return t / (ENTER_END * 0.45);
+    if (t > 0.92) return Math.max(0, (1 - t) / 0.08);
     return 1;
   });
 
   const blur = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 22;
+    if (p < beat.start || p >= beat.end) return 18;
     const t = beatT(p, beat);
-    if (t < ENTER_END) {
-      const smooth = smoothstep(t / ENTER_END);
-      return 22 * (1 - smooth);
-    }
-    if (t > EXIT_START) {
-      const smooth = smoothstep((t - EXIT_START) / EXIT_LEN);
-      return 20 * smooth;
-    }
+    if (t < ENTER_END) return 18 * (1 - smoothstep(t / ENTER_END));
+    if (t > EXIT_START) return 16 * smoothstep((t - EXIT_START) / EXIT_LEN);
     return 0;
   });
   const filter = useMotionTemplate`blur(${blur}px)`;
@@ -278,69 +273,58 @@ function BeatCard({
   const scale = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0.96;
     const t = beatT(p, beat);
-    if (t < ENTER_END) {
-      const eased = smoothstep(t / ENTER_END);
-      return 0.96 + 0.04 * eased;
-    }
+    if (t < ENTER_END) return 0.96 + 0.04 * smoothstep(t / ENTER_END);
     if (t > EXIT_START) {
-      const eased = smoothstep((t - EXIT_START) / EXIT_LEN);
-      return 1 + 0.18 * eased;
+      const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+      return 1 + 0.08 * Math.sin(e * Math.PI) - e * 0.12;
     }
     return 1;
   });
 
-  // True circular orbit on exit — flat on hold
+  // Diagonal opposite orbit: left → up/right, right → up/left, with tumble
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.72;
-    return dir * v.orbitR * Math.sin(theta);
+    const theta = e * Math.PI * 0.78;
+    return exitDir * v.orbitR * Math.sin(theta);
   });
 
   const orbitY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.72;
-    return -v.orbitR * (1 - Math.cos(theta)) - e * 220;
+    const theta = e * Math.PI * 0.78;
+    return -v.orbitR * (1 - Math.cos(theta)) - e * 260;
   });
 
   const orbitZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.72;
-    return -v.orbitR * Math.sin(theta) * 0.95;
+    const theta = e * Math.PI * 0.78;
+    return -v.orbitR * Math.sin(theta) * 0.7;
   });
 
   const rotateX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.72;
-    const dydtheta = -v.orbitR * Math.sin(theta);
-    const dzdtheta = -v.orbitR * 0.95 * Math.cos(theta);
-    const dxdtheta = dir * v.orbitR * Math.cos(theta);
-    const horiz = Math.sqrt(dxdtheta * dxdtheta + dzdtheta * dzdtheta);
-    return Math.atan2(-dydtheta, horiz) * (180 / Math.PI);
+    return -e * 28;
   });
 
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    const theta = e * Math.PI * 0.72;
-    const dzdtheta = -v.orbitR * 0.95 * Math.cos(theta);
-    const dxdtheta = dir * v.orbitR * Math.cos(theta);
-    return Math.atan2(dxdtheta, -dzdtheta) * (180 / Math.PI);
+    return exitDir * e * 48;
   });
 
   const rotateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return dir * 2.5 * e;
+    return exitDir * e * 22;
   });
 
   const orbitTransform = useMotionTemplate`translate3d(${orbitX}px, ${orbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
@@ -348,151 +332,157 @@ function BeatCard({
   const shadowOpacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < ENTER_END * 0.6) return 0.12 * smoothstep(t / (ENTER_END * 0.6));
-    if (t > EXIT_START) return 0.38 * (1 - smoothstep((t - EXIT_START) / EXIT_LEN));
-    return 0.32;
-  });
-
-  const shadowScale = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t <= EXIT_START) return 1;
-    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return 1 + e * 0.35;
+    if (t < ENTER_END * 0.55) return 0.2 * smoothstep(t / (ENTER_END * 0.55));
+    if (t > EXIT_START) return 0.28 * (1 - smoothstep((t - EXIT_START) / EXIT_LEN));
+    return 0.28;
   });
 
   const shimmerPos = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    const shimmerEnd = ENTER_END + 0.12;
-    if (t < 0.06) return 120;
+    const shimmerEnd = ENTER_END + 0.1;
+    if (t < 0.05) return 120;
     if (t > shimmerEnd) return -40;
-    return 120 - ((t - 0.06) / (shimmerEnd - 0.06)) * 160;
+    return 120 - ((t - 0.05) / (shimmerEnd - 0.05)) * 160;
   });
 
   const shimmerOpacity = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    const shimmerEnd = ENTER_END + 0.12;
-    if (t < 0.06) return 0;
-    if (t < ENTER_END * 0.45) return (t - 0.06) / (ENTER_END * 0.45 - 0.06);
-    if (t < ENTER_END + 0.04) return 1;
-    if (t < shimmerEnd) return 1 - (t - (ENTER_END + 0.04)) / (shimmerEnd - ENTER_END - 0.04);
+    const shimmerEnd = ENTER_END + 0.1;
+    if (t < 0.05) return 0;
+    if (t < ENTER_END * 0.4) return (t - 0.05) / Math.max(0.01, ENTER_END * 0.4 - 0.05);
+    if (t < ENTER_END) return 1;
+    if (t < shimmerEnd) return 1 - (t - ENTER_END) / (shimmerEnd - ENTER_END);
     return 0;
   });
 
   const shimmerBackground = useMotionTemplate`linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
       transparent ${shimmerPos}%,
-      rgba(255,255,255,0.02) calc(${shimmerPos}% + 4%),
-      rgba(255,255,255,0.18) calc(${shimmerPos}% + 9%),
-      rgba(255,255,255,0.42) calc(${shimmerPos}% + 12%),
-      rgba(240,226,196,0.2) calc(${shimmerPos}% + 14%),
-      rgba(255,255,255,0.08) calc(${shimmerPos}% + 17%),
-      transparent calc(${shimmerPos}% + 24%),
+      rgba(255,255,255,0.05) calc(${shimmerPos}% + 6%),
+      rgba(255,255,255,0.4) calc(${shimmerPos}% + 12%),
+      rgba(240,226,196,0.22) calc(${shimmerPos}% + 14%),
+      transparent calc(${shimmerPos}% + 22%),
       transparent 100%)`;
-
-  const paneOpacity = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 0;
-    const t = beatT(p, beat);
-    if (t < ENTER_END * 0.45) return t / (ENTER_END * 0.45);
-    if (t > EXIT_START + EXIT_LEN * 0.55) {
-      const e = (t - (EXIT_START + EXIT_LEN * 0.55)) / (EXIT_LEN * 0.45);
-      return Math.max(0.12, 1 - e * 0.88);
-    }
-    return 1;
-  });
 
   const sideClass =
     beat.side === "left"
       ? "left-4 origin-center md:left-10 lg:left-16"
       : "right-4 origin-center md:right-10 lg:right-16";
 
+  const faceStyle: CSSProperties = {
+    borderRadius: v.radius,
+    background: `linear-gradient(145deg, ${v.glass} 0%, rgba(255,255,255,0.06) 45%, rgba(255,255,255,0.03) 100%)`,
+    border: `1px solid ${v.rim}`,
+  };
+
   return (
     <motion.div
-      className={`pointer-events-auto absolute z-20 max-w-[min(92vw,28rem)] -translate-y-1/2 ${sideClass}`}
+      className={`pointer-events-auto absolute z-20 max-w-[min(92vw,30rem)] -translate-y-1/2 ${sideClass}`}
       style={{
         top: v.top,
         opacity,
         y: enterY,
         filter,
         scale,
-        perspective: 1800,
+        perspective: 1400,
         transformStyle: "preserve-3d",
       }}
     >
       <motion.div
-        className="relative [transform-style:preserve-3d]"
+        className="relative"
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
-        {/* Soft elliptical shadow — separate plane, not CSS drop-shadow on glass */}
+        {/* Soft ground shadow */}
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-full h-16 w-[115%] -translate-x-1/2 md:h-20"
+          className="pointer-events-none absolute left-[8%] right-[8%] top-[92%] h-10 rounded-[100%]"
           style={{
             opacity: shadowOpacity,
-            scale: shadowScale,
-            transform: "translateZ(-48px) rotateX(78deg)",
-            transformStyle: "preserve-3d",
+            transform: `translateZ(${-T - 20}px) rotateX(82deg)`,
             background:
-              "radial-gradient(ellipse 72% 48% at 50% 42%, rgba(0,0,0,0.55), rgba(0,0,0,0.22) 52%, transparent 72%)",
-            filter: "blur(10px)",
+              "radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.15) 50%, transparent 70%)",
+            filter: "blur(8px)",
           }}
         />
 
-        <div
-          className="relative [transform-style:preserve-3d]"
-          style={{ transformStyle: "preserve-3d" }}
-        >
-          {/* Back plate */}
+        {/* Prism: front / back / sides / top — no hairline artifacts */}
+        <div className="relative" style={{ transformStyle: "preserve-3d" }}>
+          {/* Back face */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0"
+            className="absolute inset-0"
             style={{
-              borderRadius: v.radius,
+              ...faceStyle,
               background:
-                "linear-gradient(160deg, rgba(255,255,255,0.04), rgba(0,0,0,0.5) 60%, rgba(8,10,14,0.65))",
-              border: `1px solid rgba(255,255,255,0.08)`,
-              transform: `translateZ(-${v.thickness}px)`,
-              transformStyle: "preserve-3d",
+                "linear-gradient(160deg, rgba(30,34,42,0.92), rgba(8,10,14,0.98))",
+              border: "1px solid rgba(255,255,255,0.06)",
+              transform: `translateZ(${-T}px)`,
             }}
           />
 
-          {/* Side edge — glass thickness */}
+          {/* Right prism face */}
           <div
             aria-hidden
-            className="pointer-events-none absolute top-0 right-0 h-full"
+            className="absolute top-0 bottom-0"
             style={{
-              width: `${v.thickness}px`,
-              borderRadius: `0 ${v.radius} ${v.radius} 0`,
-              background: `linear-gradient(180deg, ${v.glass}, rgba(0,0,0,0.35))`,
-              borderRight: `1px solid ${v.rim}`,
-              transform: `rotateY(90deg) translateZ(-${v.thickness / 2}px)`,
+              width: T,
+              right: 0,
               transformOrigin: "right center",
-              transformStyle: "preserve-3d",
+              transform: `rotateY(90deg) translateZ(0px)`,
+              borderRadius: `0 ${v.radius} ${v.radius} 0`,
+              background: `linear-gradient(180deg, rgba(255,255,255,0.22) 0%, ${v.edgeGlow} 40%, rgba(0,0,0,0.45) 100%)`,
             }}
           />
 
-          {/* Front glass face */}
-          <motion.div
-            className="group relative cursor-default overflow-hidden p-6 backdrop-blur-2xl md:p-8"
+          {/* Left prism face */}
+          <div
+            aria-hidden
+            className="absolute top-0 bottom-0"
             style={{
-              opacity: paneOpacity,
-              borderRadius: v.radius,
-              background: `linear-gradient(148deg, ${v.glass}, rgba(255,255,255,0.02) 48%, rgba(255,255,255,0.05))`,
-              border: `1px solid ${v.rim}`,
-              boxShadow: "0 1px 0 0 rgba(255,255,255,0.18) inset",
-              transform: "translateZ(0)",
+              width: T,
+              left: 0,
+              transformOrigin: "left center",
+              transform: `rotateY(-90deg) translateZ(0px)`,
+              borderRadius: `${v.radius} 0 0 ${v.radius}`,
+              background: `linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(0,0,0,0.4) 100%)`,
+            }}
+          />
+
+          {/* Top prism face */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0"
+            style={{
+              height: T,
+              top: 0,
+              transformOrigin: "center top",
+              transform: `rotateX(-90deg) translateZ(0px)`,
+              borderRadius: `${v.radius} ${v.radius} 0 0`,
+              background: `linear-gradient(90deg, rgba(255,255,255,0.08), rgba(255,255,255,0.28), rgba(255,255,255,0.08))`,
+            }}
+          />
+
+          {/* Front glass face — overflow visible so italics aren't clipped */}
+          <div
+            className="relative p-6 md:p-8"
+            style={{
+              ...faceStyle,
+              backdropFilter: "blur(24px) saturate(1.15)",
+              WebkitBackdropFilter: "blur(24px) saturate(1.15)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.28)",
+              transform: "translateZ(0px)",
               transformStyle: "preserve-3d",
             }}
           >
-            {/* Subtle top-edge highlight only */}
             <div
-              className="pointer-events-none absolute inset-x-0 top-0 h-px"
+              className="pointer-events-none absolute inset-0"
               style={{
+                borderRadius: v.radius,
                 background:
-                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.35) 30%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.35) 70%, transparent)",
+                  "linear-gradient(125deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.05) 28%, transparent 52%)",
               }}
             />
 
-            {/* Soft shimmer sweep on enter */}
             <motion.div
               aria-hidden
               className="pointer-events-none absolute inset-0"
@@ -501,14 +491,14 @@ function BeatCard({
                 borderRadius: v.radius,
                 background: shimmerBackground,
                 mixBlendMode: "screen",
-                filter: "blur(5px)",
+                filter: "blur(4px)",
               }}
             />
 
-            <div className="relative" style={{ transform: "translateZ(2px)" }}>
-              <p className="font-serif text-3xl leading-[1.15] tracking-tight text-white sm:text-4xl md:text-[2.75rem]">
+            <div className="relative overflow-visible" style={{ transform: `translateZ(${T * 0.35}px)` }}>
+              <p className="font-serif text-3xl leading-[1.2] tracking-tight text-white sm:text-4xl md:text-[2.75rem]">
                 {beat.words.map((w, i) => (
-                  <span key={`${w.t}-${i}`}>
+                  <span key={`${w.t}-${i}`} className="inline">
                     {i > 0 ? " " : null}
                     <AsyncWord
                       text={w.t}
@@ -521,7 +511,7 @@ function BeatCard({
                   </span>
                 ))}
               </p>
-              <p className="mt-3 text-sm tracking-[0.18em] text-white/55 uppercase md:text-[0.95rem]">
+              <p className="mt-3 text-sm tracking-[0.18em] text-white/60 uppercase md:text-[0.95rem]">
                 {subTokens.map((part, i) => {
                   if (/^\s+$/.test(part)) return <span key={i}>{part}</span>;
                   const clean = part.replace(/[.—,]/g, "");
@@ -541,12 +531,25 @@ function BeatCard({
                   );
                 })}
               </p>
-              <span
-                className="mt-5 block h-px w-12 bg-gradient-to-r from-[#c4a574] to-transparent transition-all duration-500 group-hover:w-28"
-                style={{ boxShadow: `0 0 10px ${v.edgeGlow}` }}
-              />
+
+              {/* Gold underline — pulses and sweeps across the pane */}
+              <div className="relative mt-5 h-px w-full overflow-hidden">
+                <motion.span
+                  className="absolute top-0 left-0 block h-px origin-left bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
+                  style={{ width: "100%", boxShadow: `0 0 10px ${v.edgeGlow}` }}
+                  animate={{
+                    scaleX: [0.12, 1, 0.12],
+                    opacity: [0.35, 1, 0.35],
+                  }}
+                  transition={{
+                    duration: 2.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+              </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
     </motion.div>
