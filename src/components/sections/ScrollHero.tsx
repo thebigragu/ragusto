@@ -67,10 +67,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 520,
       radius: "1.4rem",
-      glass: "rgba(255,255,255,0.028)",
-      rim: "rgba(255,255,255,0.1)",
-      edgeGlow: "rgba(196,165,116,0.32)",
-      depthTint: "rgba(236,216,178,0.42)",
+      glass: "rgba(255,255,255,0.14)",
+      rim: "rgba(255,255,255,0.22)",
+      edgeGlow: "rgba(196,165,116,0.55)",
+      depthTint: "rgba(232,210,168,0.85)",
       shimmerAngle: 118,
       top: "68%",
       topMobile: "18%",
@@ -91,10 +91,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 560,
       radius: "1.15rem",
-      glass: "rgba(210,230,240,0.025)",
-      rim: "rgba(230,245,255,0.1)",
-      edgeGlow: "rgba(150,200,210,0.28)",
-      depthTint: "rgba(198,228,238,0.4)",
+      glass: "rgba(200,225,235,0.12)",
+      rim: "rgba(220,240,250,0.2)",
+      edgeGlow: "rgba(160,205,220,0.5)",
+      depthTint: "rgba(190,220,232,0.82)",
       shimmerAngle: 64,
       top: "34%",
       topMobile: "80%",
@@ -115,10 +115,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 500,
       radius: "1.7rem",
-      glass: "rgba(255,248,235,0.028)",
-      rim: "rgba(196,165,116,0.12)",
-      edgeGlow: "rgba(196,165,116,0.34)",
-      depthTint: "rgba(242,224,196,0.4)",
+      glass: "rgba(255,246,230,0.13)",
+      rim: "rgba(196,165,116,0.24)",
+      edgeGlow: "rgba(196,165,116,0.58)",
+      depthTint: "rgba(236,214,178,0.88)",
       shimmerAngle: 108,
       top: "50%",
       topMobile: "22%",
@@ -139,10 +139,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 580,
       radius: "1rem",
-      glass: "rgba(255,255,255,0.03)",
-      rim: "rgba(255,255,255,0.1)",
-      edgeGlow: "rgba(240,226,196,0.32)",
-      depthTint: "rgba(248,236,214,0.42)",
+      glass: "rgba(255,255,255,0.15)",
+      rim: "rgba(255,255,255,0.22)",
+      edgeGlow: "rgba(240,226,196,0.55)",
+      depthTint: "rgba(245,230,200,0.88)",
       shimmerAngle: 52,
       top: "60%",
       topMobile: "76%",
@@ -517,10 +517,12 @@ function BeatCard({
     return 1;
   });
 
-  // Rest yaw: left panes face right; right panes face left (toward center / opposite side)
-  const restY = -exitDir * (isMobile ? 28 : 42);
-  const restX = isMobile ? 6 : 9;
-  const twistAmp = (isMobile ? 24 : 34) * tiltScale;
+  // At rest: left panes aim right across the hero; right panes aim left.
+  // Positive rotateY brings the right edge forward — so left cards use +yaw to face right.
+  const restY =
+    beat.side === "left" ? (isMobile ? 34 : 48) : isMobile ? -34 : -48;
+  const restX = isMobile ? 5 : 8;
+  const twistAmp = (isMobile ? 22 : 30) * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -687,48 +689,40 @@ function BeatCard({
   const radius = isMobile ? "1.05rem" : v.radius;
   // Keep side faces clear of rounded corners to avoid seam/overspill lines
   const edgeInset = isMobile ? 16 : 20;
-  const softGlow = v.edgeGlow.replace(/[\d.]+\)$/, "0.22)");
-  // Depth faces: lighter complementary near the front face → soft fade at the rear
-  const depthFront = v.depthTint;
-  const depthMid = v.depthTint.replace(/[\d.]+\)$/, "0.38)");
-  const depthSoft = v.depthTint.replace(/[\d.]+\)$/, "0.12)");
-  // Along thickness (front → rear). Right face: local left = front after -90° yaw.
-  const depthGradRight = `linear-gradient(90deg,
-    ${depthFront} 0%,
-    ${depthMid} 28%,
-    ${depthSoft} 58%,
-    rgba(8,10,14,0.08) 78%,
+  const softGlow = v.edgeGlow.replace(/[\d.]+\)$/, "0.35)");
+  // Metallic depth: bright sheen near the front face → richer mid → soft falloff at rear
+  const metalRight = `linear-gradient(90deg,
+    rgba(255,250,235,0.92) 0%,
+    ${v.depthTint} 10%,
+    rgba(210,185,140,0.7) 32%,
+    rgba(70,60,48,0.65) 62%,
+    rgba(12,11,10,0.5) 88%,
     transparent 100%)`;
-  // Left face: local right = front after +90° yaw
-  const depthGradLeft = `linear-gradient(270deg,
-    ${depthFront} 0%,
-    ${depthMid} 28%,
-    ${depthSoft} 58%,
-    rgba(8,10,14,0.08) 78%,
+  const metalLeft = `linear-gradient(270deg,
+    rgba(255,250,235,0.75) 0%,
+    ${v.depthTint} 12%,
+    rgba(120,108,88,0.55) 40%,
+    rgba(28,26,24,0.7) 70%,
+    rgba(8,8,8,0.45) 90%,
     transparent 100%)`;
-  // Top: after rotateX(90°), local bottom edge faces the camera
-  const depthGradTop = `linear-gradient(0deg,
-    ${depthFront} 0%,
-    ${depthMid} 30%,
-    ${depthSoft} 60%,
-    rgba(8,10,14,0.06) 80%,
+  const metalTop = `linear-gradient(0deg,
+    rgba(255,252,240,0.95) 0%,
+    ${v.depthTint} 14%,
+    ${v.edgeGlow} 40%,
+    rgba(60,52,40,0.45) 75%,
     transparent 100%)`;
-  // Bottom: after rotateX(-90°), local top edge faces the camera
-  const depthGradBottom = `linear-gradient(180deg,
-    ${depthFront} 0%,
-    ${depthMid} 30%,
-    ${depthSoft} 60%,
-    rgba(8,10,14,0.1) 80%,
+  const metalBottom = `linear-gradient(180deg,
+    rgba(40,36,30,0.7) 0%,
+    rgba(24,22,20,0.55) 40%,
+    rgba(8,8,8,0.35) 80%,
     transparent 100%)`;
-  // Soft vertical falloff so depth faces don’t read as hard slabs
   const depthMaskY =
-    "linear-gradient(180deg, transparent 0%, black 14%, black 86%, transparent 100%)";
+    "linear-gradient(180deg, transparent 0%, black 10%, black 90%, transparent 100%)";
   const depthMaskX =
-    "linear-gradient(90deg, transparent 0%, black 14%, black 86%, transparent 100%)";
+    "linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%)";
 
   const faceStyle: CSSProperties = {
     borderRadius: radius,
-    background: `linear-gradient(145deg, ${v.glass} 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.02) 100%)`,
     border: "none",
     outline: "none",
     backfaceVisibility: "hidden",
@@ -774,32 +768,20 @@ function BeatCard({
         />
 
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
+          {/* Solid back plate — connected volume */}
           <div
             aria-hidden
             className="absolute inset-0"
             style={{
               ...faceStyle,
               background:
-                "linear-gradient(165deg, rgba(22,26,34,0.28), rgba(2,4,8,0.36))",
-              boxShadow: "inset 0 0 56px rgba(0,0,0,0.18)",
+                "linear-gradient(165deg, rgba(28,30,38,0.92), rgba(8,9,12,0.96))",
+              boxShadow: "inset 0 0 40px rgba(0,0,0,0.45)",
               transform: `translateZ(${-halfT}px)`,
-              opacity: 0.55,
             }}
           />
 
-          <div
-            aria-hidden
-            className="absolute inset-[6px]"
-            style={{
-              borderRadius: radius,
-              background: `radial-gradient(ellipse 80% 70% at 50% 40%, ${v.glass}, transparent 70%)`,
-              transform: "translateZ(0px)",
-              opacity: 0.28,
-              filter: "blur(8px)",
-              backfaceVisibility: "hidden",
-            }}
-          />
-
+          {/* Right metallic edge */}
           <div
             aria-hidden
             className="absolute"
@@ -810,17 +792,19 @@ function BeatCard({
               bottom: edgeInset,
               transformOrigin: "right center",
               transform: "rotateY(-90deg) translateZ(0)",
-              borderRadius: 4,
-              background: depthGradRight,
-              opacity: 0.92,
-              filter: "blur(1.25px)",
+              borderRadius: 3,
+              background: metalRight,
+              opacity: 1,
+              filter: "blur(0.35px)",
               maskImage: depthMaskY,
               WebkitMaskImage: depthMaskY,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
+              boxShadow: `0 0 12px ${v.edgeGlow}`,
             }}
           />
 
+          {/* Left metallic edge */}
           <div
             aria-hidden
             className="absolute"
@@ -831,10 +815,10 @@ function BeatCard({
               bottom: edgeInset,
               transformOrigin: "left center",
               transform: "rotateY(90deg) translateZ(0)",
-              borderRadius: 4,
-              background: depthGradLeft,
-              opacity: 0.88,
-              filter: "blur(1.25px)",
+              borderRadius: 3,
+              background: metalLeft,
+              opacity: 0.95,
+              filter: "blur(0.35px)",
               maskImage: depthMaskY,
               WebkitMaskImage: depthMaskY,
               backfaceVisibility: "hidden",
@@ -842,6 +826,7 @@ function BeatCard({
             }}
           />
 
+          {/* Top metallic bevel */}
           <div
             aria-hidden
             className="absolute"
@@ -852,17 +837,19 @@ function BeatCard({
               right: edgeInset,
               transformOrigin: "center top",
               transform: "rotateX(90deg) translateZ(0)",
-              borderRadius: 4,
-              background: depthGradTop,
-              opacity: 0.9,
-              filter: "blur(1.1px)",
+              borderRadius: 3,
+              background: metalTop,
+              opacity: 1,
+              filter: "blur(0.25px)",
               maskImage: depthMaskX,
               WebkitMaskImage: depthMaskX,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
+              boxShadow: `0 0 10px ${v.edgeGlow}`,
             }}
           />
 
+          {/* Bottom edge */}
           <div
             aria-hidden
             className="absolute"
@@ -873,10 +860,10 @@ function BeatCard({
               right: edgeInset,
               transformOrigin: "center bottom",
               transform: "rotateX(-90deg) translateZ(0)",
-              borderRadius: 4,
-              background: depthGradBottom,
-              opacity: 0.82,
-              filter: "blur(1.35px)",
+              borderRadius: 3,
+              background: metalBottom,
+              opacity: 0.9,
+              filter: "blur(0.4px)",
               maskImage: depthMaskX,
               WebkitMaskImage: depthMaskX,
               backfaceVisibility: "hidden",
@@ -891,77 +878,64 @@ function BeatCard({
               transformStyle: "preserve-3d",
             }}
           >
+            {/* Solid glass face — no white wash overlay */}
             <div
               aria-hidden
               className="absolute inset-0 overflow-hidden"
               style={{
                 ...faceStyle,
                 background: `linear-gradient(155deg,
-                  rgba(255,255,255,0.035) 0%,
-                  ${v.glass} 30%,
-                  rgba(255,255,255,0.012) 64%,
-                  rgba(8,10,14,0.08) 100%)`,
+                  rgba(255,255,255,0.16) 0%,
+                  ${v.glass} 22%,
+                  rgba(18,20,26,0.55) 58%,
+                  rgba(10,11,14,0.72) 100%)`,
                 backdropFilter: isMobile
-                  ? "blur(16px) saturate(1.1) brightness(1.02)"
-                  : "blur(28px) saturate(1.15) brightness(1.03)",
+                  ? "blur(22px) saturate(1.25) brightness(1.04)"
+                  : "blur(36px) saturate(1.35) brightness(1.06)",
                 WebkitBackdropFilter: isMobile
-                  ? "blur(16px) saturate(1.1) brightness(1.02)"
-                  : "blur(28px) saturate(1.15) brightness(1.03)",
+                  ? "blur(22px) saturate(1.25) brightness(1.04)"
+                  : "blur(36px) saturate(1.35) brightness(1.06)",
                 boxShadow: `
-                  inset 0 22px 48px rgba(255,255,255,0.03),
-                  inset 0 -32px 56px rgba(0,0,0,0.1),
-                  0 40px 90px rgba(0,0,0,0.28),
-                  0 0 72px ${softGlow}
+                  inset 0 1px 0 rgba(255,255,255,0.22),
+                  inset 0 -1px 0 rgba(0,0,0,0.35),
+                  inset 18px 0 28px -18px rgba(255,255,255,0.08),
+                  inset -18px 0 28px -18px rgba(0,0,0,0.25),
+                  0 28px 64px rgba(0,0,0,0.45),
+                  0 0 48px ${softGlow}
                 `,
               }}
             />
 
+            {/* Thin metallic rim only — no opaque white face coat */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: radius,
                 boxShadow: `
-                  inset 0 0 0 1px rgba(255,255,255,0.03),
-                  inset 0 0 28px rgba(8,9,11,0.22)
+                  inset 0 0 0 1px ${v.rim},
+                  inset 0 0 0 1px rgba(255,255,255,0.08)
                 `,
-                opacity: 0.32,
+                opacity: 0.7,
               }}
             />
 
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-[2px]"
-              style={{
-                borderRadius: radius,
-                background: `
-                  radial-gradient(ellipse 95% 70% at 16% 8%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 32%, transparent 58%),
-                  linear-gradient(148deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 28%, transparent 52%)
-                `,
-                opacity: 0.4,
-                filter: "blur(2.5px)",
-                maskImage:
-                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
-              }}
-            />
-
+            {/* Edge-only sheen travel (masked off the center face) */}
             <motion.div
               aria-hidden
-              className="pointer-events-none absolute inset-[3px]"
+              className="pointer-events-none absolute inset-0"
               style={{
                 opacity: shimmerOpacity,
                 borderRadius: radius,
                 background: shimmerBackground,
                 mixBlendMode: "soft-light",
-                filter: "blur(12px)",
+                filter: "blur(8px)",
                 transform: shimmerLayerTransform,
                 transformStyle: "preserve-3d",
                 maskImage:
-                  "radial-gradient(ellipse 90% 85% at 50% 50%, black 35%, transparent 75%)",
+                  "radial-gradient(ellipse 70% 65% at 50% 50%, transparent 0%, transparent 55%, black 78%, black 100%)",
                 WebkitMaskImage:
-                  "radial-gradient(ellipse 90% 85% at 50% 50%, black 35%, transparent 75%)",
+                  "radial-gradient(ellipse 70% 65% at 50% 50%, transparent 0%, transparent 55%, black 78%, black 100%)",
               }}
             />
 
