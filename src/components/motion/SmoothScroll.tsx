@@ -12,10 +12,11 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     if (reduced || coarse) return;
 
     const lenis = new Lenis({
-      duration: 1.05,
+      duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      wheelMultiplier: 0.92,
+      wheelMultiplier: 0.85,
+      touchMultiplier: 1,
       autoResize: true,
     });
 

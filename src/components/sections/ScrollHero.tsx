@@ -186,20 +186,20 @@ function makeGoldDust(seed: string, count: number): DustSpec[] {
     const r3 = hashSeed(`${seed}-dust3-${i}`);
     // Ellipse ring outside the card face — halo, not face overlay
     const angle = r * Math.PI * 2;
-    const radiusX = 46 + r2 * 22; // % from center
-    const radiusY = 48 + r3 * 24;
+    const radiusX = 44 + r2 * 26;
+    const radiusY = 46 + r3 * 28;
     const left = 50 + Math.cos(angle) * radiusX;
-    const bottom = 42 + Math.sin(angle) * radiusY * 0.72;
+    const bottom = 40 + Math.sin(angle) * radiusY * 0.75;
     return {
       id: i,
       left: `${left}%`,
       bottom: `${bottom}%`,
-      size: 1.2 + r * 2.6,
-      duration: 4.6 + r2 * 5.2,
-      delay: r * 6.5,
-      drift: Math.cos(angle) * (10 + r2 * 18),
-      peak: 0.28 + r3 * 0.4,
-      blur: r > 0.55 ? 1.8 : 0.5,
+      size: 1.6 + r * 3.4,
+      duration: 3.8 + r2 * 4.4,
+      delay: r * 5.2,
+      drift: Math.cos(angle) * (14 + r2 * 22),
+      peak: 0.55 + r3 * 0.4,
+      blur: r > 0.5 ? 1.2 : 0.25,
     };
   });
 }
@@ -215,43 +215,43 @@ function GoldDustAura({
   depth: number;
 }) {
   const specs = useMemo(
-    () => makeGoldDust(seed, isMobile ? 16 : 24),
+    () => makeGoldDust(seed, isMobile ? 28 : 40),
     [seed, isMobile],
   );
 
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute -inset-[34%] overflow-visible md:-inset-[40%]"
+      className="pointer-events-none absolute -inset-[38%] overflow-visible md:-inset-[46%]"
       style={{
         transform: `translateZ(${-depth - 40}px)`,
         transformStyle: "preserve-3d",
         // Keep motes in the outer halo; punch out the card silhouette
         maskImage:
-          "radial-gradient(ellipse 42% 38% at 50% 48%, transparent 0%, transparent 62%, black 78%)",
+          "radial-gradient(ellipse 40% 36% at 50% 48%, transparent 0%, transparent 58%, black 74%)",
         WebkitMaskImage:
-          "radial-gradient(ellipse 42% 38% at 50% 48%, transparent 0%, transparent 62%, black 78%)",
+          "radial-gradient(ellipse 40% 36% at 50% 48%, transparent 0%, transparent 58%, black 74%)",
       }}
     >
       {/* Soft gold breath from behind */}
       <motion.div
-        className="absolute inset-[8%] rounded-[2.5rem]"
+        className="absolute inset-[6%] rounded-[2.5rem]"
         style={{
           background:
-            "radial-gradient(ellipse 75% 65% at 50% 50%, rgba(196,165,116,0.22) 0%, rgba(196,165,116,0.08) 38%, rgba(240,226,196,0.03) 58%, transparent 78%)",
-          filter: "blur(14px)",
+            "radial-gradient(ellipse 78% 68% at 50% 50%, rgba(196,165,116,0.42) 0%, rgba(196,165,116,0.18) 36%, rgba(240,226,196,0.08) 55%, transparent 76%)",
+          filter: "blur(12px)",
         }}
-        animate={{ opacity: [0.4, 0.85, 0.4], scale: [0.94, 1.06, 0.94] }}
-        transition={{ duration: 5.4, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ opacity: [0.55, 1, 0.55], scale: [0.94, 1.08, 0.94] }}
+        transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
       />
 
       {specs.map((p) => {
         const tone =
           p.id % 3 === 0
-            ? "rgba(240,226,196,0.95)"
+            ? "rgba(255,240,210,1)"
             : p.id % 3 === 1
-              ? "rgba(196,165,116,0.9)"
-              : "rgba(255,248,230,0.92)";
+              ? "rgba(212,184,120,1)"
+              : "rgba(240,226,196,1)";
         return (
           <motion.span
             key={p.id}
@@ -264,16 +264,16 @@ function GoldDustAura({
               marginLeft: -p.size / 2,
               background: tone,
               boxShadow:
-                p.size > 2
-                  ? "0 0 6px rgba(196,165,116,0.6), 0 0 14px rgba(240,226,196,0.3)"
-                  : "0 0 4px rgba(196,165,116,0.5)",
+                p.size > 2.5
+                  ? "0 0 8px rgba(196,165,116,0.95), 0 0 18px rgba(240,226,196,0.55)"
+                  : "0 0 5px rgba(196,165,116,0.8), 0 0 10px rgba(240,226,196,0.35)",
               filter: p.blur > 0.8 ? `blur(${p.blur}px)` : undefined,
             }}
             animate={{
-              y: [0, -(40 + Math.abs(p.drift) * 0.35), -(95 + Math.abs(p.drift) * 0.7)],
-              x: [0, p.drift * 0.35, p.drift * 0.9],
-              opacity: [0, p.peak, p.peak * 0.5, 0],
-              scale: [0.5, 1.15, 0.85, 0.35],
+              y: [0, -(50 + Math.abs(p.drift) * 0.4), -(115 + Math.abs(p.drift) * 0.85)],
+              x: [0, p.drift * 0.4, p.drift],
+              opacity: [0, p.peak, p.peak * 0.65, 0],
+              scale: [0.45, 1.25, 0.95, 0.3],
             }}
             transition={{
               duration: p.duration,
@@ -1181,9 +1181,10 @@ export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const targetTime = useRef(0);
-  const displayTime = useRef(0);
-  const lastFrame = useRef(0);
   const rafRef = useRef(0);
+  const seekingRef = useRef(false);
+  const pendingFrame = useRef<number | null>(null);
+  const frameDurRef = useRef(1 / 30);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
@@ -1194,23 +1195,31 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  // Desktop only: light spring polish. Mobile uses raw progress so the first
-  // finger drag drives scrub immediately (no dead-zone / page-slop).
+  // Desktop only: light spring polish on layout transforms.
   const sprungProgress = useSpring(scrollYProgress, {
-    stiffness: 160,
-    damping: 30,
-    mass: 0.18,
+    stiffness: 200,
+    damping: 34,
+    mass: 0.14,
     restDelta: 0.00005,
     restSpeed: 0.00005,
   });
   const driveProgress = isMobile ? scrollYProgress : sprungProgress;
 
-  const videoProgress = useTransform(driveProgress, (p) => {
+  const videoProgressRaw = useTransform(driveProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
     }
     const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
+  });
+
+  // Dedicated scrub spring — same on mobile & desktop; kills frame jitter
+  const videoProgress = useSpring(videoProgressRaw, {
+    stiffness: 380,
+    damping: 42,
+    mass: 0.08,
+    restDelta: 0.00001,
+    restSpeed: 0.00001,
   });
 
   // Hero lifts only ~halfway — remaining lower frame stays visible under contact
@@ -1253,64 +1262,59 @@ export function ScrollHero() {
 
     video.pause();
     video.playsInline = true;
-    // Prefer low-latency decode path when available
     try {
       video.disableRemotePlayback = true;
     } catch {
       /* ignore */
     }
 
+    const applyTime = (t: number) => {
+      const v = videoRef.current;
+      if (!v || !Number.isFinite(v.duration) || v.duration <= 0) return;
+      const frameDur = frameDurRef.current;
+      const framed =
+        Math.round(Math.min(v.duration - 0.001, Math.max(0, t)) / frameDur) * frameDur;
+      if (seekingRef.current) {
+        pendingFrame.current = framed;
+        return;
+      }
+      if (Math.abs(v.currentTime - framed) < frameDur * 0.4) return;
+      seekingRef.current = true;
+      const onSeeked = () => {
+        seekingRef.current = false;
+        v.removeEventListener("seeked", onSeeked);
+        const pending = pendingFrame.current;
+        pendingFrame.current = null;
+        if (pending !== null && Math.abs(v.currentTime - pending) >= frameDur * 0.4) {
+          applyTime(pending);
+        }
+      };
+      v.addEventListener("seeked", onSeeked);
+      try {
+        v.currentTime = framed;
+      } catch {
+        seekingRef.current = false;
+        v.removeEventListener("seeked", onSeeked);
+      }
+    };
+
     const onMeta = () => {
+      // Prefer ~30fps quantize; finer if duration suggests 24fps asset
+      const d = video.duration;
+      frameDurRef.current = d > 0 && Math.abs(d * 24 - Math.round(d * 24)) < 0.08 ? 1 / 24 : 1 / 30;
       const t = Math.min(
         video.duration - 0.001,
         Math.max(0, videoProgress.get()) * video.duration,
       );
       targetTime.current = t;
-      displayTime.current = t;
-      try {
-        video.currentTime = t;
-      } catch {
-        /* ignore */
-      }
+      applyTime(t);
     };
     if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
 
-    // Chase target with frame-rate-independent lerp; skip seeked gate so
-    // all-intra scrub stays continuous under fast scroll.
-    // Mobile: higher lambda = tighter tracking (no soft lag after finger moves).
-    const lambda = isMobile ? 36 : 22;
-    const tick = (now: number) => {
-      const v = videoRef.current;
-      const prev = lastFrame.current || now;
-      const dt = Math.min(0.05, Math.max(0.001, (now - prev) / 1000));
-      lastFrame.current = now;
-
-      if (v && Number.isFinite(v.duration) && v.duration > 0) {
-        const next = targetTime.current;
-        const cur = displayTime.current;
-        const alpha = 1 - Math.exp(-lambda * dt);
-        const smoothed = cur + (next - cur) * alpha;
-        displayTime.current = smoothed;
-
-        const jump = Math.abs(smoothed - v.currentTime);
-        const minWrite = isMobile ? 0.004 : 0.008;
-        // Only write when meaningfully different and not mid-seek
-        if (jump > minWrite && !v.seeking) {
-          try {
-            v.currentTime = smoothed;
-          } catch {
-            /* ignore transient seek errors */
-          }
-        } else if (jump > 0.03) {
-          // Large catch-up even if browser flagged seeking
-          try {
-            v.currentTime = smoothed;
-          } catch {
-            /* ignore */
-          }
-        }
-      }
+    // Spring already smooths target — RAF only commits on frame boundaries
+    const tick = () => {
+      applyTime(targetTime.current);
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -1318,8 +1322,10 @@ export function ScrollHero() {
     return () => {
       video.removeEventListener("loadedmetadata", onMeta);
       cancelAnimationFrame(rafRef.current);
+      seekingRef.current = false;
+      pendingFrame.current = null;
     };
-  }, [videoProgress, videoSrc, isMobile]);
+  }, [videoProgress, videoSrc]);
 
   return (
     <>
