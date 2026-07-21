@@ -1010,16 +1010,18 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  // Shared spring so scrub + panes + cue + handoff all glide together
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 120,
-    damping: 28,
-    mass: 0.2,
+  // Desktop only: light spring polish. Mobile uses raw progress so the first
+  // finger drag drives scrub immediately (no dead-zone / page-slop).
+  const sprungProgress = useSpring(scrollYProgress, {
+    stiffness: 160,
+    damping: 30,
+    mass: 0.18,
     restDelta: 0.00005,
     restSpeed: 0.00005,
   });
+  const driveProgress = isMobile ? scrollYProgress : sprungProgress;
 
-  const videoProgress = useTransform(smoothProgress, (p) => {
+  const videoProgress = useTransform(driveProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
     }
@@ -1029,17 +1031,17 @@ export function ScrollHero() {
 
   // Hero lifts out as the last second begins; contact feathers in over it
   const stickyLift = useTransform(
-    smoothProgress,
+    driveProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
     ["0%", "-42%", "-110%"],
   );
   const featherOpacity = useTransform(
-    smoothProgress,
+    driveProgress,
     [SCRUB_HANDOFF_START - 0.08, SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
     [0, 0.4, 0.8, 1],
   );
   const videoFade = useTransform(
-    smoothProgress,
+    driveProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
     [1, 0.45, 0.12],
   );
@@ -1081,7 +1083,8 @@ export function ScrollHero() {
 
     // Chase target with frame-rate-independent lerp; skip seeked gate so
     // all-intra scrub stays continuous under fast scroll.
-    const lambda = isMobile ? 18 : 22;
+    // Mobile: higher lambda = tighter tracking (no soft lag after finger moves).
+    const lambda = isMobile ? 36 : 22;
     const tick = (now: number) => {
       const v = videoRef.current;
       const prev = lastFrame.current || now;
@@ -1096,14 +1099,15 @@ export function ScrollHero() {
         displayTime.current = smoothed;
 
         const jump = Math.abs(smoothed - v.currentTime);
+        const minWrite = isMobile ? 0.004 : 0.008;
         // Only write when meaningfully different and not mid-seek
-        if (jump > 0.008 && !v.seeking) {
+        if (jump > minWrite && !v.seeking) {
           try {
             v.currentTime = smoothed;
           } catch {
             /* ignore transient seek errors */
           }
-        } else if (jump > 0.035) {
+        } else if (jump > 0.03) {
           // Large catch-up even if browser flagged seeking
           try {
             v.currentTime = smoothed;
@@ -1180,9 +1184,9 @@ export function ScrollHero() {
       </div>
 
       <section ref={scrubRef} className="relative h-[440vh] bg-transparent md:h-[680vh]">
-        <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden bg-transparent">
+        <div className="sticky top-0 z-20 h-[100dvh] w-full overflow-hidden bg-transparent">
           <motion.div
-            className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-[#08090b] will-change-transform"
+            className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#08090b] will-change-transform"
             style={{ y: stickyLift }}
           >
             <motion.video
@@ -1208,7 +1212,7 @@ export function ScrollHero() {
 
             <ScrollCue
               progress={videoProgress}
-              scrollProgress={smoothProgress}
+              scrollProgress={driveProgress}
               isMobile={isMobile}
             />
 

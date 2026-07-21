@@ -55,6 +55,7 @@
 
 html {
   scroll-behavior: auto;
+  overscroll-behavior-y: none;
 }
 
 html.lenis,
@@ -67,6 +68,7 @@ body {
   color: var(--fg);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 ::selection {
