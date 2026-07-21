@@ -1190,15 +1190,16 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  // Desktop only: light spring polish on layout transforms.
+  // Light spring damps micro-jitter from touch sampling / video seeks.
+  // Mobile stays snappy (high stiffness) so it doesn't fight Lenis inertia.
   const sprungProgress = useSpring(scrollYProgress, {
-    stiffness: 200,
-    damping: 34,
-    mass: 0.14,
+    stiffness: isMobile ? 260 : 200,
+    damping: isMobile ? 38 : 34,
+    mass: isMobile ? 0.12 : 0.14,
     restDelta: 0.00005,
     restSpeed: 0.00005,
   });
-  const driveProgress = isMobile ? scrollYProgress : sprungProgress;
+  const driveProgress = sprungProgress;
 
   const videoProgressRaw = useTransform(driveProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
@@ -1208,15 +1209,15 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
 
-  // Desktop: light scrub spring. Mobile: raw progress so finger and video stay locked.
+  // Extra scrub polish — slightly softer on mobile to hide frame-seek chatter
   const sprungVideoProgress = useSpring(videoProgressRaw, {
-    stiffness: 380,
-    damping: 42,
-    mass: 0.08,
+    stiffness: isMobile ? 240 : 380,
+    damping: isMobile ? 36 : 42,
+    mass: isMobile ? 0.11 : 0.08,
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
-  const videoProgress = isMobile ? videoProgressRaw : sprungVideoProgress;
+  const videoProgress = sprungVideoProgress;
 
   // Hero lifts only ~halfway — remaining lower frame stays visible under contact
   const stickyLift = useTransform(
@@ -1270,9 +1271,10 @@ export function ScrollHero() {
       const frameDur = frameDurRef.current;
       const framed =
         Math.round(Math.min(v.duration - 0.001, Math.max(0, t)) / frameDur) * frameDur;
-      if (Math.abs(v.currentTime - framed) < frameDur * 0.35) return;
+      // Slightly wider skip on mobile — fewer seeks = less scrub chatter
+      if (Math.abs(v.currentTime - framed) < frameDur * (isMobile ? 0.55 : 0.35)) return;
 
-      // Mobile: set time directly — seeked-queueing lags behind the finger
+      // Mobile: set time directly — seeked-queueing lags behind the fling
       if (isMobile) {
         try {
           v.currentTime = framed;
