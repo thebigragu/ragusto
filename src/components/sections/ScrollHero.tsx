@@ -167,127 +167,6 @@ function smoothstep(e: number) {
   return e * e * (3 - 2 * e);
 }
 
-type DustSpec = {
-  id: number;
-  left: string;
-  bottom: string;
-  size: number;
-  duration: number;
-  delay: number;
-  drift: number;
-  peak: number;
-  blur: number;
-};
-
-function makeGoldDust(seed: string, count: number): DustSpec[] {
-  return Array.from({ length: count }, (_, i) => {
-    const r = hashSeed(`${seed}-dust-${i}`);
-    const r2 = hashSeed(`${seed}-dust2-${i}`);
-    const r3 = hashSeed(`${seed}-dust3-${i}`);
-    // Ellipse ring outside the card face — halo, not face overlay
-    const angle = r * Math.PI * 2;
-    const radiusX = 44 + r2 * 26;
-    const radiusY = 46 + r3 * 28;
-    const left = 50 + Math.cos(angle) * radiusX;
-    const bottom = 40 + Math.sin(angle) * radiusY * 0.75;
-    return {
-      id: i,
-      left: `${left}%`,
-      bottom: `${bottom}%`,
-      size: 1.6 + r * 3.4,
-      duration: 3.8 + r2 * 4.4,
-      delay: r * 5.2,
-      drift: Math.cos(angle) * (14 + r2 * 22),
-      peak: 0.55 + r3 * 0.4,
-      blur: r > 0.5 ? 1.2 : 0.25,
-    };
-  });
-}
-
-/** Gold glitter halo behind the bubble — outside the glass, not on the face. */
-function GoldDustAura({
-  seed,
-  isMobile,
-  depth,
-}: {
-  seed: string;
-  isMobile: boolean;
-  depth: number;
-}) {
-  const specs = useMemo(
-    () => makeGoldDust(seed, isMobile ? 28 : 40),
-    [seed, isMobile],
-  );
-
-  return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute -inset-[38%] overflow-visible md:-inset-[46%]"
-      style={{
-        transform: `translateZ(${-depth - 40}px)`,
-        transformStyle: "preserve-3d",
-        // Keep motes in the outer halo; punch out the card silhouette
-        maskImage:
-          "radial-gradient(ellipse 40% 36% at 50% 48%, transparent 0%, transparent 58%, black 74%)",
-        WebkitMaskImage:
-          "radial-gradient(ellipse 40% 36% at 50% 48%, transparent 0%, transparent 58%, black 74%)",
-      }}
-    >
-      {/* Soft gold breath from behind */}
-      <motion.div
-        className="absolute inset-[6%] rounded-[2.5rem]"
-        style={{
-          background:
-            "radial-gradient(ellipse 78% 68% at 50% 50%, rgba(196,165,116,0.42) 0%, rgba(196,165,116,0.18) 36%, rgba(240,226,196,0.08) 55%, transparent 76%)",
-          filter: "blur(12px)",
-        }}
-        animate={{ opacity: [0.55, 1, 0.55], scale: [0.94, 1.08, 0.94] }}
-        transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      {specs.map((p) => {
-        const tone =
-          p.id % 3 === 0
-            ? "rgba(255,240,210,1)"
-            : p.id % 3 === 1
-              ? "rgba(212,184,120,1)"
-              : "rgba(240,226,196,1)";
-        return (
-          <motion.span
-            key={p.id}
-            className="absolute rounded-full"
-            style={{
-              left: p.left,
-              bottom: p.bottom,
-              width: p.size,
-              height: p.size,
-              marginLeft: -p.size / 2,
-              background: tone,
-              boxShadow:
-                p.size > 2.5
-                  ? "0 0 8px rgba(196,165,116,0.95), 0 0 18px rgba(240,226,196,0.55)"
-                  : "0 0 5px rgba(196,165,116,0.8), 0 0 10px rgba(240,226,196,0.35)",
-              filter: p.blur > 0.8 ? `blur(${p.blur}px)` : undefined,
-            }}
-            animate={{
-              y: [0, -(50 + Math.abs(p.drift) * 0.4), -(115 + Math.abs(p.drift) * 0.85)],
-              x: [0, p.drift * 0.4, p.drift],
-              opacity: [0, p.peak, p.peak * 0.65, 0],
-              scale: [0.45, 1.25, 0.95, 0.3],
-            }}
-            transition={{
-              duration: p.duration,
-              delay: p.delay,
-              repeat: Infinity,
-              ease: "easeOut",
-            }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 /** Longer enter/exit windows = slower rise, twist settle & leave */
 const ENTER_END = 0.4;
 const EXIT_START = 0.7;
@@ -757,8 +636,6 @@ function BeatCard({
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
         >
-        <GoldDustAura seed={beat.id} isMobile={isMobile} depth={halfT} />
-
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-[8%] right-[8%] top-[97%] h-14 rounded-[100%]"
