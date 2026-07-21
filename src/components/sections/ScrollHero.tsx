@@ -753,14 +753,33 @@ export function ScrollHero() {
   return (
     <>
       <div className="pointer-events-auto fixed top-10 left-10 z-50 md:top-14 md:left-14">
-        <Image
-          src="/brand/ragusto-logo.png"
-          alt="Ragusto"
-          width={220}
-          height={260}
-          priority
-          className="h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
-        />
+        <div className="relative inline-flex items-center justify-center">
+          {/* Feathered cinematic halo */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[140%] w-[160%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-2xl transition duration-500 group-hover:opacity-90"
+            style={{
+              background:
+                "radial-gradient(ellipse 55% 50% at 50% 45%, rgba(196,165,116,0.45) 0%, rgba(196,165,116,0.18) 38%, rgba(240,226,196,0.06) 58%, transparent 72%)",
+            }}
+          />
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-[40%] -z-10 h-[100%] w-[115%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-xl"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 42%, rgba(240,226,196,0.35) 0%, rgba(196,165,116,0.12) 45%, transparent 68%)",
+            }}
+          />
+          <Image
+            src="/brand/ragusto-logo.png"
+            alt="Ragusto"
+            width={220}
+            height={260}
+            priority
+            className="relative h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
+          />
+        </div>
       </div>
 
       <section ref={scrubRef} className="relative h-[620vh] bg-[#08090b]">
