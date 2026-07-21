@@ -15,6 +15,28 @@ import {
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+type BeatVariant = {
+  /** Resting 3D pose */
+  holdRX: number;
+  holdRY: number;
+  holdRZ: number;
+  /** Exit tip + come-forward */
+  exitRX: number;
+  exitRY: number;
+  exitRZ: number;
+  exitZ: number;
+  enterZ: number;
+  radius: string;
+  glass: string;
+  rim: string;
+  edgeGlow: string;
+  shimmerAngle: number;
+  shimmerFrom: string;
+  top: string;
+  magnetic: number;
+  depthPlate: string;
+};
+
 type Beat = {
   id: string;
   words: { t: string; emph?: boolean }[];
@@ -23,11 +45,13 @@ type Beat = {
   side: "left" | "right";
   start: number;
   end: number;
+  variant: BeatVariant;
 };
 
 /**
  * Timed across full scrub so the video finishes before the CTA.
  * Each card: rise from below → hold crystal clear → levitate out the top.
+ * Variants keep the same glass language with different 3D attitudes.
  */
 const BEATS: Beat[] = [
   {
@@ -41,6 +65,25 @@ const BEATS: Beat[] = [
     side: "left",
     start: 0.02,
     end: 0.24,
+    variant: {
+      holdRX: 6,
+      holdRY: 14,
+      holdRZ: -1.5,
+      exitRX: -18,
+      exitRY: 28,
+      exitRZ: -8,
+      exitZ: 90,
+      enterZ: -40,
+      radius: "1.35rem",
+      glass: "rgba(255,255,255,0.055)",
+      rim: "rgba(255,255,255,0.16)",
+      edgeGlow: "rgba(196,165,116,0.22)",
+      shimmerAngle: 118,
+      shimmerFrom: "-130%",
+      top: "58%",
+      magnetic: 0.22,
+      depthPlate: "translate3d(10px, 14px, -28px) rotateY(18deg) rotateX(8deg)",
+    },
   },
   {
     id: "design",
@@ -53,6 +96,25 @@ const BEATS: Beat[] = [
     side: "right",
     start: 0.26,
     end: 0.48,
+    variant: {
+      holdRX: 4,
+      holdRY: -16,
+      holdRZ: 2,
+      exitRX: -22,
+      exitRY: -32,
+      exitRZ: 10,
+      exitZ: 110,
+      enterZ: -55,
+      radius: "1.1rem",
+      glass: "rgba(180,210,220,0.05)",
+      rim: "rgba(220,235,245,0.18)",
+      edgeGlow: "rgba(140,190,200,0.2)",
+      shimmerAngle: 62,
+      shimmerFrom: "130%",
+      top: "52%",
+      magnetic: 0.18,
+      depthPlate: "translate3d(-12px, 16px, -34px) rotateY(-20deg) rotateX(6deg)",
+    },
   },
   {
     id: "apps",
@@ -65,6 +127,25 @@ const BEATS: Beat[] = [
     side: "left",
     start: 0.5,
     end: 0.72,
+    variant: {
+      holdRX: 8,
+      holdRY: 11,
+      holdRZ: -3,
+      exitRX: -14,
+      exitRY: 22,
+      exitRZ: -14,
+      exitZ: 75,
+      enterZ: -30,
+      radius: "1.75rem",
+      glass: "rgba(255,248,235,0.06)",
+      rim: "rgba(196,165,116,0.28)",
+      edgeGlow: "rgba(196,165,116,0.35)",
+      shimmerAngle: 105,
+      shimmerFrom: "-140%",
+      top: "56%",
+      magnetic: 0.26,
+      depthPlate: "translate3d(14px, 10px, -22px) rotateY(14deg) rotateX(10deg)",
+    },
   },
   {
     id: "arc",
@@ -77,6 +158,25 @@ const BEATS: Beat[] = [
     side: "right",
     start: 0.74,
     end: 0.96,
+    variant: {
+      holdRX: 5,
+      holdRY: -12,
+      holdRZ: 1.5,
+      exitRX: -28,
+      exitRY: -24,
+      exitRZ: 12,
+      exitZ: 130,
+      enterZ: -48,
+      radius: "0.95rem",
+      glass: "rgba(255,255,255,0.07)",
+      rim: "rgba(255,255,255,0.2)",
+      edgeGlow: "rgba(240,226,196,0.28)",
+      shimmerAngle: 48,
+      shimmerFrom: "125%",
+      top: "54%",
+      magnetic: 0.2,
+      depthPlate: "translate3d(-16px, 12px, -40px) rotateY(-16deg) rotateX(9deg)",
+    },
   },
 ];
 
@@ -125,6 +225,12 @@ function EmphSub({ text, emph = [] }: { text: string; emph?: string[] }) {
   );
 }
 
+function beatT(p: number, beat: Beat) {
+  if (p < beat.start) return 0;
+  if (p >= beat.end) return 1;
+  return (p - beat.start) / (beat.end - beat.start);
+}
+
 function BeatCard({
   beat,
   progress,
@@ -132,47 +238,107 @@ function BeatCard({
   beat: Beat;
   progress: MotionValue<number>;
 }) {
+  const v = beat.variant;
+
   // Rise from below hero → long clear hold → exit out the top
   const y = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
     if (p < beat.start) return "110vh";
     if (p >= beat.end) return "-110vh";
-    const t = (p - beat.start) / (beat.end - beat.start);
-    if (t < 0.14) {
-      const e = t / 0.14;
-      return `${110 - 110 * e}vh`; // 110vh → 0 (hold band)
-    }
-    if (t > 0.78) {
-      const e = (t - 0.78) / 0.22;
-      return `${0 - 110 * e}vh`; // 0 → -110vh
-    }
+    if (t < 0.14) return `${110 - 110 * (t / 0.14)}vh`;
+    if (t > 0.78) return `${0 - 110 * ((t - 0.78) / 0.22)}vh`;
     return "0vh";
   });
 
   const opacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
-    const t = (p - beat.start) / (beat.end - beat.start);
+    const t = beatT(p, beat);
     if (t < 0.08) return t / 0.08;
     if (t > 0.9) return Math.max(0, (1 - t) / 0.1);
     return 1;
   });
 
-  // Short blur in/out — crystal clear for most of the hold
   const blur = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 16;
-    const t = (p - beat.start) / (beat.end - beat.start);
+    const t = beatT(p, beat);
     if (t < 0.08) return 16 * (1 - t / 0.08);
     if (t > 0.9) return 12 * ((t - 0.9) / 0.1);
     return 0;
   });
   const filter = useMotionTemplate`blur(${blur}px)`;
+
   const scale = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 0.94;
-    const t = (p - beat.start) / (beat.end - beat.start);
-    if (t < 0.14) return 0.94 + 0.06 * (t / 0.14);
-    if (t > 0.78) return 1 - 0.04 * ((t - 0.78) / 0.22);
+    if (p < beat.start || p >= beat.end) return 0.92;
+    const t = beatT(p, beat);
+    if (t < 0.14) return 0.92 + 0.08 * (t / 0.14);
+    if (t > 0.78) return 1 + 0.08 * ((t - 0.78) / 0.22); // swell toward camera on exit
     return 1;
   });
-  const rotateY = beat.side === "left" ? 9 : -9;
+
+  // Dimensional tilt — settle into pose, then tip + come forward on exit
+  const rotateX = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (p < beat.start) return v.holdRX + 12;
+    if (t < 0.14) return v.holdRX + 12 * (1 - t / 0.14);
+    if (t > 0.78) return v.holdRX + (v.exitRX - v.holdRX) * ((t - 0.78) / 0.22);
+    return v.holdRX;
+  });
+  const rotateY = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (p < beat.start) return v.holdRY * 1.35;
+    if (t < 0.14) return v.holdRY * (1.35 - 0.35 * (t / 0.14));
+    if (t > 0.78) return v.holdRY + (v.exitRY - v.holdRY) * ((t - 0.78) / 0.22);
+    return v.holdRY;
+  });
+  const rotateZ = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (t < 0.14) return v.holdRZ * (t / 0.14);
+    if (t > 0.78) return v.holdRZ + (v.exitRZ - v.holdRZ) * ((t - 0.78) / 0.22);
+    return v.holdRZ;
+  });
+  const translateZ = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (p < beat.start) return v.enterZ;
+    if (t < 0.14) return v.enterZ + (0 - v.enterZ) * (t / 0.14);
+    if (t > 0.78) return v.exitZ * ((t - 0.78) / 0.22);
+    return 0;
+  });
+
+  const faceTransform = useMotionTemplate`translateZ(${translateZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
+
+  // Mirror sheen glides as the card becomes legible
+  const shimmerX = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    const from = parseFloat(v.shimmerFrom);
+    if (t < 0.04 || t > 0.32) return from;
+    const e = (t - 0.04) / 0.28;
+    return from + (0 - from) * e + (from < 0 ? 160 : -160) * e;
+  });
+  const shimmerOpacity = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (t < 0.05) return 0;
+    if (t < 0.12) return (t - 0.05) / 0.07;
+    if (t < 0.22) return 1;
+    if (t < 0.32) return 1 - (t - 0.22) / 0.1;
+    return 0;
+  });
+  const shimmerXPct = useMotionTemplate`${shimmerX}%`;
+
+  // Soft secondary sheen on exit tip
+  const exitSheen = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (t < 0.8) return 0;
+    if (t > 0.95) return 0;
+    return Math.sin(((t - 0.8) / 0.15) * Math.PI) * 0.55;
+  });
+
+  const depthOpacity = useTransform(progress, (p) => {
+    if (p < beat.start || p >= beat.end) return 0;
+    const t = beatT(p, beat);
+    if (t < 0.1) return 0.35 * (t / 0.1);
+    if (t > 0.82) return 0.35 * (1 - (t - 0.82) / 0.18);
+    return 0.45;
+  });
 
   const sideClass =
     beat.side === "left"
@@ -181,39 +347,97 @@ function BeatCard({
 
   return (
     <motion.div
-      className={`pointer-events-auto absolute top-[58%] z-20 max-w-[min(92vw,28rem)] -translate-y-1/2 md:top-[55%] ${sideClass}`}
+      className={`pointer-events-auto absolute z-20 max-w-[min(92vw,28rem)] -translate-y-1/2 ${sideClass}`}
       style={{
+        top: v.top,
         opacity,
         y,
         filter,
         scale,
-        perspective: 1400,
+        perspective: 1600,
+        transformStyle: "preserve-3d",
       }}
     >
-      <Magnetic strength={0.2} className="block w-full">
-        <div
-          className="group relative cursor-default rounded-2xl border border-white/15 bg-white/[0.06] p-6 shadow-[0_30px_80px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition duration-500 hover:border-[#c4a574]/35 hover:bg-white/[0.09] md:p-8"
-          style={{
-            transform: `rotateY(${rotateY}deg) rotateX(4deg)`,
-            transformStyle: "preserve-3d",
-          }}
-        >
-          <div
-            className="pointer-events-none absolute inset-0 rounded-2xl opacity-60"
+      <Magnetic strength={v.magnetic} className="block w-full [transform-style:preserve-3d]">
+        <div className="relative [transform-style:preserve-3d]" style={{ perspective: 1600 }}>
+          {/* Depth plate — ghost face behind the glass */}
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
             style={{
-              background:
-                "linear-gradient(135deg, rgba(255,255,255,0.14) 0%, transparent 42%, transparent 58%, rgba(196,165,116,0.08) 100%)",
-              transform: "translateZ(1px)",
+              opacity: depthOpacity,
+              borderRadius: v.radius,
+              background: "linear-gradient(145deg, rgba(0,0,0,0.55), rgba(20,24,32,0.35))",
+              border: `1px solid ${v.rim}`,
+              boxShadow: `0 24px 60px rgba(0,0,0,0.45)`,
+              transform: v.depthPlate,
+              transformStyle: "preserve-3d",
             }}
           />
-          <div className="relative" style={{ transform: "translateZ(28px)" }}>
-            <EmphLine
-              words={beat.words}
-              className="font-serif text-3xl leading-[1.1] tracking-tight text-white sm:text-4xl md:text-[2.75rem]"
+
+          <motion.div
+            className="group relative cursor-default overflow-hidden p-6 shadow-[0_36px_90px_rgba(0,0,0,0.58),0_0_0_1px_rgba(255,255,255,0.04)_inset] backdrop-blur-2xl md:p-8"
+            style={{
+              borderRadius: v.radius,
+              background: v.glass,
+              border: `1px solid ${v.rim}`,
+              boxShadow: `0 0 40px -12px ${v.edgeGlow}, 0 28px 70px rgba(0,0,0,0.5)`,
+              transform: faceTransform,
+              transformStyle: "preserve-3d",
+            }}
+          >
+            {/* Specular rim */}
+            <div
+              className="pointer-events-none absolute inset-0 opacity-70"
+              style={{
+                borderRadius: v.radius,
+                background: `linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 38%, transparent 62%, ${v.edgeGlow} 100%)`,
+                transform: "translateZ(2px)",
+              }}
             />
-            <EmphSub text={beat.sub} emph={beat.subEmph} />
-            <span className="mt-5 block h-px w-12 bg-gradient-to-r from-[#c4a574] to-transparent transition-all duration-500 group-hover:w-28" />
-          </div>
+
+            {/* Enter mirror shimmer */}
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-y-[-20%] w-[42%]"
+              style={{
+                x: shimmerXPct,
+                opacity: shimmerOpacity,
+                rotate: v.shimmerAngle,
+                background:
+                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 28%, rgba(255,255,255,0.55) 48%, rgba(240,226,196,0.35) 52%, rgba(255,255,255,0.08) 68%, transparent 100%)",
+                mixBlendMode: "screen",
+                filter: "blur(1px)",
+                transform: "translateZ(36px)",
+              }}
+            />
+
+            {/* Exit tip highlight */}
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-0"
+              style={{
+                opacity: exitSheen,
+                borderRadius: v.radius,
+                background:
+                  "linear-gradient(160deg, rgba(255,255,255,0.28) 0%, transparent 40%, transparent 70%, rgba(196,165,116,0.18) 100%)",
+                mixBlendMode: "soft-light",
+                transform: "translateZ(8px)",
+              }}
+            />
+
+            <div className="relative" style={{ transform: "translateZ(40px)" }}>
+              <EmphLine
+                words={beat.words}
+                className="font-serif text-3xl leading-[1.1] tracking-tight text-white sm:text-4xl md:text-[2.75rem]"
+              />
+              <EmphSub text={beat.sub} emph={beat.subEmph} />
+              <span
+                className="mt-5 block h-px w-12 bg-gradient-to-r from-[#c4a574] to-transparent transition-all duration-500 group-hover:w-28"
+                style={{ boxShadow: `0 0 12px ${v.edgeGlow}` }}
+              />
+            </div>
+          </motion.div>
         </div>
       </Magnetic>
     </motion.div>
@@ -331,15 +555,15 @@ export function ScrollHero() {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/35" />
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-          <div className="absolute top-0 right-0 z-30 p-5 md:p-8">
-            <Magnetic strength={0.16}>
+          <div className="absolute top-0 left-0 z-30 p-4 md:p-6">
+            <Magnetic strength={0.14}>
               <Image
                 src="/brand/ragusto-logo.png"
                 alt="Ragusto"
-                width={320}
-                height={380}
+                width={200}
+                height={240}
                 priority
-                className="h-24 w-auto opacity-50 transition duration-500 hover:opacity-80 md:h-32 lg:h-40"
+                className="h-14 w-auto opacity-45 transition duration-500 hover:opacity-75 md:h-16 lg:h-[4.5rem]"
               />
             </Magnetic>
           </div>
