@@ -719,9 +719,9 @@ function BeatCard({
             style={{
               borderRadius: radius,
               boxShadow:
-                "inset 0 0 0 1.5px rgba(240,226,196,0.75), inset 0 0 22px 3px rgba(196,165,116,0.35), 0 0 18px 3px rgba(196,165,116,0.4), 0 0 44px 10px rgba(196,165,116,0.28)",
+                "inset 0 0 0 1px rgba(240,226,196,0.55), inset 0 0 16px 2px rgba(196,165,116,0.22), 0 0 12px 2px rgba(196,165,116,0.28), 0 0 32px 8px rgba(196,165,116,0.16)",
             }}
-            animate={{ opacity: [0.55, 1, 0.55] }}
+            animate={{ opacity: [0.4, 0.72, 0.4] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           />
 
