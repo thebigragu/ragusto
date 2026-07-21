@@ -169,6 +169,11 @@ function beatT(p: number, beat: Beat) {
   return (p - beat.start) / (beat.end - beat.start);
 }
 
+/** Longer enter/exit windows = slower rise & leave relative to scroll */
+const ENTER_END = 0.24;
+const EXIT_START = 0.68;
+const EXIT_LEN = 1 - EXIT_START;
+
 function AsyncWord({
   text,
   emph,
@@ -186,37 +191,37 @@ function AsyncWord({
 }) {
   const delay = useMemo(() => {
     const base = hashSeed(`${beat.id}-${kind}-${index}-${text}`);
-    return 0.02 + base * 0.14;
+    return 0.03 + base * 0.2;
   }, [beat.id, kind, index, text]);
 
   const opacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < 0.08) return t / 0.08;
+    if (t < ENTER_END * 0.55) return t / (ENTER_END * 0.55);
     // Hold clear; scatter-out on exit with per-word delay
-    if (t < 0.78) return 1;
-    const local = (t - 0.78) / 0.22;
+    if (t < EXIT_START) return 1;
+    const local = (t - EXIT_START) / EXIT_LEN;
     const start = delay;
-    const fade = Math.min(1, Math.max(0, (local - start) / 0.18));
+    const fade = Math.min(1, Math.max(0, (local - start) / 0.28));
     return 1 - fade;
   });
 
   const y = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < 0.78) return 0;
-    const local = (t - 0.78) / 0.22;
+    if (t < EXIT_START) return 0;
+    const local = (t - EXIT_START) / EXIT_LEN;
     const start = delay;
-    const e = Math.min(1, Math.max(0, (local - start) / 0.22));
+    const e = Math.min(1, Math.max(0, (local - start) / 0.32));
     const drift = (hashSeed(`${beat.id}-y-${index}`) - 0.5) * 28;
     return -e * (18 + drift);
   });
 
   const blur = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < 0.78) return 0;
-    const local = (t - 0.78) / 0.22;
+    if (t < EXIT_START) return 0;
+    const local = (t - EXIT_START) / EXIT_LEN;
     const start = delay;
-    const e = Math.min(1, Math.max(0, (local - start) / 0.2));
+    const e = Math.min(1, Math.max(0, (local - start) / 0.3));
     return e * 8;
   });
   const filter = useMotionTemplate`blur(${blur}px)`;
@@ -259,10 +264,13 @@ function BeatCard({
     const t = beatT(p, beat);
     if (p < beat.start) return "110vh";
     if (p >= beat.end) return "-120vh";
-    if (t < 0.14) return `${110 - 110 * (t / 0.14)}vh`;
-    if (t > 0.78) {
-      const e = (t - 0.78) / 0.22;
-      // Ease into an orbital climb
+    if (t < ENTER_END) {
+      const e = t / ENTER_END;
+      const eased = e * e * (3 - 2 * e);
+      return `${110 - 110 * eased}vh`;
+    }
+    if (t > EXIT_START) {
+      const e = (t - EXIT_START) / EXIT_LEN;
       const eased = e * e * (3 - 2 * e);
       return `${0 - 120 * eased}vh`;
     }
@@ -271,18 +279,17 @@ function BeatCard({
 
   const x = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= 0.78) return 0;
-    const e = (t - 0.78) / 0.22;
+    if (t <= EXIT_START) return 0;
+    const e = (t - EXIT_START) / EXIT_LEN;
     const eased = e * e * (3 - 2 * e);
-    // Arc laterally as if orbiting past the camera
     return v.orbitX * Math.sin(eased * Math.PI * 0.85);
   });
 
   const opacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < 0.08) return t / 0.08;
-    if (t > 0.92) return Math.max(0, (1 - t) / 0.08);
+    if (t < ENTER_END * 0.5) return t / (ENTER_END * 0.5);
+    if (t > 0.94) return Math.max(0, (1 - t) / 0.06);
     return 1;
   });
 
@@ -290,15 +297,13 @@ function BeatCard({
   const blur = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 22;
     const t = beatT(p, beat);
-    if (t < 0.16) {
-      // Ease out of blur as the pane settles into place
-      const e = t / 0.16;
+    if (t < ENTER_END) {
+      const e = t / ENTER_END;
       const smooth = e * e * (3 - 2 * e);
       return 22 * (1 - smooth);
     }
-    if (t > 0.76) {
-      // Ramp blur back up through the exit / orbit
-      const e = (t - 0.76) / 0.24;
+    if (t > EXIT_START) {
+      const e = (t - EXIT_START) / EXIT_LEN;
       const smooth = e * e * (3 - 2 * e);
       return 20 * smooth;
     }
@@ -310,9 +315,12 @@ function BeatCard({
   const scale = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0.96;
     const t = beatT(p, beat);
-    if (t < 0.14) return 0.96 + 0.04 * (t / 0.14);
-    if (t > 0.78) {
-      const e = (t - 0.78) / 0.22;
+    if (t < ENTER_END) {
+      const e = t / ENTER_END;
+      return 0.96 + 0.04 * (e * e * (3 - 2 * e));
+    }
+    if (t > EXIT_START) {
+      const e = (t - EXIT_START) / EXIT_LEN;
       return 1 + 0.42 * (e * e * (3 - 2 * e));
     }
     return 1;
@@ -321,23 +329,23 @@ function BeatCard({
   // Zero angle on enter/hold — tilt only on exit
   const rotateX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= 0.78) return 0;
-    return v.exitRX * ((t - 0.78) / 0.22);
+    if (t <= EXIT_START) return 0;
+    return v.exitRX * ((t - EXIT_START) / EXIT_LEN);
   });
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= 0.78) return 0;
-    return v.exitRY * ((t - 0.78) / 0.22);
+    if (t <= EXIT_START) return 0;
+    return v.exitRY * ((t - EXIT_START) / EXIT_LEN);
   });
   const rotateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= 0.78) return 0;
-    return v.exitRZ * ((t - 0.78) / 0.22);
+    if (t <= EXIT_START) return 0;
+    return v.exitRZ * ((t - EXIT_START) / EXIT_LEN);
   });
   const translateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < 0.14) return -24 + 24 * (t / 0.14);
-    if (t > 0.78) return v.exitZ * ((t - 0.78) / 0.22);
+    if (t < ENTER_END) return -24 + 24 * (t / ENTER_END);
+    if (t > EXIT_START) return v.exitZ * ((t - EXIT_START) / EXIT_LEN);
     return 0;
   });
 
@@ -346,16 +354,18 @@ function BeatCard({
   // Soft diagonal light sweep — full-pane specular, not a hard rectangle
   const shimmerPos = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < 0.05) return 120;
-    if (t > 0.34) return -40;
-    return 120 - ((t - 0.05) / 0.29) * 160;
+    const shimmerEnd = ENTER_END + 0.12;
+    if (t < 0.06) return 120;
+    if (t > shimmerEnd) return -40;
+    return 120 - ((t - 0.06) / (shimmerEnd - 0.06)) * 160;
   });
   const shimmerOpacity = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < 0.05) return 0;
-    if (t < 0.1) return (t - 0.05) / 0.05;
-    if (t < 0.26) return 1;
-    if (t < 0.34) return 1 - (t - 0.26) / 0.08;
+    const shimmerEnd = ENTER_END + 0.12;
+    if (t < 0.06) return 0;
+    if (t < ENTER_END * 0.45) return (t - 0.06) / (ENTER_END * 0.45 - 0.06);
+    if (t < ENTER_END + 0.04) return 1;
+    if (t < shimmerEnd) return 1 - (t - (ENTER_END + 0.04)) / (shimmerEnd - ENTER_END - 0.04);
     return 0;
   });
   const shimmerBackground = useMotionTemplate`linear-gradient(${v.shimmerAngle}deg,
@@ -371,24 +381,27 @@ function BeatCard({
 
   const exitSheen = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < 0.8) return 0;
+    if (t < EXIT_START + 0.02) return 0;
     if (t > 0.96) return 0;
-    return Math.sin(((t - 0.8) / 0.16) * Math.PI) * 0.5;
+    return Math.sin(((t - EXIT_START - 0.02) / (EXIT_LEN - 0.02)) * Math.PI) * 0.5;
   });
 
   const depthOpacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < 0.1) return 0.4 * (t / 0.1);
-    if (t > 0.82) return 0.55 * (1 - (t - 0.82) / 0.18);
+    if (t < ENTER_END * 0.7) return 0.4 * (t / (ENTER_END * 0.7));
+    if (t > EXIT_START) return 0.55 * (1 - (t - EXIT_START) / EXIT_LEN);
     return 0.5;
   });
 
   const paneOpacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < 0.08) return t / 0.08;
-    if (t > 0.88) return Math.max(0.15, 1 - ((t - 0.88) / 0.12) * 0.85);
+    if (t < ENTER_END * 0.45) return t / (ENTER_END * 0.45);
+    if (t > EXIT_START + EXIT_LEN * 0.55) {
+      const e = (t - (EXIT_START + EXIT_LEN * 0.55)) / (EXIT_LEN * 0.45);
+      return Math.max(0.15, 1 - e * 0.85);
+    }
     return 1;
   });
 
