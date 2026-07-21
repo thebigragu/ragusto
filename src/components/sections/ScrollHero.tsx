@@ -1325,13 +1325,13 @@ export function ScrollHero() {
     <>
       <div className="pointer-events-auto fixed top-8 left-7 z-50 sm:top-8 sm:left-8 md:top-14 md:left-14">
         <div className="relative inline-flex items-center justify-center">
-          {/* Outer breath — soft gold bloom */}
+          {/* Outer breath — teal to match logo R (#1a5b68) */}
           <motion.span
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[170%] w-[190%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl md:h-[200%] md:w-[220%] md:blur-3xl"
             style={{
               background:
-                "radial-gradient(ellipse 58% 52% at 50% 45%, rgba(196,165,116,0.7) 0%, rgba(196,165,116,0.35) 32%, rgba(240,226,196,0.14) 52%, transparent 72%)",
+                "radial-gradient(ellipse 58% 52% at 50% 45%, rgba(26,91,104,0.75) 0%, rgba(26,91,104,0.38) 32%, rgba(42,122,140,0.14) 52%, transparent 72%)",
             }}
             animate={{
               opacity: [0.55, 1, 0.55],
@@ -1339,13 +1339,13 @@ export function ScrollHero() {
             }}
             transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
           />
-          {/* Mid breath — warmer core */}
+          {/* Mid breath — cooler core */}
           <motion.span
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-[40%] -z-10 h-[130%] w-[145%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl md:h-[150%] md:w-[165%] md:blur-2xl"
             style={{
               background:
-                "radial-gradient(circle at 50% 42%, rgba(240,226,196,0.65) 0%, rgba(196,165,116,0.35) 38%, rgba(196,165,116,0.1) 62%, transparent 76%)",
+                "radial-gradient(circle at 50% 42%, rgba(42,122,140,0.7) 0%, rgba(26,91,104,0.4) 38%, rgba(26,91,104,0.12) 62%, transparent 76%)",
             }}
             animate={{
               opacity: [0.5, 0.95, 0.5],
@@ -1359,7 +1359,7 @@ export function ScrollHero() {
             className="pointer-events-none absolute left-1/2 top-[38%] -z-10 h-[90%] w-[105%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-lg md:h-[95%] md:w-[110%] md:blur-xl"
             style={{
               background:
-                "radial-gradient(circle at 50% 40%, rgba(255,240,210,0.55) 0%, rgba(196,165,116,0.28) 45%, transparent 70%)",
+                "radial-gradient(circle at 50% 40%, rgba(58,140,155,0.55) 0%, rgba(26,91,104,0.32) 45%, transparent 70%)",
             }}
             animate={{
               opacity: [0.45, 0.9, 0.45],
