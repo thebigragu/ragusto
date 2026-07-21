@@ -953,16 +953,16 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
 
-  // Lift sticky so contact enters during the last second of video (not after it ends)
-  const stickyLift = useTransform(
-    scrollYProgress,
-    [SCRUB_HANDOFF_START, 1],
-    isMobile ? ["0%", "-48%"] : ["0%", "-58%"],
-  );
+  // Contact scrolls over the hero during the last second — no sticky lift (that left a black void)
   const featherOpacity = useTransform(
     scrollYProgress,
-    [SCRUB_HANDOFF_START - 0.04, SCRUB_HANDOFF_START + 0.06, 1],
-    [0, 0.55, 1],
+    [SCRUB_HANDOFF_START - 0.1, SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
+    [0, 0.45, 0.85, 1],
+  );
+  const videoFade = useTransform(
+    scrollYProgress,
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
+    [1, 0.55, 0.2],
   );
 
   useMotionValueEvent(videoProgress, "change", (p) => {
@@ -1074,61 +1074,62 @@ export function ScrollHero() {
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[440vh] bg-[#08090b] md:h-[680vh]">
-        <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden">
-          <motion.div className="relative h-full w-full" style={{ y: stickyLift }}>
-            <div className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-black">
-              <video
-                ref={videoRef}
-                className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-center max-md:h-[88%] max-md:w-[96%] max-md:object-contain max-md:scale-[0.92] md:inset-0 md:left-0 md:top-0 md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:object-cover md:scale-100"
-                src="/videos/hero-kling.mp4"
-                muted
-                playsInline
-                preload="auto"
-                aria-hidden
-              />
+      <section ref={scrubRef} className="relative h-[440vh] bg-transparent md:h-[680vh]">
+        <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden bg-transparent">
+          <div className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-[#08090b]">
+            <motion.video
+              ref={videoRef}
+              className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-center max-md:h-[88%] max-md:w-[96%] max-md:object-contain max-md:scale-[0.92] md:inset-0 md:left-0 md:top-0 md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:object-cover md:scale-100"
+              src="/videos/hero-kling.mp4"
+              muted
+              playsInline
+              preload="auto"
+              aria-hidden
+              style={{ opacity: videoFade }}
+            />
 
-              {BEATS.map((beat) => (
-                <BeatCard
-                  key={beat.id}
-                  beat={beat}
-                  progress={videoProgress}
-                  isMobile={isMobile}
-                />
-              ))}
-
-              <ScrollCue
+            {BEATS.map((beat) => (
+              <BeatCard
+                key={beat.id}
+                beat={beat}
                 progress={videoProgress}
-                scrollProgress={scrollYProgress}
                 isMobile={isMobile}
               />
+            ))}
 
-              {/* Deep feather into contact during last-second handoff */}
-              <motion.div
-                className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[55%] md:h-[70%]"
-                style={{
-                  opacity: featherOpacity,
-                  background:
-                    "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.2) 22%, rgba(8,9,11,0.55) 48%, rgba(8,9,11,0.88) 72%, #08090b 100%)",
-                }}
-              />
-            </div>
-          </motion.div>
+            <ScrollCue
+              progress={videoProgress}
+              scrollProgress={scrollYProgress}
+              isMobile={isMobile}
+            />
+
+            {/* Continuous veil into contact — soft, tall, no hard band */}
+            <motion.div
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[85%] md:h-[90%]"
+              style={{
+                opacity: featherOpacity,
+                background:
+                  "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.08) 18%, rgba(8,9,11,0.28) 38%, rgba(8,9,11,0.55) 55%, rgba(8,9,11,0.82) 72%, rgba(8,9,11,0.96) 88%, #08090b 100%)",
+              }}
+            />
+          </div>
         </div>
       </section>
 
-      {/* Overlaps handoff so contact appears as last second plays — continuous blend, no hard break */}
+      {/* Overlaps hero (above sticky) so contact arrives over the video — no black gap */}
       <section
         id="contact"
-        className="relative z-10 -mt-[42vh] bg-[#08090b] px-5 pt-[12vh] pb-14 md:-mt-[58vh] md:px-6 md:pt-[18vh] md:pb-20"
+        className="relative z-30 -mt-[78vh] bg-transparent px-5 pt-[32vh] pb-14 md:-mt-[92vh] md:px-6 md:pt-[42vh] md:pb-20"
       >
+        {/* Top of contact is transparent → solid so video feathers through */}
         <div
-          className="pointer-events-none absolute inset-x-0 -top-24 h-48"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[48vh] md:h-[56vh]"
           style={{
             background:
-              "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.35) 35%, #08090b 100%)",
+              "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.12) 20%, rgba(8,9,11,0.4) 42%, rgba(8,9,11,0.78) 68%, rgba(8,9,11,0.96) 88%, #08090b 100%)",
           }}
         />
+        <div className="pointer-events-none absolute inset-x-0 top-[40vh] bottom-0 bg-[#08090b] md:top-[48vh]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(196,165,116,0.1),transparent_55%)]" />
         <div className="pointer-events-none absolute inset-0 ambient-grid opacity-15" />
 
