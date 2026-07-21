@@ -40,38 +40,44 @@ export function ContactModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="contact-modal-title"
-            className="relative z-10 max-h-[min(94svh,960px)] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-3xl border border-white/10 bg-[#12141a]/95 p-8 shadow-2xl dark md:max-w-5xl md:overflow-hidden md:p-12 md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
+            className="relative z-10 max-h-[min(94svh,960px)] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-3xl border border-white/10 bg-[#12141a]/95 shadow-2xl dark md:max-w-5xl md:overflow-hidden md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs tracking-[0.28em] text-white/45 uppercase">Contact</p>
-                <h2
-                  id="contact-modal-title"
-                  className="mt-2 font-serif text-3xl tracking-tight text-white md:text-5xl"
+            {/*
+              Inner pad wrapper — padding on the scroll container itself often
+              clips at the bottom on mobile; keep top/bottom equal and responsive.
+            */}
+            <div className="px-6 pt-6 pb-6 sm:px-8 sm:pt-8 sm:pb-8 md:px-12 md:pt-12 md:pb-12">
+              <div className="mb-6 flex items-start justify-between gap-4 md:mb-8">
+                <div>
+                  <p className="text-xs tracking-[0.28em] text-white/45 uppercase">Contact</p>
+                  <h2
+                    id="contact-modal-title"
+                    className="mt-2 font-serif text-3xl tracking-tight text-white md:text-5xl"
+                  >
+                    Get in{" "}
+                    <span className="bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text italic text-transparent">
+                      touch
+                    </span>
+                  </h2>
+                  <p className="mt-2 text-sm text-white/60">
+                    Tell us what you&apos;re building — we&apos;ll reply with a clear next step.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-white/70 transition hover:border-white/35 hover:text-white"
+                  aria-label="Close"
                 >
-                  Get in{" "}
-                  <span className="bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text italic text-transparent">
-                    touch
-                  </span>
-                </h2>
-                <p className="mt-2 text-sm text-white/60">
-                  Tell us what you&apos;re building — we&apos;ll reply with a clear next step.
-                </p>
+                  Close
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-white/70 transition hover:border-white/35 hover:text-white"
-                aria-label="Close"
-              >
-                Close
-              </button>
+              <ContactForm />
             </div>
-            <ContactForm />
           </motion.div>
         </motion.div>
       )}
