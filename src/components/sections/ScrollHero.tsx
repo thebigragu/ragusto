@@ -1212,14 +1212,15 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
 
-  // Dedicated scrub spring — same on mobile & desktop; kills frame jitter
-  const videoProgress = useSpring(videoProgressRaw, {
+  // Desktop: light scrub spring. Mobile: raw progress so finger and video stay locked.
+  const sprungVideoProgress = useSpring(videoProgressRaw, {
     stiffness: 380,
     damping: 42,
     mass: 0.08,
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
+  const videoProgress = isMobile ? videoProgressRaw : sprungVideoProgress;
 
   // Hero lifts only ~halfway — remaining lower frame stays visible under contact
   const stickyLift = useTransform(
@@ -1273,11 +1274,22 @@ export function ScrollHero() {
       const frameDur = frameDurRef.current;
       const framed =
         Math.round(Math.min(v.duration - 0.001, Math.max(0, t)) / frameDur) * frameDur;
+      if (Math.abs(v.currentTime - framed) < frameDur * 0.35) return;
+
+      // Mobile: set time directly — seeked-queueing lags behind the finger
+      if (isMobile) {
+        try {
+          v.currentTime = framed;
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+
       if (seekingRef.current) {
         pendingFrame.current = framed;
         return;
       }
-      if (Math.abs(v.currentTime - framed) < frameDur * 0.4) return;
       seekingRef.current = true;
       const onSeeked = () => {
         seekingRef.current = false;
@@ -1324,7 +1336,7 @@ export function ScrollHero() {
       seekingRef.current = false;
       pendingFrame.current = null;
     };
-  }, [videoProgress, videoSrc]);
+  }, [videoProgress, videoSrc, isMobile]);
 
   return (
     <>
@@ -1383,7 +1395,7 @@ export function ScrollHero() {
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[780vh] bg-transparent md:h-[680vh]">
+      <section ref={scrubRef} className="relative h-[620vh] bg-transparent md:h-[680vh]">
         <div className="sticky top-0 z-20 h-[100dvh] w-full overflow-hidden bg-transparent">
           <motion.div
             className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#08090b] will-change-transform"
