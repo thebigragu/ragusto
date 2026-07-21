@@ -518,14 +518,6 @@ function BeatCard({
   const lineRy = useTransform(rotateY, (ry) => ry * 0.18);
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
 
-  const shadowOpacity = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 0;
-    const t = beatT(p, beat);
-    if (t < ENTER_END * 0.55) return 0.28 * smoothstep(t / (ENTER_END * 0.55));
-    if (t > EXIT_START) return 0.42 * (1 - smoothstep((t - EXIT_START) / EXIT_LEN));
-    return 0.42;
-  });
-
   const shimmerPos = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     const shimmerEnd = ENTER_END + 0.14;
@@ -680,18 +672,6 @@ function BeatCard({
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
         >
-        {/* Tight contact shadow — no soft glow halo */}
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute left-[14%] right-[14%] top-[98%] h-6 rounded-[100%]"
-          style={{
-            opacity: shadowOpacity,
-            transform: `translateZ(${-halfT - 48}px) rotateX(88deg)`,
-            background:
-              "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 48%, transparent 72%)",
-          }}
-        />
-
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
           {/* Soft rear plane — no CSS blur (blur paints a rectangular ghost when yawing) */}
           <div
