@@ -204,22 +204,27 @@ function AsyncWord({
     const e = Math.min(1, Math.max(0, (local - start) / 0.3));
     return e * 8;
   });
-  const filter = useMotionTemplate`blur(${blur}px)`;
+  const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
 
   if (kind === "sub") {
     return (
-      <motion.span style={{ opacity, y, filter }} className="inline-block">
+      <motion.span style={{ opacity, y, filter }} className="inline-block py-0.5">
         {emph ? <span className="text-[#c4a574]">{text}</span> : text}
       </motion.span>
     );
   }
 
+  // Italic + bg-clip-text paints inside the glyph box; Cormorant overhangs need pad
+  // so letters like g/p/d and the italic lean aren't cut by neighbors or the pane.
   return (
-    <motion.span style={{ opacity, y, filter }} className="inline-block pe-[0.12em]">
+    <motion.span
+      style={{ opacity, y, filter }}
+      className={`inline-block overflow-visible ${emph ? "px-[0.06em] pe-[0.28em] pb-[0.12em]" : "pe-[0.06em] pb-[0.08em]"}`}
+    >
       <span
         className={
           emph
-            ? "bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text font-serif italic text-transparent"
+            ? "inline-block overflow-visible bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text font-serif italic text-transparent"
             : undefined
         }
       >
@@ -268,7 +273,8 @@ function BeatCard({
     if (t > EXIT_START) return 16 * smoothstep((t - EXIT_START) / EXIT_LEN);
     return 0;
   });
-  const filter = useMotionTemplate`blur(${blur}px)`;
+  // blur(0) still creates a filter containing block that clips glyph overhangs
+  const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
 
   const scale = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0.96;
@@ -505,23 +511,31 @@ function BeatCard({
             }}
           />
 
-          {/* Front glass face — soft glow rim, no stroke outline */}
+          {/* Front plate: glass layer separate from type so backdrop-filter
+              + radius cannot clip italic overhangs / descenders */}
           <div
-            className="relative p-6 md:p-8"
+            className="relative"
             style={{
-              ...faceStyle,
-              backdropFilter: "blur(28px) saturate(1.2)",
-              WebkitBackdropFilter: "blur(28px) saturate(1.2)",
-              boxShadow: `
-                inset 0 18px 36px rgba(255,255,255,0.07),
-                inset 0 -24px 40px rgba(0,0,0,0.18),
-                0 22px 56px rgba(0,0,0,0.38),
-                0 0 48px ${v.edgeGlow}
-              `,
               transform: "translateZ(0px)",
               transformStyle: "preserve-3d",
             }}
           >
+            <div
+              aria-hidden
+              className="absolute inset-0"
+              style={{
+                ...faceStyle,
+                backdropFilter: "blur(28px) saturate(1.2)",
+                WebkitBackdropFilter: "blur(28px) saturate(1.2)",
+                boxShadow: `
+                  inset 0 18px 36px rgba(255,255,255,0.07),
+                  inset 0 -24px 40px rgba(0,0,0,0.18),
+                  0 22px 56px rgba(0,0,0,0.38),
+                  0 0 48px ${v.edgeGlow}
+                `,
+              }}
+            />
+
             <div
               className="pointer-events-none absolute inset-0"
               style={{
@@ -544,12 +558,12 @@ function BeatCard({
             />
 
             <div
-              className="relative overflow-visible"
+              className="relative overflow-visible px-7 py-7 md:px-10 md:py-9"
               style={{ transform: `translateZ(${T * 0.45}px)` }}
             >
-              <p className="font-serif text-3xl leading-[1.2] tracking-tight text-white sm:text-4xl md:text-[2.75rem]">
+              <p className="overflow-visible font-serif text-3xl leading-[1.35] tracking-normal text-white sm:text-4xl md:text-[2.75rem] md:leading-[1.32]">
                 {beat.words.map((w, i) => (
-                  <span key={`${w.t}-${i}`} className="inline">
+                  <span key={`${w.t}-${i}`} className="inline overflow-visible">
                     {i > 0 ? " " : null}
                     <AsyncWord
                       text={w.t}
@@ -562,7 +576,7 @@ function BeatCard({
                   </span>
                 ))}
               </p>
-              <p className="mt-3 text-sm tracking-[0.18em] text-white/60 uppercase md:text-[0.95rem]">
+              <p className="mt-3.5 overflow-visible text-sm tracking-[0.18em] text-white/60 uppercase md:text-[0.95rem] md:leading-relaxed">
                 {subTokens.map((part, i) => {
                   if (/^\s+$/.test(part)) return <span key={i}>{part}</span>;
                   const clean = part.replace(/[.—,]/g, "");
@@ -883,7 +897,7 @@ export function ScrollHero() {
           </p>
           <h2 className="mt-5 font-serif text-4xl tracking-tight text-white md:text-6xl lg:text-7xl">
             Ready to build something{" "}
-            <span className="inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text pe-[0.18em] italic text-transparent">
+            <span className="inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text pe-[0.28em] pb-[0.08em] italic text-transparent">
               exceptional
             </span>
             ?
