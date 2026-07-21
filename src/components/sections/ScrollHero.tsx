@@ -271,18 +271,15 @@ function AsyncWord({
       rx = -e * 52;
       ry = exitDir * e * 72;
     }
-    // At rest: soft forward extrusion shadow (depth without tilt)
+    // At rest: tight depth shadow only (no gold glow spill)
     if (t >= ENTER_END && t <= EXIT_START) {
       return emph
-        ? "0 10px 22px rgba(0,0,0,0.55), 0 2px 0 rgba(255,255,255,0.1), 0 0 28px rgba(196,165,116,0.32)"
-        : "0 8px 20px rgba(0,0,0,0.52), 0 1px 0 rgba(255,255,255,0.12)";
+        ? "0 6px 14px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08)"
+        : "0 5px 12px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.08)";
     }
-    const sx = -Math.sin((ry * Math.PI) / 180) * 10;
-    const sy = 6 + Math.sin((rx * Math.PI) / 180) * 8;
-    const glow = emph
-      ? `${-sx * 0.3}px ${-sy * 0.2}px 16px rgba(196,165,116,0.4)`
-      : `${-sx * 0.2}px ${-sy * 0.15}px 12px rgba(255,255,255,0.1)`;
-    return `${sx}px ${sy}px 16px rgba(0,0,0,0.5), ${glow}`;
+    const sx = -Math.sin((ry * Math.PI) / 180) * 8;
+    const sy = 5 + Math.sin((rx * Math.PI) / 180) * 6;
+    return `${sx}px ${sy}px 12px rgba(0,0,0,0.45)`;
   });
 
   if (kind === "sub") {
@@ -377,10 +374,10 @@ function BeatCard({
       if (t >= clearBy) return 0;
       return 18 * (1 - smoothstep(t / clearBy));
     }
-    // Delay exit blur — stay sharp until late in the leave
+    // Soft exit dissolve — keep small so it doesn’t bloom past the card
     const blurStart = EXIT_START + EXIT_LEN * 0.42;
     if (t <= blurStart) return 0;
-    return 16 * smoothstep((t - blurStart) / (1 - blurStart));
+    return 6 * smoothstep((t - blurStart) / (1 - blurStart));
   });
   // blur(0) still creates a filter containing block that clips glyph overhangs
   const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
@@ -568,7 +565,6 @@ function BeatCard({
   const radius = isMobile ? "1.05rem" : v.radius;
   // Tiny inset only — sides must meet the rounded faces to read as one volume
   const edgeInset = isMobile ? 3 : 4;
-  const softGlow = v.edgeGlow.replace(/[\d.]+\)$/, "0.45)");
   // Continuous metal: bright chrome lip → brass body → dark steel rear
   const metalRight = `linear-gradient(90deg,
     rgba(255,252,245,1) 0%,
@@ -604,10 +600,10 @@ function BeatCard({
   const faceMetal = `
     linear-gradient(118deg,
       transparent 0%,
-      rgba(255,255,255,0.22) 12%,
+      rgba(255,255,255,0.18) 12%,
       transparent 22%,
       transparent 48%,
-      rgba(240,226,196,0.18) 61%,
+      rgba(240,226,196,0.14) 61%,
       transparent 74%),
     linear-gradient(155deg,
       rgba(210,205,198,1) 0%,
@@ -620,10 +616,10 @@ function BeatCard({
   const faceMetalSheen = `
     linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
-      rgba(255,255,255,0.08) 28%,
-      rgba(255,248,230,0.28) 46%,
-      rgba(196,165,116,0.2) 52%,
-      rgba(255,255,255,0.06) 58%,
+      rgba(255,255,255,0.06) 28%,
+      rgba(255,248,230,0.2) 46%,
+      rgba(196,165,116,0.14) 52%,
+      rgba(255,255,255,0.04) 58%,
       transparent 78%)
   `;
 
@@ -669,15 +665,15 @@ function BeatCard({
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
         >
+        {/* Tight contact shadow — no soft glow halo */}
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute left-[8%] right-[8%] top-[97%] h-14 rounded-[100%]"
+          className="pointer-events-none absolute left-[14%] right-[14%] top-[98%] h-6 rounded-[100%]"
           style={{
             opacity: shadowOpacity,
             transform: `translateZ(${-halfT - 48}px) rotateX(88deg)`,
             background:
-              "radial-gradient(ellipse at center, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 42%, transparent 74%)",
-            filter: "blur(16px)",
+              "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 48%, transparent 72%)",
           }}
         />
 
@@ -723,7 +719,7 @@ function BeatCard({
               transform: `translateZ(${-halfT}px) rotateY(-90deg)`,
               borderRadius: 2,
               background: metalRight,
-              boxShadow: `inset 0 0 16px rgba(255,252,240,0.28), inset 0 0 6px rgba(196,165,116,0.35), 0 0 14px ${v.edgeGlow}`,
+              boxShadow: "inset 0 0 10px rgba(255,252,240,0.18)",
             }}
           />
 
@@ -737,7 +733,7 @@ function BeatCard({
               transform: `translateZ(${-halfT}px) rotateY(90deg)`,
               borderRadius: 2,
               background: metalLeft,
-              boxShadow: "inset 0 0 12px rgba(255,255,255,0.12)",
+              boxShadow: "inset 0 0 8px rgba(255,255,255,0.08)",
             }}
           />
 
@@ -754,7 +750,7 @@ function BeatCard({
               transform: `translateZ(${-halfT}px) rotateX(90deg)`,
               borderRadius: 2,
               background: metalTop,
-              boxShadow: `inset 0 0 18px rgba(255,252,240,0.35), 0 0 12px ${v.edgeGlow}`,
+              boxShadow: "inset 0 0 10px rgba(255,252,240,0.2)",
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
@@ -793,60 +789,55 @@ function BeatCard({
                 ...faceStyle,
                 background: faceMetal,
                 boxShadow: `
-                  inset 0 1px 0 rgba(255,255,255,0.38),
-                  inset 0 -1px 0 rgba(0,0,0,0.55),
-                  inset 22px 0 36px -20px rgba(255,248,230,0.12),
-                  inset -22px 0 36px -20px rgba(0,0,0,0.4),
+                  inset 0 1px 0 rgba(255,255,255,0.32),
+                  inset 0 -1px 0 rgba(0,0,0,0.5),
+                  inset 18px 0 28px -18px rgba(255,248,230,0.08),
+                  inset -18px 0 28px -18px rgba(0,0,0,0.35),
                   0 0 0 1px ${v.rim},
-                  0 28px 64px rgba(0,0,0,0.55),
-                  0 0 56px ${softGlow}
+                  0 18px 36px rgba(0,0,0,0.4)
                 `,
               }}
             />
 
-            {/* Resting metallic specular wash */}
+            {/* Resting metallic specular wash — clipped to face */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 overflow-hidden"
               style={{
                 borderRadius: radius,
                 background: faceMetalSheen,
-                mixBlendMode: "overlay",
-                opacity: 0.85,
+                opacity: 0.7,
               }}
             />
 
-            {/* Chrome rim — bright outer lip + dark inner bevel */}
+            {/* Chrome rim — inset only, no outer glow */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: radius,
                 boxShadow: `
-                  inset 0 0 0 1px rgba(255,248,230,0.45),
-                  inset 0 0 0 2px rgba(0,0,0,0.35),
-                  0 0 0 1px ${v.rim}
+                  inset 0 0 0 1px rgba(255,248,230,0.4),
+                  inset 0 0 0 2px rgba(0,0,0,0.3)
                 `,
               }}
             />
 
-            {/* Traveling specular sheen */}
+            {/* Traveling specular sheen — clipped, no blur spill */}
             <motion.div
               aria-hidden
-              className="pointer-events-none absolute inset-0"
+              className="pointer-events-none absolute inset-0 overflow-hidden"
               style={{
                 opacity: shimmerOpacity,
                 borderRadius: radius,
                 background: shimmerBackground,
-                mixBlendMode: "screen",
-                filter: "blur(5px)",
                 transform: shimmerLayerTransform,
                 transformStyle: "preserve-3d",
               }}
             />
 
             <motion.div
-              className={`relative overflow-visible px-5 py-5 sm:px-8 sm:py-7 md:px-16 md:py-12 ${
+              className={`relative px-5 py-5 sm:px-8 sm:py-7 md:px-16 md:py-12 ${
                 beat.side === "left" ? "md:pe-[4.5rem]" : "md:ps-[4.5rem]"
               }`}
               style={{
@@ -904,56 +895,19 @@ function BeatCard({
                 })}
               </p>
 
-              {/* Gold underline — floats ahead of type, tilts with the prism */}
+              {/* Gold underline — clean line, no glow bloom */}
               <motion.div
-                className="relative mt-4 h-3 w-full overflow-visible sm:mt-6 md:mt-7"
+                className="relative mt-4 h-[2px] w-full overflow-hidden sm:mt-6 md:mt-7"
                 style={{
                   transform: lineTransform,
                   transformStyle: "preserve-3d",
                 }}
               >
                 <motion.span
-                  aria-hidden
-                  className="pointer-events-none absolute top-1/2 left-0 h-3 w-full -translate-y-1/2 origin-left rounded-full bg-[#c4a574]/55 blur-md"
-                  style={{ width: "100%" }}
+                  className="absolute inset-0 block origin-left rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
                   animate={{
                     scaleX: [0.12, 1, 0.12],
-                    opacity: [0.25, 0.85, 0.25],
-                  }}
-                  transition={{
-                    duration: 2.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                <motion.span
-                  aria-hidden
-                  className="pointer-events-none absolute top-1/2 left-0 h-5 w-full -translate-y-1/2 origin-left rounded-full bg-[#f0e2c4]/35 blur-xl"
-                  style={{ width: "100%" }}
-                  animate={{
-                    scaleX: [0.12, 1, 0.12],
-                    opacity: [0.15, 0.7, 0.15],
-                  }}
-                  transition={{
-                    duration: 2.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                <motion.span
-                  className="absolute top-1/2 left-0 block h-[2px] w-full -translate-y-1/2 origin-left rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
-                  style={{
-                    width: "100%",
-                    boxShadow: `0 0 8px ${v.edgeGlow}, 0 0 18px rgba(196,165,116,0.75), 0 0 32px rgba(240,226,196,0.45)`,
-                  }}
-                  animate={{
-                    scaleX: [0.12, 1, 0.12],
-                    opacity: [0.45, 1, 0.45],
-                    boxShadow: [
-                      `0 0 6px ${v.edgeGlow}, 0 0 12px rgba(196,165,116,0.4), 0 0 20px rgba(240,226,196,0.2)`,
-                      `0 0 10px ${v.edgeGlow}, 0 0 24px rgba(196,165,116,0.9), 0 0 40px rgba(240,226,196,0.65)`,
-                      `0 0 6px ${v.edgeGlow}, 0 0 12px rgba(196,165,116,0.4), 0 0 20px rgba(240,226,196,0.2)`,
-                    ],
+                    opacity: [0.5, 1, 0.5],
                   }}
                   transition={{
                     duration: 2.6,
