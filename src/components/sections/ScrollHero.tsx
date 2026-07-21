@@ -810,9 +810,9 @@ function ScrollCue({
 }) {
   const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.35, 0.1]);
 
-  // Desktop: mid-right → bottom-right. Mobile: quieter lower-right, smaller.
-  const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [86, 90] : [91, 94]);
-  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [62, 88] : [48, 90]);
+  // Desktop: mid-right → bottom-right. Mobile: center-right → bottom-right.
+  const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [88, 92] : [91, 94]);
+  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [50, 88] : [48, 90]);
   const leftPct = useMotionTemplate`${left}%`;
   const topPct = useMotionTemplate`${top}%`;
   const anchorX = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
