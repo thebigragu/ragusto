@@ -71,7 +71,7 @@ const BEATS: Beat[] = [
       shimmerAngle: 118,
       top: "68%",
       topMobile: "18%",
-      thickness: 82,
+      thickness: 112,
     },
   },
   {
@@ -94,7 +94,7 @@ const BEATS: Beat[] = [
       shimmerAngle: 64,
       top: "34%",
       topMobile: "80%",
-      thickness: 88,
+      thickness: 120,
     },
   },
   {
@@ -117,7 +117,7 @@ const BEATS: Beat[] = [
       shimmerAngle: 108,
       top: "50%",
       topMobile: "22%",
-      thickness: 78,
+      thickness: 108,
     },
   },
   {
@@ -140,7 +140,7 @@ const BEATS: Beat[] = [
       shimmerAngle: 52,
       top: "60%",
       topMobile: "76%",
-      thickness: 90,
+      thickness: 124,
     },
   },
 ];
@@ -161,9 +161,9 @@ function smoothstep(e: number) {
   return e * e * (3 - 2 * e);
 }
 
-/** Longer enter/exit windows = slower rise & leave relative to scroll */
-const ENTER_END = 0.24;
-const EXIT_START = 0.68;
+/** Longer enter/exit windows = slower rise, twist settle & leave */
+const ENTER_END = 0.4;
+const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
 function AsyncWord({
@@ -339,7 +339,7 @@ function BeatCard({
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
   const orbitScale = isMobile ? 0.42 : 1;
   const tiltScale = isMobile ? 0.55 : 1;
-  const T = Math.max(16, isMobile ? Math.round(v.thickness * 0.62) : v.thickness);
+  const T = Math.max(22, isMobile ? Math.round(v.thickness * 0.72) : v.thickness);
   const halfT = T / 2;
   const restTop = isMobile ? v.topMobile : v.top;
 
@@ -390,10 +390,10 @@ function BeatCard({
     return 1;
   });
 
-  // Subtle prism pose at rest so depth edges read; stronger angles only on enter/exit
-  const restY = -exitDir * (isMobile ? 7 : 11);
-  const restX = isMobile ? 3 : 5;
-  const twistAmp = (isMobile ? 28 : 40) * tiltScale;
+  // Stronger rest tilt so thickness reads; enter twist is slower / softer
+  const restY = -exitDir * (isMobile ? 11 : 16);
+  const restX = isMobile ? 6 : 9;
+  const twistAmp = (isMobile ? 24 : 34) * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -413,13 +413,13 @@ function BeatCard({
 
   const orbitZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    const restZ = isMobile ? 36 : 72;
+    const restZ = isMobile ? 52 : 108;
     if (t < ENTER_END) {
       // Brief push toward camera during the depth-reveal twist
       const u = t / ENTER_END;
-      if (u > 0.55 && u < 1) {
-        const twistU = (u - 0.55) / 0.45;
-        const bump = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 18 : 28);
+      if (u > 0.48 && u < 1) {
+        const twistU = (u - 0.48) / 0.52;
+        const bump = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 14 : 22);
         return restZ + bump;
       }
       return restZ;
@@ -434,15 +434,15 @@ function BeatCard({
     const t = beatT(p, beat);
     if (t < ENTER_END) {
       const u = t / ENTER_END;
-      const startX = restX + 20 * tiltScale;
-      if (u < 0.55) {
-        return startX + (restX - startX) * smoothstep(u / 0.55);
+      const startX = restX + 16 * tiltScale;
+      // Longer settle into rest before the slow depth twist
+      if (u < 0.48) {
+        return startX + (restX - startX) * smoothstep(u / 0.48);
       }
-      // Lift slightly during horizontal twist so the top bevel reads
-      const twistU = (u - 0.55) / 0.45;
-      const lift = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 6 : 9);
+      const twistU = (u - 0.48) / 0.52;
+      const lift = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 5 : 7);
       if (u < 0.78) {
-        const e = smoothstep((u - 0.55) / 0.23);
+        const e = smoothstep((u - 0.48) / 0.3);
         return restX + lift * e;
       }
       const e = smoothstep((u - 0.78) / 0.22);
@@ -457,20 +457,20 @@ function BeatCard({
     const t = beatT(p, beat);
     if (t < ENTER_END) {
       const u = t / ENTER_END;
-      const startY = restY + exitDir * 28 * tiltScale;
-      // Opposite-side peak: reveals the elongated prism edge, then springs to rest
+      const startY = restY + exitDir * 22 * tiltScale;
+      // Opposite-side peak: reveals the elongated prism edge, then soft-settles
       const peakY = restY + exitDir * twistAmp;
-      if (u < 0.55) {
-        return startY + (restY - startY) * smoothstep(u / 0.55);
+      if (u < 0.48) {
+        return startY + (restY - startY) * smoothstep(u / 0.48);
       }
       if (u < 0.78) {
-        const e = smoothstep((u - 0.55) / 0.23);
+        const e = smoothstep((u - 0.48) / 0.3);
         return restY + (peakY - restY) * e;
       }
-      // Spring back — slight ease past then settle
+      // Soft settle — no hard overshoot snap
       const e = smoothstep((u - 0.78) / 0.22);
-      const overshoot = Math.sin(e * Math.PI) * exitDir * -3;
-      return peakY + (restY - peakY) * e + overshoot * (1 - e);
+      const soft = Math.sin(e * Math.PI) * exitDir * -1.2;
+      return peakY + (restY - peakY) * e + soft * (1 - e);
     }
     if (t <= EXIT_START) return restY;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
@@ -481,11 +481,10 @@ function BeatCard({
     const t = beatT(p, beat);
     if (t < ENTER_END) {
       const u = t / ENTER_END;
-      const startZ = exitDir * -10 * tiltScale;
-      if (u < 0.55) return startZ * (1 - smoothstep(u / 0.55));
-      // Counter-roll with the yaw twist
-      const twistU = (u - 0.55) / 0.45;
-      return exitDir * Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 5 : 8);
+      const startZ = exitDir * -8 * tiltScale;
+      if (u < 0.48) return startZ * (1 - smoothstep(u / 0.48));
+      const twistU = (u - 0.48) / 0.52;
+      return exitDir * Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 4 : 6);
     }
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
@@ -502,15 +501,15 @@ function BeatCard({
     return 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.35;
   });
 
-  const shimmerZ = useTransform(layerBoost, (b) => halfT + 8 * b);
+  const shimmerZ = useTransform(layerBoost, (b) => halfT + 6 * b);
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
 
-  const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 18 : 30) * b);
+  const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 22 : 38) * b);
   const contentRx = useTransform(rotateX, (rx) => rx * 0.18);
   const contentRy = useTransform(rotateY, (ry) => ry * 0.22);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 26 : 40) * b);
+  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 30 : 48) * b);
   const lineRx = useTransform(rotateX, (rx) => rx * 0.25);
   const lineRy = useTransform(rotateY, (ry) => ry * 0.18);
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
@@ -518,14 +517,14 @@ function BeatCard({
   const shadowOpacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < ENTER_END * 0.55) return 0.25 * smoothstep(t / (ENTER_END * 0.55));
-    if (t > EXIT_START) return 0.35 * (1 - smoothstep((t - EXIT_START) / EXIT_LEN));
-    return 0.35;
+    if (t < ENTER_END * 0.55) return 0.28 * smoothstep(t / (ENTER_END * 0.55));
+    if (t > EXIT_START) return 0.42 * (1 - smoothstep((t - EXIT_START) / EXIT_LEN));
+    return 0.42;
   });
 
   const shimmerPos = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    const shimmerEnd = ENTER_END + 0.1;
+    const shimmerEnd = ENTER_END + 0.14;
     if (t < 0.05) return 120;
     if (t > shimmerEnd) return -40;
     return 120 - ((t - 0.05) / (shimmerEnd - 0.05)) * 160;
@@ -533,21 +532,23 @@ function BeatCard({
 
   const shimmerOpacity = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    const shimmerEnd = ENTER_END + 0.1;
+    const shimmerEnd = ENTER_END + 0.14;
     if (t < 0.05) return 0;
-    if (t < ENTER_END * 0.4) return (t - 0.05) / Math.max(0.01, ENTER_END * 0.4 - 0.05);
-    if (t < ENTER_END) return 1;
-    if (t < shimmerEnd) return 1 - (t - ENTER_END) / (shimmerEnd - ENTER_END);
+    if (t < ENTER_END * 0.45) return (t - 0.05) / Math.max(0.01, ENTER_END * 0.45 - 0.05);
+    if (t < ENTER_END) return 0.85;
+    if (t < shimmerEnd) return 0.85 * (1 - (t - ENTER_END) / (shimmerEnd - ENTER_END));
     return 0;
   });
 
+  // Wide soft band — no hard specular spike
   const shimmerBackground = useMotionTemplate`linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
       transparent ${shimmerPos}%,
-      rgba(255,255,255,0.05) calc(${shimmerPos}% + 6%),
-      rgba(255,255,255,0.4) calc(${shimmerPos}% + 12%),
-      rgba(240,226,196,0.22) calc(${shimmerPos}% + 14%),
-      transparent calc(${shimmerPos}% + 22%),
+      rgba(255,255,255,0.03) calc(${shimmerPos}% + 4%),
+      rgba(255,255,255,0.14) calc(${shimmerPos}% + 12%),
+      rgba(240,226,196,0.1) calc(${shimmerPos}% + 18%),
+      rgba(255,255,255,0.05) calc(${shimmerPos}% + 26%),
+      transparent calc(${shimmerPos}% + 36%),
       transparent 100%)`;
 
   const sideClass = isMobile
@@ -556,13 +557,18 @@ function BeatCard({
       ? "left-4 origin-center md:left-10 lg:left-16"
       : "right-4 origin-center md:right-10 lg:right-16";
 
-  const radius = isMobile ? "1rem" : v.radius;
+  const radius = isMobile ? "1.05rem" : v.radius;
+  // Keep side faces clear of rounded corners to avoid seam/overspill lines
+  const edgeInset = isMobile ? 16 : 20;
+  const softGlow = v.edgeGlow.replace(/[\d.]+\)$/, "0.22)");
 
   const faceStyle: CSSProperties = {
     borderRadius: radius,
     background: `linear-gradient(145deg, ${v.glass} 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.02) 100%)`,
     border: "none",
     outline: "none",
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
   };
 
   return (
@@ -575,7 +581,7 @@ function BeatCard({
         y: enterY,
         filter,
         scale,
-        perspective: isMobile ? 1100 : 1800,
+        perspective: isMobile ? 980 : 1500,
         transformStyle: "preserve-3d",
       }}
     >
@@ -591,13 +597,13 @@ function BeatCard({
         >
         <motion.div
           aria-hidden
-          className="pointer-events-none absolute left-[6%] right-[6%] top-[96%] h-12 rounded-[100%]"
+          className="pointer-events-none absolute left-[8%] right-[8%] top-[97%] h-14 rounded-[100%]"
           style={{
             opacity: shadowOpacity,
-            transform: `translateZ(${-halfT - 36}px) rotateX(88deg)`,
+            transform: `translateZ(${-halfT - 48}px) rotateX(88deg)`,
             background:
-              "radial-gradient(ellipse at center, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.22) 45%, transparent 72%)",
-            filter: "blur(12px)",
+              "radial-gradient(ellipse at center, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.28) 42%, transparent 74%)",
+            filter: "blur(16px)",
           }}
         />
 
@@ -608,21 +614,22 @@ function BeatCard({
             style={{
               ...faceStyle,
               background:
-                "linear-gradient(165deg, rgba(28,32,40,0.98), rgba(4,6,10,1))",
-              boxShadow: "inset 0 0 48px rgba(0,0,0,0.55)",
+                "linear-gradient(165deg, rgba(22,26,34,0.98), rgba(2,4,8,1))",
+              boxShadow: "inset 0 0 56px rgba(0,0,0,0.62)",
               transform: `translateZ(${-halfT}px)`,
             }}
           />
 
           <div
             aria-hidden
-            className="absolute inset-[3px]"
+            className="absolute inset-[6px]"
             style={{
               borderRadius: radius,
-              background: `linear-gradient(145deg, ${v.glass}, rgba(255,255,255,0.03) 50%, transparent)`,
+              background: `radial-gradient(ellipse 80% 70% at 50% 40%, ${v.glass}, transparent 70%)`,
               transform: "translateZ(0px)",
-              boxShadow: `inset 0 0 40px ${v.edgeGlow}`,
-              opacity: 0.55,
+              opacity: 0.45,
+              filter: "blur(8px)",
+              backfaceVisibility: "hidden",
             }}
           />
 
@@ -632,17 +639,22 @@ function BeatCard({
             style={{
               width: T,
               right: 0,
-              top: 8,
-              bottom: 8,
+              top: edgeInset,
+              bottom: edgeInset,
               transformOrigin: "right center",
               transform: "rotateY(-90deg) translateZ(0)",
-              borderRadius: `0 ${radius} ${radius} 0`,
+              borderRadius: 2,
               background: `linear-gradient(180deg,
-                rgba(255,255,255,0.48) 0%,
-                ${v.edgeGlow} 16%,
-                rgba(255,255,255,0.14) 40%,
-                rgba(40,44,54,0.35) 68%,
-                rgba(0,0,0,0.55) 100%)`,
+                transparent 0%,
+                rgba(255,255,255,0.22) 10%,
+                ${v.edgeGlow} 22%,
+                rgba(255,255,255,0.08) 48%,
+                rgba(30,34,42,0.4) 72%,
+                rgba(0,0,0,0.35) 88%,
+                transparent 100%)`,
+              opacity: 0.85,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           />
 
@@ -652,15 +664,20 @@ function BeatCard({
             style={{
               width: T,
               left: 0,
-              top: 8,
-              bottom: 8,
+              top: edgeInset,
+              bottom: edgeInset,
               transformOrigin: "left center",
               transform: "rotateY(90deg) translateZ(0)",
-              borderRadius: `${radius} 0 0 ${radius}`,
+              borderRadius: 2,
               background: `linear-gradient(180deg,
-                rgba(255,255,255,0.1) 0%,
-                rgba(30,34,42,0.75) 40%,
-                rgba(0,0,0,0.7) 100%)`,
+                transparent 0%,
+                rgba(255,255,255,0.05) 12%,
+                rgba(24,28,36,0.55) 42%,
+                rgba(0,0,0,0.55) 78%,
+                transparent 100%)`,
+              opacity: 0.8,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           />
 
@@ -670,17 +687,22 @@ function BeatCard({
             style={{
               height: T,
               top: 0,
-              left: 8,
-              right: 8,
+              left: edgeInset,
+              right: edgeInset,
               transformOrigin: "center top",
               transform: "rotateX(90deg) translateZ(0)",
-              borderRadius: `${radius} ${radius} 0 0`,
+              borderRadius: 2,
               background: `linear-gradient(90deg,
-                rgba(255,255,255,0.04),
-                rgba(255,255,255,0.32),
-                ${v.edgeGlow},
-                rgba(255,255,255,0.32),
-                rgba(255,255,255,0.04))`,
+                transparent 0%,
+                rgba(255,255,255,0.08) 12%,
+                rgba(255,255,255,0.22) 38%,
+                ${v.edgeGlow} 52%,
+                rgba(255,255,255,0.18) 68%,
+                rgba(255,255,255,0.06) 88%,
+                transparent 100%)`,
+              opacity: 0.75,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           />
 
@@ -690,15 +712,20 @@ function BeatCard({
             style={{
               height: T,
               bottom: 0,
-              left: 8,
-              right: 8,
+              left: edgeInset,
+              right: edgeInset,
               transformOrigin: "center bottom",
               transform: "rotateX(-90deg) translateZ(0)",
-              borderRadius: `0 0 ${radius} ${radius}`,
+              borderRadius: 2,
               background: `linear-gradient(90deg,
-                rgba(0,0,0,0.6),
-                rgba(18,20,26,0.75),
-                rgba(0,0,0,0.6))`,
+                transparent 0%,
+                rgba(0,0,0,0.45) 18%,
+                rgba(12,14,20,0.7) 50%,
+                rgba(0,0,0,0.45) 82%,
+                transparent 100%)`,
+              opacity: 0.8,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
             }}
           />
 
@@ -711,25 +738,25 @@ function BeatCard({
           >
             <div
               aria-hidden
-              className="absolute inset-0"
+              className="absolute inset-0 overflow-hidden"
               style={{
                 ...faceStyle,
                 background: `linear-gradient(155deg,
-                  rgba(255,255,255,0.14) 0%,
-                  ${v.glass} 28%,
-                  rgba(255,255,255,0.04) 62%,
-                  rgba(8,10,14,0.25) 100%)`,
+                  rgba(255,255,255,0.1) 0%,
+                  ${v.glass} 30%,
+                  rgba(255,255,255,0.03) 64%,
+                  rgba(8,10,14,0.28) 100%)`,
                 backdropFilter: isMobile
-                  ? "blur(20px) saturate(1.25) brightness(1.05)"
-                  : "blur(34px) saturate(1.35) brightness(1.08)",
+                  ? "blur(22px) saturate(1.2) brightness(1.04)"
+                  : "blur(36px) saturate(1.28) brightness(1.06)",
                 WebkitBackdropFilter: isMobile
-                  ? "blur(20px) saturate(1.25) brightness(1.05)"
-                  : "blur(34px) saturate(1.35) brightness(1.08)",
+                  ? "blur(22px) saturate(1.2) brightness(1.04)"
+                  : "blur(36px) saturate(1.28) brightness(1.06)",
                 boxShadow: `
-                  inset 0 18px 42px rgba(255,255,255,0.1),
-                  inset 0 -28px 48px rgba(0,0,0,0.22),
-                  0 32px 72px rgba(0,0,0,0.48),
-                  0 0 64px ${v.edgeGlow}
+                  inset 0 22px 48px rgba(255,255,255,0.07),
+                  inset 0 -32px 56px rgba(0,0,0,0.28),
+                  0 40px 90px rgba(0,0,0,0.55),
+                  0 0 72px ${softGlow}
                 `,
               }}
             />
@@ -739,22 +766,48 @@ function BeatCard({
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: radius,
-                background:
-                  "linear-gradient(125deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 22%, transparent 48%)",
+                boxShadow: `
+                  inset 0 0 0 1px rgba(255,255,255,0.04),
+                  inset 0 0 28px rgba(8,9,11,0.35)
+                `,
+                mixBlendMode: "multiply",
+                opacity: 0.65,
+              }}
+            />
+
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-[2px]"
+              style={{
+                borderRadius: radius,
+                background: `
+                  radial-gradient(ellipse 95% 70% at 16% 8%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.06) 32%, transparent 58%),
+                  linear-gradient(148deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 28%, transparent 52%)
+                `,
+                opacity: 0.72,
+                filter: "blur(2.5px)",
+                maskImage:
+                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
               }}
             />
 
             <motion.div
               aria-hidden
-              className="pointer-events-none absolute inset-0"
+              className="pointer-events-none absolute inset-[3px]"
               style={{
                 opacity: shimmerOpacity,
                 borderRadius: radius,
                 background: shimmerBackground,
-                mixBlendMode: "screen",
-                filter: "blur(4px)",
+                mixBlendMode: "soft-light",
+                filter: "blur(12px)",
                 transform: shimmerLayerTransform,
                 transformStyle: "preserve-3d",
+                maskImage:
+                  "radial-gradient(ellipse 90% 85% at 50% 50%, black 35%, transparent 75%)",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 90% 85% at 50% 50%, black 35%, transparent 75%)",
               }}
             />
 
