@@ -1338,7 +1338,7 @@ export function ScrollHero() {
           */}
           <motion.div
             id="contact"
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[62dvh] flex-col justify-end px-5 pb-8 md:max-h-[58dvh] md:px-6 md:pb-12"
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[46dvh] flex-col justify-end px-5 pb-6 md:max-h-[58dvh] md:px-6 md:pb-12"
             style={{ y: contactParallax, opacity: contactOpacity }}
           >
             {/* Background fades slower than the copy — soft join, not a hard band */}
