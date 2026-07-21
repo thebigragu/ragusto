@@ -138,7 +138,7 @@ const BEATS: Beat[] = [
     start: 0.74,
     end: 0.96,
     variant: {
-      orbitR: 580,
+      orbitR: 800,
       radius: "1rem",
       glass: "rgba(36,38,44,0.98)",
       rim: "rgba(255,255,255,0.28)",
@@ -341,7 +341,7 @@ function BeatCard({
   // Left panes exit up/right; right panes exit up/left (diagonally opposite)
   const exitDir = beat.side === "left" ? 1 : -1;
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
-  const orbitScale = isMobile ? 0.42 : 1;
+  const orbitScale = isMobile ? 0.55 : 1;
   const tiltScale = isMobile ? 0.55 : 1;
   // Elongated prism depth — visible at rest via opposite-side tilt
   const T = Math.max(
@@ -398,7 +398,9 @@ function BeatCard({
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     const theta = e * Math.PI * 0.92;
-    return exitDir * v.orbitR * orbitScale * Math.sin(theta);
+    // Stretch horizontal travel further across the hero on exit
+    const xAmp = isMobile ? 1.5 : 1.45;
+    return exitDir * v.orbitR * orbitScale * Math.sin(theta) * xAmp;
   });
 
   const orbitY = useTransform(progress, (p) => {
