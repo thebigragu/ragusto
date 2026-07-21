@@ -396,8 +396,8 @@ function BeatCard({
     return 1;
   });
 
-  // Stronger rest tilt so thickness reads; enter twist is slower / softer
-  const restY = -exitDir * (isMobile ? 11 : 16);
+  // Rest yaw always leans toward the opposite side (left pane → right, right pane → left)
+  const restY = -exitDir * (isMobile ? 22 : 32);
   const restX = isMobile ? 6 : 9;
   const twistAmp = (isMobile ? 24 : 34) * tiltScale;
 
