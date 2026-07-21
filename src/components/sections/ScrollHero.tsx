@@ -67,10 +67,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 520,
       radius: "1.4rem",
-      glass: "rgba(255,255,255,0.14)",
-      rim: "rgba(255,255,255,0.22)",
+      glass: "rgba(38,40,48,0.98)",
+      rim: "rgba(255,255,255,0.28)",
       edgeGlow: "rgba(196,165,116,0.55)",
-      depthTint: "rgba(232,210,168,0.85)",
+      depthTint: "rgba(232,210,168,0.9)",
       shimmerAngle: 118,
       top: "68%",
       topMobile: "18%",
@@ -91,10 +91,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 560,
       radius: "1.15rem",
-      glass: "rgba(200,225,235,0.12)",
-      rim: "rgba(220,240,250,0.2)",
+      glass: "rgba(28,36,44,0.98)",
+      rim: "rgba(220,240,250,0.26)",
       edgeGlow: "rgba(160,205,220,0.5)",
-      depthTint: "rgba(190,220,232,0.82)",
+      depthTint: "rgba(190,220,232,0.88)",
       shimmerAngle: 64,
       top: "34%",
       topMobile: "80%",
@@ -115,10 +115,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 500,
       radius: "1.7rem",
-      glass: "rgba(255,246,230,0.13)",
-      rim: "rgba(196,165,116,0.24)",
+      glass: "rgba(40,36,32,0.98)",
+      rim: "rgba(196,165,116,0.32)",
       edgeGlow: "rgba(196,165,116,0.58)",
-      depthTint: "rgba(236,214,178,0.88)",
+      depthTint: "rgba(236,214,178,0.92)",
       shimmerAngle: 108,
       top: "50%",
       topMobile: "22%",
@@ -139,10 +139,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 580,
       radius: "1rem",
-      glass: "rgba(255,255,255,0.15)",
-      rim: "rgba(255,255,255,0.22)",
+      glass: "rgba(36,38,44,0.98)",
+      rim: "rgba(255,255,255,0.28)",
       edgeGlow: "rgba(240,226,196,0.55)",
-      depthTint: "rgba(245,230,200,0.88)",
+      depthTint: "rgba(245,230,200,0.92)",
       shimmerAngle: 52,
       top: "60%",
       topMobile: "76%",
@@ -649,17 +649,17 @@ function BeatCard({
         />
 
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Back plate — same family as the front glass, just denser */}
+          {/* Back plate — solid slab */}
           <div
             aria-hidden
             className="absolute inset-0"
             style={{
               ...faceStyle,
               background: `linear-gradient(165deg,
-                rgba(40,42,50,0.94) 0%,
-                ${v.glass} 40%,
-                rgba(8,9,12,0.98) 100%)`,
-              boxShadow: `inset 0 0 36px rgba(0,0,0,0.4), 0 0 0 1px ${v.rim}`,
+                rgba(48,50,58,1) 0%,
+                ${v.glass} 45%,
+                rgba(6,7,10,1) 100%)`,
+              boxShadow: `inset 0 0 36px rgba(0,0,0,0.55), 0 0 0 1px ${v.rim}`,
               transform: `translateZ(${-halfT}px)`,
             }}
           />
@@ -671,11 +671,10 @@ function BeatCard({
             style={{
               borderRadius: radius,
               background: `linear-gradient(180deg,
-                ${v.depthTint.replace(/[\d.]+\)$/, "0.18)")} 0%,
-                rgba(20,22,28,0.55) 50%,
-                rgba(8,9,12,0.7) 100%)`,
+                ${v.depthTint.replace(/[\d.]+\)$/, "0.22)")} 0%,
+                rgba(18,20,26,0.98) 50%,
+                rgba(8,9,12,1) 100%)`,
               transform: "translateZ(0px)",
-              opacity: 0.85,
               backfaceVisibility: "hidden",
             }}
           />
@@ -752,24 +751,24 @@ function BeatCard({
               transformStyle: "preserve-3d",
             }}
           >
-            {/* Front glass — opaque face so the rear plate never shows through */}
+            {/* Front face — solid polished slab with a soft highlight wash */}
             <div
               aria-hidden
               className="absolute inset-0 overflow-hidden"
               style={{
                 ...faceStyle,
                 background: `linear-gradient(155deg,
-                  rgba(255,255,255,0.2) 0%,
-                  ${v.glass.replace(/[\d.]+\)$/, "0.82)")} 16%,
-                  rgba(22,24,30,0.97) 48%,
-                  rgba(10,11,14,0.99) 100%)`,
+                  rgba(255,255,255,0.14) 0%,
+                  ${v.glass} 22%,
+                  rgba(14,16,20,1) 62%,
+                  rgba(6,7,10,1) 100%)`,
                 boxShadow: `
-                  inset 0 1px 0 rgba(255,255,255,0.22),
-                  inset 0 -1px 0 rgba(0,0,0,0.35),
-                  inset 18px 0 28px -18px rgba(255,255,255,0.08),
-                  inset -18px 0 28px -18px rgba(0,0,0,0.25),
+                  inset 0 1px 0 rgba(255,255,255,0.18),
+                  inset 0 -1px 0 rgba(0,0,0,0.45),
+                  inset 18px 0 28px -18px rgba(255,255,255,0.06),
+                  inset -18px 0 28px -18px rgba(0,0,0,0.35),
                   0 0 0 1px ${v.rim},
-                  0 28px 64px rgba(0,0,0,0.45),
+                  0 28px 64px rgba(0,0,0,0.5),
                   0 0 48px ${softGlow}
                 `,
               }}
