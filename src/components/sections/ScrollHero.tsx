@@ -978,10 +978,11 @@ export function ScrollHero() {
     [1, 0.92, 0.8],
   );
   // Contact parallax: rises into the lower half only (never into the upper hero band)
+  // Mobile settles a bit higher so copy sits nearer mid-viewport
   const contactParallax = useTransform(
     driveProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
-    ["42vh", "10vh", "0vh"],
+    isMobile ? ["36vh", "4vh", "-8vh"] : ["42vh", "10vh", "0vh"],
   );
   const contactOpacity = useTransform(
     driveProgress,
