@@ -563,24 +563,17 @@ function ScrollCue({
   progress: MotionValue<number>;
   scrollProgress: MotionValue<number>;
 }) {
-  const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.45, 0.15]);
+  const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.4, 0.12]);
 
-  // Center of the black LCD in frame 0 (laptop sits slightly left; screen is mid-upper)
-  const left = useTransform(scrollProgress, [0, 0.14], [46.5, 93]);
-  const top = useTransform(scrollProgress, [0, 0.14], [34.5, 90]);
+  // Right-middle (larger) → bottom-right (smaller)
+  const left = useTransform(scrollProgress, [0, 0.16], [91, 94]);
+  const top = useTransform(scrollProgress, [0, 0.16], [48, 90]);
   const leftPct = useMotionTemplate`${left}%`;
   const topPct = useMotionTemplate`${top}%`;
-  const anchorX = useTransform(scrollProgress, [0, 0.14], [-50, -100]);
-  const anchorY = useTransform(scrollProgress, [0, 0.14], [-50, -100]);
-
-  // Match open lid plane: strong pitch (screen reclined), yaw kept in the lean direction user liked,
-  // foreshortened scale so it sits IN the screen rather than floating flat on top of it
-  const rotateX = useTransform(scrollProgress, [0, 0.14], [34, 0]);
-  const rotateY = useTransform(scrollProgress, [0, 0.14], [16, 0]);
-  const rotateZ = useTransform(scrollProgress, [0, 0.14], [5, 0]);
-  const scaleX = useTransform(scrollProgress, [0, 0.14], [0.94, 1]);
-  const scaleY = useTransform(scrollProgress, [0, 0.14], [0.72, 1]);
-  const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) perspective(480px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) scale(${scaleX}, ${scaleY})`;
+  const anchorX = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
+  const anchorY = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
+  const scale = useTransform(scrollProgress, [0, 0.16], [1.35, 1]);
+  const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) scale(${scale})`;
 
   return (
     <motion.div
@@ -590,28 +583,26 @@ function ScrollCue({
         top: topPct,
         opacity,
         transform: cueTransform,
-        transformStyle: "preserve-3d",
       }}
       aria-hidden
     >
       <motion.div
-        className="flex flex-col items-center gap-2.5"
-        animate={{ y: [0, -5, 0] }}
+        className="flex flex-col items-center gap-3"
+        animate={{ y: [0, -6, 0] }}
         transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-        style={{ transformStyle: "preserve-3d", transform: "translateZ(8px)" }}
       >
-        <span className="text-[10px] font-medium tracking-[0.42em] text-[#e8d5b0] uppercase drop-shadow-[0_0_12px_rgba(196,165,116,0.55)] md:text-[11px]">
+        <span className="text-[11px] font-medium tracking-[0.42em] text-[#e8d5b0] uppercase drop-shadow-[0_0_12px_rgba(196,165,116,0.55)] md:text-xs">
           Scroll
         </span>
 
-        <div className="relative" style={{ transform: "translateZ(10px)" }}>
+        <div className="relative">
           <motion.div
             className="absolute -inset-3 rounded-full bg-[#c4a574]/25 blur-md"
             animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.92, 1.08, 0.92] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="relative flex h-14 w-8 items-start justify-center rounded-full border-2 border-[#c4a574]/70 bg-black/45 p-1.5 shadow-[0_0_28px_rgba(196,165,116,0.45),inset_0_0_18px_rgba(196,165,116,0.12)] backdrop-blur-md md:h-16 md:w-9"
+            className="relative flex h-16 w-9 items-start justify-center rounded-full border-2 border-[#c4a574]/70 bg-black/45 p-2 shadow-[0_0_28px_rgba(196,165,116,0.45),inset_0_0_18px_rgba(196,165,116,0.12)] backdrop-blur-md md:h-[4.5rem] md:w-10"
             animate={{
               borderColor: [
                 "rgba(196,165,116,0.55)",
@@ -627,8 +618,8 @@ function ScrollCue({
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           >
             <motion.span
-              className="mt-0.5 h-2 w-2 rounded-full bg-[#f0e2c4] shadow-[0_0_16px_rgba(240,226,196,0.95)] md:h-2.5 md:w-2.5"
-              animate={{ y: [0, 22, 0], opacity: [1, 0.35, 1] }}
+              className="mt-0.5 h-2.5 w-2.5 rounded-full bg-[#f0e2c4] shadow-[0_0_16px_rgba(240,226,196,0.95)] md:h-3 md:w-3"
+              animate={{ y: [0, 26, 0], opacity: [1, 0.35, 1] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>
@@ -670,9 +661,9 @@ function ScrollCue({
   );
 }
 
-/** First ~9s play in sticky scrub; last second shares scroll as contact feathers in. */
+/** First 9s map to most of scrub; last second shares scroll with contact reveal. */
 const VIDEO_HANDOFF = 0.9;
-const SCRUB_HANDOFF_START = 0.85;
+const SCRUB_HANDOFF_START = 0.78;
 
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
@@ -695,8 +686,13 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
 
-  // Soft dissolve into contact — no sticky lift (that created the black void)
-  const featherOpacity = useTransform(scrollYProgress, [0.82, 0.92, 1], [0, 0.65, 1]);
+  // Lift sticky so contact enters during the last second of video (not after it ends)
+  const stickyLift = useTransform(scrollYProgress, [SCRUB_HANDOFF_START, 1], ["0%", "-58%"]);
+  const featherOpacity = useTransform(
+    scrollYProgress,
+    [SCRUB_HANDOFF_START - 0.04, SCRUB_HANDOFF_START + 0.06, 1],
+    [0, 0.55, 1],
+  );
 
   useMotionValueEvent(videoProgress, "change", (p) => {
     const video = videoRef.current;
@@ -754,10 +750,9 @@ export function ScrollHero() {
     <>
       <div className="pointer-events-auto fixed top-10 left-10 z-50 md:top-14 md:left-14">
         <div className="relative inline-flex items-center justify-center">
-          {/* Feathered cinematic halo */}
           <span
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[140%] w-[160%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-2xl transition duration-500 group-hover:opacity-90"
+            className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[140%] w-[160%] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70 blur-2xl"
             style={{
               background:
                 "radial-gradient(ellipse 55% 50% at 50% 45%, rgba(196,165,116,0.45) 0%, rgba(196,165,116,0.18) 38%, rgba(240,226,196,0.06) 58%, transparent 72%)",
@@ -782,48 +777,53 @@ export function ScrollHero() {
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[620vh] bg-[#08090b]">
-        <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden bg-black">
-          <video
-            ref={videoRef}
-            className="absolute inset-0 h-full w-full object-cover object-center"
-            src="/videos/hero-kling.mp4"
-            muted
-            playsInline
-            preload="auto"
-            aria-hidden
-          />
+      <section ref={scrubRef} className="relative h-[680vh] bg-[#08090b]">
+        <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden">
+          <motion.div className="relative h-full w-full" style={{ y: stickyLift }}>
+            <div className="relative h-[100svh] w-full overflow-hidden bg-black">
+              <video
+                ref={videoRef}
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                src="/videos/hero-kling.mp4"
+                muted
+                playsInline
+                preload="auto"
+                aria-hidden
+              />
 
-          {BEATS.map((beat) => (
-            <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
-          ))}
+              {BEATS.map((beat) => (
+                <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
+              ))}
 
-          <ScrollCue progress={videoProgress} scrollProgress={scrollYProgress} />
+              <ScrollCue progress={videoProgress} scrollProgress={scrollYProgress} />
 
-          {/* Feather hero → contact as the last second plays out */}
-          <motion.div
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[48%]"
-            style={{
-              opacity: featherOpacity,
-              background:
-                "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.25) 35%, rgba(8,9,11,0.72) 68%, #08090b 100%)",
-            }}
-          />
+              {/* Deep feather into contact during last-second handoff */}
+              <motion.div
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[70%]"
+                style={{
+                  opacity: featherOpacity,
+                  background:
+                    "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.2) 22%, rgba(8,9,11,0.55) 48%, rgba(8,9,11,0.88) 72%, #08090b 100%)",
+                }}
+              />
+            </div>
+          </motion.div>
         </div>
       </section>
 
+      {/* Overlaps handoff so contact appears as last second plays — continuous blend, no hard break */}
       <section
         id="contact"
-        className="relative z-10 -mt-8 bg-[#08090b] px-6 pt-10 pb-16 md:-mt-12 md:pt-14 md:pb-20"
+        className="relative z-10 -mt-[58vh] bg-[#08090b] px-6 pt-[18vh] pb-16 md:pb-20"
       >
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-24"
+          className="pointer-events-none absolute inset-x-0 -top-24 h-48"
           style={{
             background:
-              "linear-gradient(to bottom, #08090b 0%, rgba(8,9,11,0.5) 40%, transparent 100%)",
+              "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.35) 35%, #08090b 100%)",
           }}
         />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(196,165,116,0.08),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(196,165,116,0.1),transparent_55%)]" />
         <div className="pointer-events-none absolute inset-0 ambient-grid opacity-15" />
 
         <div className="relative mx-auto max-w-3xl text-center">
