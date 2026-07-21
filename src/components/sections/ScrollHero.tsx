@@ -10,6 +10,7 @@ import {
   useMotionTemplate,
   useMotionValueEvent,
   useScroll,
+  useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -563,7 +564,7 @@ function BeatCard({
 
   return (
     <motion.div
-      className={`pointer-events-auto absolute z-20 max-w-[min(84vw,19.5rem)] -translate-y-1/2 md:max-w-[min(94vw,36rem)] ${sideClass}`}
+      className={`pointer-events-auto absolute z-20 max-w-[min(84vw,19.5rem)] -translate-y-1/2 will-change-transform md:max-w-[min(94vw,36rem)] ${sideClass}`}
       style={{
         top: restTop,
         x: isMobile ? "-50%" : 0,
@@ -891,14 +892,15 @@ function ScrollCue({
 }) {
   const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.35, 0.1]);
 
-  // Desktop: mid-right → bottom-right. Mobile: center-right → bottom-right.
-  const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [88, 92] : [91, 94]);
-  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [50, 88] : [48, 90]);
+  // Desktop: mid-right → bottom-right.
+  // Mobile: horizontal center, upper-third → bottom-right.
+  const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [50, 92] : [91, 94]);
+  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [18, 88] : [48, 90]);
   const leftPct = useMotionTemplate`${left}%`;
   const topPct = useMotionTemplate`${top}%`;
   const anchorX = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
   const anchorY = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
-  const scale = useTransform(scrollProgress, [0, 0.16], isMobile ? [1.05, 0.85] : [1.35, 1]);
+  const scale = useTransform(scrollProgress, [0, 0.16], isMobile ? [1.12, 0.85] : [1.35, 1]);
   const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) scale(${scale})`;
 
   return (
@@ -995,6 +997,8 @@ export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const targetTime = useRef(0);
+  const displayTime = useRef(0);
+  const lastFrame = useRef(0);
   const rafRef = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
@@ -1006,7 +1010,16 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  const videoProgress = useTransform(scrollYProgress, (p) => {
+  // Shared spring so scrub + panes + cue + handoff all glide together
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 28,
+    mass: 0.2,
+    restDelta: 0.00005,
+    restSpeed: 0.00005,
+  });
+
+  const videoProgress = useTransform(smoothProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
     }
@@ -1016,17 +1029,17 @@ export function ScrollHero() {
 
   // Hero lifts out as the last second begins; contact feathers in over it
   const stickyLift = useTransform(
-    scrollYProgress,
+    smoothProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
     ["0%", "-42%", "-110%"],
   );
   const featherOpacity = useTransform(
-    scrollYProgress,
+    smoothProgress,
     [SCRUB_HANDOFF_START - 0.08, SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
     [0, 0.4, 0.8, 1],
   );
   const videoFade = useTransform(
-    scrollYProgress,
+    smoothProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
     [1, 0.45, 0.12],
   );
@@ -1043,33 +1056,59 @@ export function ScrollHero() {
 
     video.pause();
     video.playsInline = true;
+    // Prefer low-latency decode path when available
+    try {
+      video.disableRemotePlayback = true;
+    } catch {
+      /* ignore */
+    }
 
     const onMeta = () => {
-      targetTime.current = Math.min(
+      const t = Math.min(
         video.duration - 0.001,
         Math.max(0, videoProgress.get()) * video.duration,
       );
+      targetTime.current = t;
+      displayTime.current = t;
+      try {
+        video.currentTime = t;
+      } catch {
+        /* ignore */
+      }
     };
     if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
 
-    let seeking = false;
-    const tick = () => {
+    // Chase target with frame-rate-independent lerp; skip seeked gate so
+    // all-intra scrub stays continuous under fast scroll.
+    const lambda = isMobile ? 18 : 22;
+    const tick = (now: number) => {
       const v = videoRef.current;
-      if (v && Number.isFinite(v.duration) && v.duration > 0 && !seeking) {
+      const prev = lastFrame.current || now;
+      const dt = Math.min(0.05, Math.max(0.001, (now - prev) / 1000));
+      lastFrame.current = now;
+
+      if (v && Number.isFinite(v.duration) && v.duration > 0) {
         const next = targetTime.current;
-        if (Math.abs(v.currentTime - next) > 0.0005) {
-          seeking = true;
-          const onSeeked = () => {
-            seeking = false;
-            v.removeEventListener("seeked", onSeeked);
-          };
-          v.addEventListener("seeked", onSeeked);
+        const cur = displayTime.current;
+        const alpha = 1 - Math.exp(-lambda * dt);
+        const smoothed = cur + (next - cur) * alpha;
+        displayTime.current = smoothed;
+
+        const jump = Math.abs(smoothed - v.currentTime);
+        // Only write when meaningfully different and not mid-seek
+        if (jump > 0.008 && !v.seeking) {
           try {
-            v.currentTime = next;
+            v.currentTime = smoothed;
           } catch {
-            seeking = false;
-            v.removeEventListener("seeked", onSeeked);
+            /* ignore transient seek errors */
+          }
+        } else if (jump > 0.035) {
+          // Large catch-up even if browser flagged seeking
+          try {
+            v.currentTime = smoothed;
+          } catch {
+            /* ignore */
           }
         }
       }
@@ -1081,11 +1120,11 @@ export function ScrollHero() {
       video.removeEventListener("loadedmetadata", onMeta);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [videoProgress, videoSrc]);
+  }, [videoProgress, videoSrc, isMobile]);
 
   return (
     <>
-      <div className="pointer-events-auto fixed top-5 left-5 z-50 sm:top-8 sm:left-8 md:top-14 md:left-14">
+      <div className="pointer-events-auto fixed top-8 left-7 z-50 sm:top-8 sm:left-8 md:top-14 md:left-14">
         <div className="relative inline-flex items-center justify-center">
           {/* Outer breath — soft gold bloom */}
           <motion.span
@@ -1143,13 +1182,13 @@ export function ScrollHero() {
       <section ref={scrubRef} className="relative h-[440vh] bg-transparent md:h-[680vh]">
         <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden bg-transparent">
           <motion.div
-            className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-[#08090b]"
+            className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-[#08090b] will-change-transform"
             style={{ y: stickyLift }}
           >
             <motion.video
               key={videoSrc}
               ref={videoRef}
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              className="absolute inset-0 h-full w-full object-cover object-center will-change-[opacity]"
               src={videoSrc}
               muted
               playsInline
@@ -1169,7 +1208,7 @@ export function ScrollHero() {
 
             <ScrollCue
               progress={videoProgress}
-              scrollProgress={scrollYProgress}
+              scrollProgress={smoothProgress}
               isMobile={isMobile}
             />
 
