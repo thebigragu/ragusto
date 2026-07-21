@@ -366,23 +366,7 @@ function BeatCard({
     return 1;
   });
 
-  const blur = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 18;
-    const t = beatT(p, beat);
-    // Unblur quickly on enter (clear by ~45% of enter window)
-    if (t < ENTER_END) {
-      const clearBy = ENTER_END * 0.42;
-      if (t >= clearBy) return 0;
-      return 18 * (1 - smoothstep(t / clearBy));
-    }
-    // Soft exit dissolve — keep small so it doesn’t bloom past the card
-    const blurStart = EXIT_START + EXIT_LEN * 0.42;
-    if (t <= blurStart) return 0;
-    return 6 * smoothstep((t - blurStart) / (1 - blurStart));
-  });
-  // blur(0) still creates a filter containing block that clips glyph overhangs
-  const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
-
+  // No CSS filter blur on the card — it paints a rectangular ghost behind rounded corners
   const scale = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0.96;
     const t = beatT(p, beat);
@@ -557,19 +541,6 @@ function BeatCard({
       : "right-4 origin-center md:right-10 lg:right-16";
 
   const radius = isMobile ? "1.05rem" : v.radius;
-  // Continuous edge metal: bright front lip → dark body → soft dissolve (no hard rear pane)
-  const metalEdge = (deg: number) =>
-    `linear-gradient(${deg}deg,
-      rgba(255,250,240,0.95) 0%,
-      ${v.depthTint} 18%,
-      rgba(70,62,52,0.95) 48%,
-      rgba(28,28,32,0.85) 72%,
-      rgba(12,12,14,0.35) 90%,
-      transparent 100%)`;
-  const metalRight = metalEdge(90);
-  const metalLeft = metalEdge(270);
-  const metalTop = metalEdge(0);
-  const metalBottom = metalEdge(180);
 
   // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
   const sheenAngle = beat.side === "left" ? 118 : 62;
@@ -613,16 +584,6 @@ function BeatCard({
     WebkitBackfaceVisibility: "hidden",
   };
 
-  // Edge walls span full thickness; origin on the card perimeter
-  const sideWallBase: CSSProperties = {
-    position: "absolute",
-    width: T,
-    top: 1,
-    bottom: 1,
-    backfaceVisibility: "hidden",
-    WebkitBackfaceVisibility: "hidden",
-  };
-
   return (
     <motion.div
       className={`pointer-events-auto absolute z-20 max-w-[min(84vw,19.5rem)] -translate-y-1/2 will-change-transform md:max-w-[min(94vw,36rem)] ${sideClass}`}
@@ -631,7 +592,6 @@ function BeatCard({
         x: isMobile ? "-50%" : 0,
         opacity,
         y: enterY,
-        filter,
         scale,
         perspective: isMobile ? 980 : 1500,
         transformStyle: "preserve-3d",
@@ -641,129 +601,74 @@ function BeatCard({
         className="relative"
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
-        <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/*
-            Seamless rim: four continuous edge faces only — no rear plate, no mid fills.
-            Material fades out at the back so depth reads as one extrusion.
-          */}
+        {/*
+          Single solid face only. Side/bottom walls caused the flat “platform”
+          under the card and the rectangular ghost behind the rounded corners.
+          Depth is implied with bevel + soft drop shadow — no extra planes.
+        */}
+        <div
+          className="relative overflow-hidden"
+          style={{
+            borderRadius: radius,
+            transform: `translateZ(${halfT}px)`,
+            transformStyle: "preserve-3d",
+          }}
+        >
           <div
             aria-hidden
+            className="absolute inset-0"
             style={{
-              ...sideWallBase,
-              right: 0,
-              transformOrigin: "right center",
-              transform: `translateZ(${-halfT}px) rotateY(-90deg)`,
-              background: metalRight,
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              ...sideWallBase,
-              left: 0,
-              transformOrigin: "left center",
-              transform: `translateZ(${-halfT}px) rotateY(90deg)`,
-              background: metalLeft,
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              height: T,
-              top: 0,
-              left: 1,
-              right: 1,
-              transformOrigin: "center top",
-              transform: `translateZ(${-halfT}px) rotateX(90deg)`,
-              background: metalTop,
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              height: T,
-              bottom: 0,
-              left: 1,
-              right: 1,
-              transformOrigin: "center bottom",
-              transform: `translateZ(${-halfT}px) rotateX(-90deg)`,
-              background: metalBottom,
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
+              ...faceStyle,
+              background: faceMetal,
+              boxShadow: `
+                inset 0 1px 0 rgba(255,255,255,0.32),
+                inset 0 -1px 0 rgba(0,0,0,0.5),
+                inset 18px 0 28px -18px rgba(255,248,230,0.08),
+                inset -18px 0 28px -18px rgba(0,0,0,0.35),
+                0 0 0 1px ${v.rim}
+              `,
             }}
           />
 
           <div
-            className="relative"
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
             style={{
-              transform: `translateZ(${halfT}px)`,
+              borderRadius: radius,
+              background: faceMetalSheen,
+              opacity: 0.7,
+            }}
+          />
+
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              borderRadius: radius,
+              boxShadow: "inset 0 0 0 1px rgba(196,165,116,0.55)",
+            }}
+            animate={{
+              opacity: [0.4, 0.95, 0.4],
+              boxShadow: [
+                "inset 0 0 0 1px rgba(196,165,116,0.35)",
+                "inset 0 0 0 1px rgba(240,226,196,0.75)",
+                "inset 0 0 0 1px rgba(196,165,116,0.35)",
+              ],
+            }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+          />
+
+          <motion.div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 overflow-hidden"
+            style={{
+              opacity: shimmerOpacity,
+              borderRadius: radius,
+              background: shimmerBackground,
+              transform: shimmerLayerTransform,
               transformStyle: "preserve-3d",
             }}
-          >
-            {/* Front face — the only full pane */}
-            <div
-              aria-hidden
-              className="absolute inset-0 overflow-hidden"
-              style={{
-                ...faceStyle,
-                background: faceMetal,
-                boxShadow: `
-                  inset 0 1px 0 rgba(255,255,255,0.32),
-                  inset 0 -1px 0 rgba(0,0,0,0.5),
-                  inset 18px 0 28px -18px rgba(255,248,230,0.08),
-                  inset -18px 0 28px -18px rgba(0,0,0,0.35),
-                  0 0 0 1px ${v.rim},
-                  0 12px 28px rgba(0,0,0,0.35)
-                `,
-              }}
-            />
-
-            {/* Resting metallic specular wash — clipped to face */}
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 overflow-hidden"
-              style={{
-                borderRadius: radius,
-                background: faceMetalSheen,
-                opacity: 0.7,
-              }}
-            />
-
-            {/* Gold breathing border — inset only so it can’t spill past the radius */}
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                borderRadius: radius,
-                boxShadow: "inset 0 0 0 1px rgba(196,165,116,0.55)",
-              }}
-              animate={{
-                opacity: [0.4, 0.95, 0.4],
-                boxShadow: [
-                  "inset 0 0 0 1px rgba(196,165,116,0.35)",
-                  "inset 0 0 0 1px rgba(240,226,196,0.75)",
-                  "inset 0 0 0 1px rgba(196,165,116,0.35)",
-                ],
-              }}
-              transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
-            />
-
-            {/* Traveling specular sheen — clipped, no blur spill */}
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute inset-0 overflow-hidden"
-              style={{
-                opacity: shimmerOpacity,
-                borderRadius: radius,
-                background: shimmerBackground,
-                transform: shimmerLayerTransform,
-                transformStyle: "preserve-3d",
-              }}
-            />
+          />
 
             <motion.div
               className="relative overflow-hidden px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-10"
@@ -852,7 +757,6 @@ function BeatCard({
               </div>
             </motion.div>
           </div>
-        </div>
       </motion.div>
     </motion.div>
   );
