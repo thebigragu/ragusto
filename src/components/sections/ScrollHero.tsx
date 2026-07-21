@@ -509,13 +509,14 @@ function BeatCard({
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
 
   const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 22 : 38) * b);
-  const contentRx = useTransform(rotateX, (rx) => rx * 0.18);
-  const contentRy = useTransform(rotateY, (ry) => ry * 0.22);
+  // Mobile: keep copy coplanar with the face so underlines can’t yaw outside the card
+  const contentRx = useTransform(rotateX, (rx) => (isMobile ? 0 : rx * 0.18));
+  const contentRy = useTransform(rotateY, (ry) => (isMobile ? 0 : ry * 0.22));
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 30 : 48) * b);
-  const lineRx = useTransform(rotateX, (rx) => rx * 0.25);
-  const lineRy = useTransform(rotateY, (ry) => ry * 0.18);
+  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 8 : 48) * b);
+  const lineRx = useTransform(rotateX, (rx) => (isMobile ? 0 : rx * 0.25));
+  const lineRy = useTransform(rotateY, (ry) => (isMobile ? 0 : ry * 0.18));
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
 
   const shimmerPos = useTransform(progress, (p) => {
@@ -804,23 +805,20 @@ function BeatCard({
               }}
             />
 
-            {/* Gold breathing border */}
+            {/* Gold breathing border — inset only so it can’t spill past the radius */}
             <motion.div
               aria-hidden
               className="pointer-events-none absolute inset-0"
               style={{
                 borderRadius: radius,
-                boxShadow: `
-                  inset 0 0 0 1px rgba(196,165,116,0.55),
-                  0 0 0 1px rgba(196,165,116,0.4)
-                `,
+                boxShadow: "inset 0 0 0 1px rgba(196,165,116,0.55)",
               }}
               animate={{
                 opacity: [0.4, 0.95, 0.4],
                 boxShadow: [
-                  "inset 0 0 0 1px rgba(196,165,116,0.35), 0 0 0 1px rgba(196,165,116,0.22)",
-                  "inset 0 0 0 1px rgba(240,226,196,0.75), 0 0 0 1px rgba(196,165,116,0.55)",
-                  "inset 0 0 0 1px rgba(196,165,116,0.35), 0 0 0 1px rgba(196,165,116,0.22)",
+                  "inset 0 0 0 1px rgba(196,165,116,0.35)",
+                  "inset 0 0 0 1px rgba(240,226,196,0.75)",
+                  "inset 0 0 0 1px rgba(196,165,116,0.35)",
                 ],
               }}
               transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
@@ -840,10 +838,11 @@ function BeatCard({
             />
 
             <motion.div
-              className={`relative px-5 py-5 sm:px-8 sm:py-7 md:px-16 md:py-12 ${
+              className={`relative overflow-hidden px-5 py-5 sm:overflow-visible sm:px-8 sm:py-7 md:px-16 md:py-12 ${
                 beat.side === "left" ? "md:pe-[4.5rem]" : "md:ps-[4.5rem]"
               }`}
               style={{
+                borderRadius: isMobile ? radius : undefined,
                 transform: contentTransform,
                 transformStyle: "preserve-3d",
               }}
@@ -898,27 +897,33 @@ function BeatCard({
                 })}
               </p>
 
-              {/* Gold underline — clean line, no glow bloom */}
-              <motion.div
-                className="relative mt-4 h-[2px] w-full overflow-hidden sm:mt-6 md:mt-7"
-                style={{
-                  transform: lineTransform,
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                <motion.span
-                  className="absolute inset-0 block origin-left rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
-                  animate={{
-                    scaleX: [0.12, 1, 0.12],
-                    opacity: [0.5, 1, 0.5],
-                  }}
-                  transition={{
-                    duration: 2.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-              </motion.div>
+              {/* Gold underline — clipped flat on mobile so it can’t leave the card */}
+              <div className="relative mt-4 w-full overflow-hidden rounded-full sm:mt-6 md:mt-7">
+                <motion.div
+                  className="relative h-[2px] w-full overflow-hidden rounded-full"
+                  style={
+                    isMobile
+                      ? undefined
+                      : {
+                          transform: lineTransform,
+                          transformStyle: "preserve-3d",
+                        }
+                  }
+                >
+                  <motion.span
+                    className="absolute inset-0 block origin-left rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
+                    animate={{
+                      scaleX: [0.12, 1, 0.12],
+                      opacity: [0.5, 1, 0.5],
+                    }}
+                    transition={{
+                      duration: 2.6,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>
