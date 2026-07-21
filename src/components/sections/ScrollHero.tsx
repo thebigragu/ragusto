@@ -16,19 +16,16 @@ import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type BeatVariant = {
-  exitRX: number;
-  exitRY: number;
-  exitRZ: number;
-  exitZ: number;
-  orbitX: number;
+  /** Orbit arc radius in px during exit */
+  orbitR: number;
   radius: string;
   glass: string;
   rim: string;
   edgeGlow: string;
   shimmerAngle: number;
   top: string;
-  magnetic: number;
-  depthOffset: string;
+  /** Glass thickness in px for side edge */
+  thickness: number;
 };
 
 type Beat = {
@@ -44,7 +41,7 @@ type Beat = {
 
 /**
  * Timed across full scrub so the video finishes before the CTA.
- * Flat glass on hold → orbit forward / enlarge / tip only on exit.
+ * Flat glass on hold → true orbital exit up & away.
  */
 const BEATS: Beat[] = [
   {
@@ -59,19 +56,14 @@ const BEATS: Beat[] = [
     start: 0.02,
     end: 0.24,
     variant: {
-      exitRX: -22,
-      exitRY: 32,
-      exitRZ: -10,
-      exitZ: 160,
-      orbitX: 48,
+      orbitR: 340,
       radius: "1.4rem",
-      glass: "rgba(255,255,255,0.08)",
-      rim: "rgba(255,255,255,0.28)",
-      edgeGlow: "rgba(196,165,116,0.28)",
+      glass: "rgba(255,255,255,0.1)",
+      rim: "rgba(255,255,255,0.35)",
+      edgeGlow: "rgba(196,165,116,0.3)",
       shimmerAngle: 118,
       top: "58%",
-      magnetic: 0.2,
-      depthOffset: "translate3d(12px, 16px, -36px)",
+      thickness: 14,
     },
   },
   {
@@ -86,19 +78,14 @@ const BEATS: Beat[] = [
     start: 0.26,
     end: 0.48,
     variant: {
-      exitRX: -26,
-      exitRY: -36,
-      exitRZ: 12,
-      exitZ: 190,
-      orbitX: -56,
+      orbitR: 380,
       radius: "1.15rem",
-      glass: "rgba(210,230,240,0.07)",
-      rim: "rgba(230,245,255,0.3)",
-      edgeGlow: "rgba(150,200,210,0.26)",
+      glass: "rgba(210,230,240,0.09)",
+      rim: "rgba(230,245,255,0.36)",
+      edgeGlow: "rgba(150,200,210,0.28)",
       shimmerAngle: 64,
       top: "52%",
-      magnetic: 0.17,
-      depthOffset: "translate3d(-14px, 18px, -42px)",
+      thickness: 16,
     },
   },
   {
@@ -113,19 +100,14 @@ const BEATS: Beat[] = [
     start: 0.5,
     end: 0.72,
     variant: {
-      exitRX: -18,
-      exitRY: 26,
-      exitRZ: -14,
-      exitZ: 145,
-      orbitX: 40,
+      orbitR: 320,
       radius: "1.7rem",
-      glass: "rgba(255,248,235,0.09)",
-      rim: "rgba(196,165,116,0.38)",
-      edgeGlow: "rgba(196,165,116,0.4)",
+      glass: "rgba(255,248,235,0.1)",
+      rim: "rgba(196,165,116,0.42)",
+      edgeGlow: "rgba(196,165,116,0.38)",
       shimmerAngle: 108,
       top: "56%",
-      magnetic: 0.24,
-      depthOffset: "translate3d(16px, 12px, -30px)",
+      thickness: 12,
     },
   },
   {
@@ -140,19 +122,14 @@ const BEATS: Beat[] = [
     start: 0.74,
     end: 0.96,
     variant: {
-      exitRX: -30,
-      exitRY: -28,
-      exitRZ: 14,
-      exitZ: 210,
-      orbitX: -62,
+      orbitR: 400,
       radius: "1rem",
-      glass: "rgba(255,255,255,0.1)",
-      rim: "rgba(255,255,255,0.32)",
-      edgeGlow: "rgba(240,226,196,0.34)",
+      glass: "rgba(255,255,255,0.11)",
+      rim: "rgba(255,255,255,0.38)",
+      edgeGlow: "rgba(240,226,196,0.32)",
       shimmerAngle: 52,
       top: "54%",
-      magnetic: 0.19,
-      depthOffset: "translate3d(-18px, 14px, -48px)",
+      thickness: 18,
     },
   },
 ];
@@ -167,6 +144,10 @@ function beatT(p: number, beat: Beat) {
   if (p < beat.start) return 0;
   if (p >= beat.end) return 1;
   return (p - beat.start) / (beat.end - beat.start);
+}
+
+function smoothstep(e: number) {
+  return e * e * (3 - 2 * e);
 }
 
 /** Longer enter/exit windows = slower rise & leave relative to scroll */
@@ -198,7 +179,6 @@ function AsyncWord({
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
     if (t < ENTER_END * 0.55) return t / (ENTER_END * 0.55);
-    // Hold clear; scatter-out on exit with per-word delay
     if (t < EXIT_START) return 1;
     const local = (t - EXIT_START) / EXIT_LEN;
     const start = delay;
@@ -257,32 +237,19 @@ function BeatCard({
   progress: MotionValue<number>;
 }) {
   const v = beat.variant;
+  const dir = beat.side === "left" ? -1 : 1;
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
 
-  // Rise from below → hold flat → orbit up / out / toward camera
-  const y = useTransform(progress, (p) => {
+  // Rise from below → hold flat → orbital exit
+  const enterY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (p < beat.start) return "110vh";
-    if (p >= beat.end) return "-120vh";
+    if (p >= beat.end) return "-30vh";
     if (t < ENTER_END) {
-      const e = t / ENTER_END;
-      const eased = e * e * (3 - 2 * e);
+      const eased = smoothstep(t / ENTER_END);
       return `${110 - 110 * eased}vh`;
     }
-    if (t > EXIT_START) {
-      const e = (t - EXIT_START) / EXIT_LEN;
-      const eased = e * e * (3 - 2 * e);
-      return `${0 - 120 * eased}vh`;
-    }
     return "0vh";
-  });
-
-  const x = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
-    const e = (t - EXIT_START) / EXIT_LEN;
-    const eased = e * e * (3 - 2 * e);
-    return v.orbitX * Math.sin(eased * Math.PI * 0.85);
   });
 
   const opacity = useTransform(progress, (p) => {
@@ -293,65 +260,106 @@ function BeatCard({
     return 1;
   });
 
-  // Depth-of-field: soft on approach, sharp on hold, soft again as they orbit out
   const blur = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 22;
     const t = beatT(p, beat);
     if (t < ENTER_END) {
-      const e = t / ENTER_END;
-      const smooth = e * e * (3 - 2 * e);
+      const smooth = smoothstep(t / ENTER_END);
       return 22 * (1 - smooth);
     }
     if (t > EXIT_START) {
-      const e = (t - EXIT_START) / EXIT_LEN;
-      const smooth = e * e * (3 - 2 * e);
+      const smooth = smoothstep((t - EXIT_START) / EXIT_LEN);
       return 20 * smooth;
     }
     return 0;
   });
   const filter = useMotionTemplate`blur(${blur}px)`;
 
-  // Flat until exit — then swell toward camera (orbit pop)
   const scale = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0.96;
     const t = beatT(p, beat);
     if (t < ENTER_END) {
-      const e = t / ENTER_END;
-      return 0.96 + 0.04 * (e * e * (3 - 2 * e));
+      const eased = smoothstep(t / ENTER_END);
+      return 0.96 + 0.04 * eased;
     }
     if (t > EXIT_START) {
-      const e = (t - EXIT_START) / EXIT_LEN;
-      return 1 + 0.42 * (e * e * (3 - 2 * e));
+      const eased = smoothstep((t - EXIT_START) / EXIT_LEN);
+      return 1 + 0.18 * eased;
     }
     return 1;
   });
 
-  // Zero angle on enter/hold — tilt only on exit
+  // True circular orbit on exit — flat on hold
+  const orbitX = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (t <= EXIT_START) return 0;
+    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+    const theta = e * Math.PI * 0.72;
+    return dir * v.orbitR * Math.sin(theta);
+  });
+
+  const orbitY = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (t <= EXIT_START) return 0;
+    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+    const theta = e * Math.PI * 0.72;
+    return -v.orbitR * (1 - Math.cos(theta)) - e * 220;
+  });
+
+  const orbitZ = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (t <= EXIT_START) return 0;
+    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+    const theta = e * Math.PI * 0.72;
+    return -v.orbitR * Math.sin(theta) * 0.95;
+  });
+
   const rotateX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
-    return v.exitRX * ((t - EXIT_START) / EXIT_LEN);
+    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+    const theta = e * Math.PI * 0.72;
+    const dydtheta = -v.orbitR * Math.sin(theta);
+    const dzdtheta = -v.orbitR * 0.95 * Math.cos(theta);
+    const dxdtheta = dir * v.orbitR * Math.cos(theta);
+    const horiz = Math.sqrt(dxdtheta * dxdtheta + dzdtheta * dzdtheta);
+    return Math.atan2(-dydtheta, horiz) * (180 / Math.PI);
   });
+
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
-    return v.exitRY * ((t - EXIT_START) / EXIT_LEN);
+    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+    const theta = e * Math.PI * 0.72;
+    const dzdtheta = -v.orbitR * 0.95 * Math.cos(theta);
+    const dxdtheta = dir * v.orbitR * Math.cos(theta);
+    return Math.atan2(dxdtheta, -dzdtheta) * (180 / Math.PI);
   });
+
   const rotateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
-    return v.exitRZ * ((t - EXIT_START) / EXIT_LEN);
+    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+    return dir * 2.5 * e;
   });
-  const translateZ = useTransform(progress, (p) => {
+
+  const orbitTransform = useMotionTemplate`translate3d(${orbitX}px, ${orbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
+
+  const shadowOpacity = useTransform(progress, (p) => {
+    if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
-    if (t < ENTER_END) return -24 + 24 * (t / ENTER_END);
-    if (t > EXIT_START) return v.exitZ * ((t - EXIT_START) / EXIT_LEN);
-    return 0;
+    if (t < ENTER_END * 0.6) return 0.12 * smoothstep(t / (ENTER_END * 0.6));
+    if (t > EXIT_START) return 0.38 * (1 - smoothstep((t - EXIT_START) / EXIT_LEN));
+    return 0.32;
   });
 
-  const faceTransform = useMotionTemplate`translateZ(${translateZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
+  const shadowScale = useTransform(progress, (p) => {
+    const t = beatT(p, beat);
+    if (t <= EXIT_START) return 1;
+    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+    return 1 + e * 0.35;
+  });
 
-  // Soft diagonal light sweep — full-pane specular, not a hard rectangle
   const shimmerPos = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     const shimmerEnd = ENTER_END + 0.12;
@@ -359,6 +367,7 @@ function BeatCard({
     if (t > shimmerEnd) return -40;
     return 120 - ((t - 0.06) / (shimmerEnd - 0.06)) * 160;
   });
+
   const shimmerOpacity = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     const shimmerEnd = ENTER_END + 0.12;
@@ -368,31 +377,17 @@ function BeatCard({
     if (t < shimmerEnd) return 1 - (t - (ENTER_END + 0.04)) / (shimmerEnd - ENTER_END - 0.04);
     return 0;
   });
+
   const shimmerBackground = useMotionTemplate`linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
       transparent ${shimmerPos}%,
       rgba(255,255,255,0.02) calc(${shimmerPos}% + 4%),
-      rgba(255,255,255,0.22) calc(${shimmerPos}% + 9%),
-      rgba(255,255,255,0.55) calc(${shimmerPos}% + 12%),
-      rgba(240,226,196,0.28) calc(${shimmerPos}% + 14%),
-      rgba(255,255,255,0.12) calc(${shimmerPos}% + 17%),
+      rgba(255,255,255,0.18) calc(${shimmerPos}% + 9%),
+      rgba(255,255,255,0.42) calc(${shimmerPos}% + 12%),
+      rgba(240,226,196,0.2) calc(${shimmerPos}% + 14%),
+      rgba(255,255,255,0.08) calc(${shimmerPos}% + 17%),
       transparent calc(${shimmerPos}% + 24%),
       transparent 100%)`;
-
-  const exitSheen = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t < EXIT_START + 0.02) return 0;
-    if (t > 0.96) return 0;
-    return Math.sin(((t - EXIT_START - 0.02) / (EXIT_LEN - 0.02)) * Math.PI) * 0.5;
-  });
-
-  const depthOpacity = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 0;
-    const t = beatT(p, beat);
-    if (t < ENTER_END * 0.7) return 0.4 * (t / (ENTER_END * 0.7));
-    if (t > EXIT_START) return 0.55 * (1 - (t - EXIT_START) / EXIT_LEN);
-    return 0.5;
-  });
 
   const paneOpacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
@@ -400,7 +395,7 @@ function BeatCard({
     if (t < ENTER_END * 0.45) return t / (ENTER_END * 0.45);
     if (t > EXIT_START + EXIT_LEN * 0.55) {
       const e = (t - (EXIT_START + EXIT_LEN * 0.55)) / (EXIT_LEN * 0.45);
-      return Math.max(0.15, 1 - e * 0.85);
+      return Math.max(0.12, 1 - e * 0.88);
     }
     return 1;
   });
@@ -416,71 +411,88 @@ function BeatCard({
       style={{
         top: v.top,
         opacity,
-        x,
-        y,
+        y: enterY,
         filter,
         scale,
         perspective: 1800,
         transformStyle: "preserve-3d",
       }}
     >
-      <Magnetic strength={v.magnetic} className="block w-full [transform-style:preserve-3d]">
-        <div className="relative [transform-style:preserve-3d]" style={{ perspective: 1800 }}>
-          {/* Depth plate for glass thickness */}
-          <motion.div
+      <motion.div
+        className="relative [transform-style:preserve-3d]"
+        style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
+      >
+        {/* Soft elliptical shadow — separate plane, not CSS drop-shadow on glass */}
+        <motion.div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-full h-16 w-[115%] -translate-x-1/2 md:h-20"
+          style={{
+            opacity: shadowOpacity,
+            scale: shadowScale,
+            transform: "translateZ(-48px) rotateX(78deg)",
+            transformStyle: "preserve-3d",
+            background:
+              "radial-gradient(ellipse 72% 48% at 50% 42%, rgba(0,0,0,0.55), rgba(0,0,0,0.22) 52%, transparent 72%)",
+            filter: "blur(10px)",
+          }}
+        />
+
+        <div
+          className="relative [transform-style:preserve-3d]"
+          style={{ transformStyle: "preserve-3d" }}
+        >
+          {/* Back plate */}
+          <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
             style={{
-              opacity: depthOpacity,
               borderRadius: v.radius,
               background:
-                "linear-gradient(155deg, rgba(255,255,255,0.06), rgba(0,0,0,0.45) 55%, rgba(10,12,16,0.55))",
-              border: `1px solid ${v.rim}`,
-              boxShadow: "0 28px 70px rgba(0,0,0,0.5)",
-              transform: `${v.depthOffset} scale(0.985)`,
+                "linear-gradient(160deg, rgba(255,255,255,0.04), rgba(0,0,0,0.5) 60%, rgba(8,10,14,0.65))",
+              border: `1px solid rgba(255,255,255,0.08)`,
+              transform: `translateZ(-${v.thickness}px)`,
               transformStyle: "preserve-3d",
             }}
           />
 
+          {/* Side edge — glass thickness */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-0 right-0 h-full"
+            style={{
+              width: `${v.thickness}px`,
+              borderRadius: `0 ${v.radius} ${v.radius} 0`,
+              background: `linear-gradient(180deg, ${v.glass}, rgba(0,0,0,0.35))`,
+              borderRight: `1px solid ${v.rim}`,
+              transform: `rotateY(90deg) translateZ(-${v.thickness / 2}px)`,
+              transformOrigin: "right center",
+              transformStyle: "preserve-3d",
+            }}
+          />
+
+          {/* Front glass face */}
           <motion.div
             className="group relative cursor-default overflow-hidden p-6 backdrop-blur-2xl md:p-8"
             style={{
               opacity: paneOpacity,
               borderRadius: v.radius,
-              background: `linear-gradient(145deg, ${v.glass}, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06))`,
+              background: `linear-gradient(148deg, ${v.glass}, rgba(255,255,255,0.02) 48%, rgba(255,255,255,0.05))`,
               border: `1px solid ${v.rim}`,
-              boxShadow: `
-                0 0 0 1px rgba(255,255,255,0.06) inset,
-                0 1px 0 0 rgba(255,255,255,0.22) inset,
-                0 -1px 0 0 rgba(0,0,0,0.25) inset,
-                0 0 50px -10px ${v.edgeGlow},
-                0 32px 80px rgba(0,0,0,0.55)
-              `,
-              transform: faceTransform,
+              boxShadow: "0 1px 0 0 rgba(255,255,255,0.18) inset",
+              transform: "translateZ(0)",
               transformStyle: "preserve-3d",
             }}
           >
-            {/* Glass face refraction */}
+            {/* Subtle top-edge highlight only */}
             <div
-              className="pointer-events-none absolute inset-0"
+              className="pointer-events-none absolute inset-x-0 top-0 h-px"
               style={{
-                borderRadius: v.radius,
                 background:
-                  "linear-gradient(125deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.06) 22%, transparent 42%, transparent 68%, rgba(255,255,255,0.05) 100%)",
-                mixBlendMode: "soft-light",
+                  "linear-gradient(90deg, transparent, rgba(255,255,255,0.35) 30%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0.35) 70%, transparent)",
               }}
             />
 
-            {/* Soft edge caustic */}
-            <div
-              className="pointer-events-none absolute inset-0 opacity-80"
-              style={{
-                borderRadius: v.radius,
-                boxShadow: `inset 0 0 40px ${v.edgeGlow}`,
-              }}
-            />
-
-            {/* Believable specular sweep across the full pane */}
+            {/* Soft shimmer sweep on enter */}
             <motion.div
               aria-hidden
               className="pointer-events-none absolute inset-0"
@@ -489,24 +501,11 @@ function BeatCard({
                 borderRadius: v.radius,
                 background: shimmerBackground,
                 mixBlendMode: "screen",
-                filter: "blur(6px)",
+                filter: "blur(5px)",
               }}
             />
 
-            {/* Exit light catch as it tips toward camera */}
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute inset-0"
-              style={{
-                opacity: exitSheen,
-                borderRadius: v.radius,
-                background:
-                  "radial-gradient(ellipse 80% 60% at 30% 20%, rgba(255,255,255,0.35), transparent 55%)",
-                mixBlendMode: "soft-light",
-              }}
-            />
-
-            <div className="relative" style={{ transform: "translateZ(48px)" }}>
+            <div className="relative" style={{ transform: "translateZ(2px)" }}>
               <p className="font-serif text-3xl leading-[1.15] tracking-tight text-white sm:text-4xl md:text-[2.75rem]">
                 {beat.words.map((w, i) => (
                   <span key={`${w.t}-${i}`}>
@@ -544,12 +543,12 @@ function BeatCard({
               </p>
               <span
                 className="mt-5 block h-px w-12 bg-gradient-to-r from-[#c4a574] to-transparent transition-all duration-500 group-hover:w-28"
-                style={{ boxShadow: `0 0 12px ${v.edgeGlow}` }}
+                style={{ boxShadow: `0 0 10px ${v.edgeGlow}` }}
               />
             </div>
           </motion.div>
         </div>
-      </Magnetic>
+      </motion.div>
     </motion.div>
   );
 }
@@ -561,23 +560,22 @@ function ScrollCue({
   progress: MotionValue<number>;
   scrollProgress: MotionValue<number>;
 }) {
-  // Softens near the end of the video timeline
   const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.45, 0.15]);
 
-  // Glide from laptop-screen center → bottom-right with early scroll wheel travel
-  const left = useTransform(scrollProgress, [0, 0.14], [47, 94]);
-  const top = useTransform(scrollProgress, [0, 0.14], [40, 91]);
+  // Three-quarter from front-left — screen center → bottom-right corner
+  const left = useTransform(scrollProgress, [0, 0.14], [44, 92]);
+  const top = useTransform(scrollProgress, [0, 0.14], [38, 90]);
   const leftPct = useMotionTemplate`${left}%`;
   const topPct = useMotionTemplate`${top}%`;
   const anchorX = useTransform(scrollProgress, [0, 0.14], [-50, -100]);
   const anchorY = useTransform(scrollProgress, [0, 0.14], [-50, -100]);
 
-  // Match open MacBook lid (yaw left, pitch back) — flatten as it parks in the corner
-  const rotateX = useTransform(scrollProgress, [0, 0.14], [16, 0]);
-  const rotateY = useTransform(scrollProgress, [0, 0.14], [-26, 0]);
-  const rotateZ = useTransform(scrollProgress, [0, 0.14], [-4, 0]);
-  const scale = useTransform(scrollProgress, [0, 0.14], [0.86, 1]);
-  const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) scale(${scale})`;
+  const rotateX = useTransform(scrollProgress, [0, 0.14], [14, 0]);
+  const rotateY = useTransform(scrollProgress, [0, 0.14], [22, 0]);
+  const rotateZ = useTransform(scrollProgress, [0, 0.14], [3, 0]);
+  const skewY = useTransform(scrollProgress, [0, 0.14], [-6, 0]);
+  const scale = useTransform(scrollProgress, [0, 0.14], [0.82, 1]);
+  const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) skewY(${skewY}deg) scale(${scale})`;
 
   return (
     <motion.div
@@ -670,13 +668,11 @@ function ScrollCue({
 
 /** First ~9s of the ~10s clip play in the sticky scrub; last second shares scroll with contact entry. */
 const VIDEO_HANDOFF = 0.9;
-/** Portion of scrub scroll reserved for that last second + contact reveal */
 const SCRUB_HANDOFF_START = 0.8;
 
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const bleedRef = useRef<HTMLVideoElement>(null);
   const targetTime = useRef(0);
   const rafRef = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
@@ -687,7 +683,6 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  // Map scroll so contact can enter while the final second of video still scrubs
   const videoProgress = useTransform(scrollYProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
@@ -696,22 +691,12 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
 
+  const stickyLift = useTransform(scrollYProgress, [SCRUB_HANDOFF_START, 1], ["0%", "-50%"]);
+
   useMotionValueEvent(videoProgress, "change", (p) => {
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
     targetTime.current = Math.min(video.duration - 0.001, Math.max(0, p) * video.duration);
-    // Keep bleed plate in sync during the handoff so the join never freezes early
-    const bleed = bleedRef.current;
-    if (bleed && Number.isFinite(bleed.duration) && bleed.duration > 0) {
-      const t = Math.min(bleed.duration - 0.001, Math.max(0, p) * bleed.duration);
-      if (Math.abs(bleed.currentTime - t) > 0.04) {
-        try {
-          bleed.currentTime = t;
-        } catch {
-          /* ignore */
-        }
-      }
-    }
   });
 
   useEffect(() => {
@@ -721,31 +706,14 @@ export function ScrollHero() {
     video.pause();
     video.playsInline = true;
 
-    const syncBleed = () => {
-      const bleed = bleedRef.current;
-      if (!bleed || !Number.isFinite(video.duration) || video.duration <= 0) return;
-      bleed.pause();
-      try {
-        bleed.currentTime = Math.min(
-          video.duration - 0.001,
-          Math.max(0, videoProgress.get()) * video.duration,
-        );
-      } catch {
-        /* ignore */
-      }
-    };
-
     const onMeta = () => {
       targetTime.current = Math.min(
         video.duration - 0.001,
         Math.max(0, videoProgress.get()) * video.duration,
       );
-      syncBleed();
     };
     if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
-    const bleed = bleedRef.current;
-    bleed?.addEventListener("loadedmetadata", syncBleed);
 
     let seeking = false;
     const tick = () => {
@@ -773,73 +741,60 @@ export function ScrollHero() {
 
     return () => {
       video.removeEventListener("loadedmetadata", onMeta);
-      bleed?.removeEventListener("loadedmetadata", syncBleed);
       cancelAnimationFrame(rafRef.current);
     };
   }, [videoProgress]);
 
   return (
     <>
-      {/* Extra length on the handoff so last second + contact entry share scroll room */}
-      <section ref={scrubRef} className="relative h-[620vh] bg-black">
-        <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
-          <video
-            ref={videoRef}
-            className="absolute inset-0 h-full w-full object-cover object-center"
-            src="/videos/hero-kling.mp4"
-            muted
-            playsInline
-            preload="auto"
-            aria-hidden
-          />
+      <section ref={scrubRef} className="relative h-[620vh] bg-[#08090b]">
+        <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden">
+          <motion.div className="relative h-full w-full" style={{ y: stickyLift }}>
+            <div className="relative h-[100svh] w-full overflow-hidden bg-black">
+              <video
+                ref={videoRef}
+                className="absolute inset-0 h-full w-full object-cover object-center"
+                src="/videos/hero-kling.mp4"
+                muted
+                playsInline
+                preload="auto"
+                aria-hidden
+              />
 
-          <div className="absolute top-10 left-10 z-30 md:top-14 md:left-14">
-            <Image
-              src="/brand/ragusto-logo.png"
-              alt="Ragusto"
-              width={220}
-              height={260}
-              priority
-              className="h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
-            />
-          </div>
+              <div className="absolute top-10 left-10 z-30 md:top-14 md:left-14">
+                <Image
+                  src="/brand/ragusto-logo.png"
+                  alt="Ragusto"
+                  width={220}
+                  height={260}
+                  priority
+                  className="h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
+                />
+              </div>
 
-          {BEATS.map((beat) => (
-            <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
-          ))}
+              {BEATS.map((beat) => (
+                <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
+              ))}
 
-          <ScrollCue progress={videoProgress} scrollProgress={scrollYProgress} />
+              <ScrollCue progress={videoProgress} scrollProgress={scrollYProgress} />
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Pull contact in earlier so it meets the last second of scrub */}
       <section
         id="contact"
-        className="relative -mt-[72vh] overflow-hidden px-6 pb-28 pt-[52vh] md:-mt-[78vh] md:pb-36 md:pt-[58vh]"
+        className="relative z-10 -mt-[50vh] bg-[#08090b] px-6 pt-[28vh] pb-28 md:pb-36"
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[78vh] overflow-hidden">
-          <video
-            ref={bleedRef}
-            className="absolute inset-0 h-full w-full scale-[1.04] object-cover object-center"
-            src="/videos/hero-kling.mp4"
-            muted
-            playsInline
-            preload="auto"
-            tabIndex={-1}
-            aria-hidden
-          />
-          <div
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(to bottom, rgba(8,9,11,0) 0%, rgba(8,9,11,0.12) 28%, rgba(8,9,11,0.55) 58%, rgba(8,9,11,0.88) 78%, #08090b 100%)",
-            }}
-          />
-        </div>
-
-        <div className="pointer-events-none absolute inset-0 top-[55%] bg-[#08090b]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(196,165,116,0.1),transparent_55%)]" />
-        <div className="pointer-events-none absolute inset-0 ambient-grid opacity-20" />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-32"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(8,9,11,0.15) 0%, transparent 100%)",
+          }}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(196,165,116,0.08),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-0 ambient-grid opacity-15" />
 
         <div className="relative mx-auto max-w-3xl text-center">
           <p className="text-base tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-lg">
