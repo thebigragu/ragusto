@@ -24,6 +24,8 @@ type BeatVariant = {
   glass: string;
   rim: string;
   edgeGlow: string;
+  /** Lighter complementary tint for the 3D thickness faces */
+  depthTint: string;
   shimmerAngle: number;
   top: string;
   /**
@@ -68,6 +70,7 @@ const BEATS: Beat[] = [
       glass: "rgba(255,255,255,0.08)",
       rim: "rgba(255,255,255,0.18)",
       edgeGlow: "rgba(196,165,116,0.38)",
+      depthTint: "rgba(236,216,178,0.72)",
       shimmerAngle: 118,
       top: "68%",
       topMobile: "18%",
@@ -91,6 +94,7 @@ const BEATS: Beat[] = [
       glass: "rgba(210,230,240,0.07)",
       rim: "rgba(230,245,255,0.16)",
       edgeGlow: "rgba(150,200,210,0.35)",
+      depthTint: "rgba(198,228,238,0.68)",
       shimmerAngle: 64,
       top: "34%",
       topMobile: "80%",
@@ -114,6 +118,7 @@ const BEATS: Beat[] = [
       glass: "rgba(255,248,235,0.08)",
       rim: "rgba(196,165,116,0.2)",
       edgeGlow: "rgba(196,165,116,0.42)",
+      depthTint: "rgba(242,224,196,0.7)",
       shimmerAngle: 108,
       top: "50%",
       topMobile: "22%",
@@ -137,6 +142,7 @@ const BEATS: Beat[] = [
       glass: "rgba(255,255,255,0.09)",
       rim: "rgba(255,255,255,0.18)",
       edgeGlow: "rgba(240,226,196,0.4)",
+      depthTint: "rgba(248,236,214,0.74)",
       shimmerAngle: 52,
       top: "60%",
       topMobile: "76%",
@@ -561,6 +567,43 @@ function BeatCard({
   // Keep side faces clear of rounded corners to avoid seam/overspill lines
   const edgeInset = isMobile ? 16 : 20;
   const softGlow = v.edgeGlow.replace(/[\d.]+\)$/, "0.22)");
+  // Depth faces: lighter complementary near the front face → soft fade at the rear
+  const depthFront = v.depthTint;
+  const depthMid = v.depthTint.replace(/[\d.]+\)$/, "0.38)");
+  const depthSoft = v.depthTint.replace(/[\d.]+\)$/, "0.12)");
+  // Along thickness (front → rear). Right face: local left = front after -90° yaw.
+  const depthGradRight = `linear-gradient(90deg,
+    ${depthFront} 0%,
+    ${depthMid} 28%,
+    ${depthSoft} 58%,
+    rgba(8,10,14,0.08) 78%,
+    transparent 100%)`;
+  // Left face: local right = front after +90° yaw
+  const depthGradLeft = `linear-gradient(270deg,
+    ${depthFront} 0%,
+    ${depthMid} 28%,
+    ${depthSoft} 58%,
+    rgba(8,10,14,0.08) 78%,
+    transparent 100%)`;
+  // Top: after rotateX(90°), local bottom edge faces the camera
+  const depthGradTop = `linear-gradient(0deg,
+    ${depthFront} 0%,
+    ${depthMid} 30%,
+    ${depthSoft} 60%,
+    rgba(8,10,14,0.06) 80%,
+    transparent 100%)`;
+  // Bottom: after rotateX(-90°), local top edge faces the camera
+  const depthGradBottom = `linear-gradient(180deg,
+    ${depthFront} 0%,
+    ${depthMid} 30%,
+    ${depthSoft} 60%,
+    rgba(8,10,14,0.1) 80%,
+    transparent 100%)`;
+  // Soft vertical falloff so depth faces don’t read as hard slabs
+  const depthMaskY =
+    "linear-gradient(180deg, transparent 0%, black 14%, black 86%, transparent 100%)";
+  const depthMaskX =
+    "linear-gradient(90deg, transparent 0%, black 14%, black 86%, transparent 100%)";
 
   const faceStyle: CSSProperties = {
     borderRadius: radius,
@@ -643,16 +686,12 @@ function BeatCard({
               bottom: edgeInset,
               transformOrigin: "right center",
               transform: "rotateY(-90deg) translateZ(0)",
-              borderRadius: 2,
-              background: `linear-gradient(180deg,
-                transparent 0%,
-                rgba(255,255,255,0.22) 10%,
-                ${v.edgeGlow} 22%,
-                rgba(255,255,255,0.08) 48%,
-                rgba(30,34,42,0.4) 72%,
-                rgba(0,0,0,0.35) 88%,
-                transparent 100%)`,
-              opacity: 0.85,
+              borderRadius: 4,
+              background: depthGradRight,
+              opacity: 0.92,
+              filter: "blur(1.25px)",
+              maskImage: depthMaskY,
+              WebkitMaskImage: depthMaskY,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
@@ -668,14 +707,12 @@ function BeatCard({
               bottom: edgeInset,
               transformOrigin: "left center",
               transform: "rotateY(90deg) translateZ(0)",
-              borderRadius: 2,
-              background: `linear-gradient(180deg,
-                transparent 0%,
-                rgba(255,255,255,0.05) 12%,
-                rgba(24,28,36,0.55) 42%,
-                rgba(0,0,0,0.55) 78%,
-                transparent 100%)`,
-              opacity: 0.8,
+              borderRadius: 4,
+              background: depthGradLeft,
+              opacity: 0.88,
+              filter: "blur(1.25px)",
+              maskImage: depthMaskY,
+              WebkitMaskImage: depthMaskY,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
@@ -691,16 +728,12 @@ function BeatCard({
               right: edgeInset,
               transformOrigin: "center top",
               transform: "rotateX(90deg) translateZ(0)",
-              borderRadius: 2,
-              background: `linear-gradient(90deg,
-                transparent 0%,
-                rgba(255,255,255,0.08) 12%,
-                rgba(255,255,255,0.22) 38%,
-                ${v.edgeGlow} 52%,
-                rgba(255,255,255,0.18) 68%,
-                rgba(255,255,255,0.06) 88%,
-                transparent 100%)`,
-              opacity: 0.75,
+              borderRadius: 4,
+              background: depthGradTop,
+              opacity: 0.9,
+              filter: "blur(1.1px)",
+              maskImage: depthMaskX,
+              WebkitMaskImage: depthMaskX,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
@@ -716,14 +749,12 @@ function BeatCard({
               right: edgeInset,
               transformOrigin: "center bottom",
               transform: "rotateX(-90deg) translateZ(0)",
-              borderRadius: 2,
-              background: `linear-gradient(90deg,
-                transparent 0%,
-                rgba(0,0,0,0.45) 18%,
-                rgba(12,14,20,0.7) 50%,
-                rgba(0,0,0,0.45) 82%,
-                transparent 100%)`,
-              opacity: 0.8,
+              borderRadius: 4,
+              background: depthGradBottom,
+              opacity: 0.82,
+              filter: "blur(1.35px)",
+              maskImage: depthMaskX,
+              WebkitMaskImage: depthMaskX,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
