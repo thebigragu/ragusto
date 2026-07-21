@@ -918,6 +918,7 @@ export function ScrollHero() {
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
+  const videoSrc = isMobile ? "/videos/hero-kling-mobile.mp4" : "/videos/hero-kling.mp4";
 
   const { scrollYProgress } = useScroll({
     target: scrubRef,
@@ -994,7 +995,7 @@ export function ScrollHero() {
       video.removeEventListener("loadedmetadata", onMeta);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [videoProgress]);
+  }, [videoProgress, videoSrc]);
 
   return (
     <>
@@ -1057,9 +1058,10 @@ export function ScrollHero() {
         <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden bg-transparent">
           <div className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-[#08090b]">
             <motion.video
+              key={videoSrc}
               ref={videoRef}
-              className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-center max-md:h-[88%] max-md:w-[96%] max-md:object-contain max-md:scale-[0.92] md:inset-0 md:left-0 md:top-0 md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:object-cover md:scale-100"
-              src="/videos/hero-kling.mp4"
+              className="absolute inset-0 h-full w-full object-cover object-center"
+              src={videoSrc}
               muted
               playsInline
               preload="auto"
