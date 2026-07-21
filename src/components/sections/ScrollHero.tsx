@@ -610,14 +610,50 @@ function BeatCard({
                 })}
               </p>
 
-              {/* Gold underline — pulses and sweeps across the pane */}
-              <div className="relative mt-6 h-px w-full overflow-hidden md:mt-7">
+              {/* Gold underline — pulses, sweeps, and glows */}
+              <div className="relative mt-6 h-3 w-full overflow-visible md:mt-7">
                 <motion.span
-                  className="absolute top-0 left-0 block h-px origin-left bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
-                  style={{ width: "100%", boxShadow: `0 0 10px ${v.edgeGlow}` }}
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 left-0 h-3 w-full -translate-y-1/2 origin-left rounded-full bg-[#c4a574]/55 blur-md"
+                  style={{ width: "100%" }}
                   animate={{
                     scaleX: [0.12, 1, 0.12],
-                    opacity: [0.35, 1, 0.35],
+                    opacity: [0.25, 0.85, 0.25],
+                  }}
+                  transition={{
+                    duration: 2.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+                <motion.span
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 left-0 h-5 w-full -translate-y-1/2 origin-left rounded-full bg-[#f0e2c4]/35 blur-xl"
+                  style={{ width: "100%" }}
+                  animate={{
+                    scaleX: [0.12, 1, 0.12],
+                    opacity: [0.15, 0.7, 0.15],
+                  }}
+                  transition={{
+                    duration: 2.6,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                />
+                <motion.span
+                  className="absolute top-1/2 left-0 block h-[2px] w-full -translate-y-1/2 origin-left rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
+                  style={{
+                    width: "100%",
+                    boxShadow: `0 0 8px ${v.edgeGlow}, 0 0 18px rgba(196,165,116,0.75), 0 0 32px rgba(240,226,196,0.45)`,
+                  }}
+                  animate={{
+                    scaleX: [0.12, 1, 0.12],
+                    opacity: [0.45, 1, 0.45],
+                    boxShadow: [
+                      `0 0 6px ${v.edgeGlow}, 0 0 12px rgba(196,165,116,0.4), 0 0 20px rgba(240,226,196,0.2)`,
+                      `0 0 10px ${v.edgeGlow}, 0 0 24px rgba(196,165,116,0.9), 0 0 40px rgba(240,226,196,0.65)`,
+                      `0 0 6px ${v.edgeGlow}, 0 0 12px rgba(196,165,116,0.4), 0 0 20px rgba(240,226,196,0.2)`,
+                    ],
                   }}
                   transition={{
                     duration: 2.6,
