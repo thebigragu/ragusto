@@ -620,7 +620,7 @@ function BeatCard({
           Depth is implied with bevel + soft drop shadow — no extra planes.
         */}
         <div
-          className="relative overflow-hidden"
+          className="relative"
           style={{
             borderRadius: radius,
             transform: `translateZ(${halfT}px)`,
@@ -658,17 +658,18 @@ function BeatCard({
             className="pointer-events-none absolute inset-0"
             style={{
               borderRadius: radius,
-              boxShadow: "inset 0 0 0 1px rgba(196,165,116,0.55)",
+              boxShadow:
+                "inset 0 0 0 1px rgba(196,165,116,0.55), inset 0 0 18px 2px rgba(196,165,116,0.22), 0 0 14px 2px rgba(196,165,116,0.28), 0 0 36px 8px rgba(196,165,116,0.16)",
             }}
             animate={{
-              opacity: [0.4, 0.95, 0.4],
+              opacity: [0.55, 1, 0.55],
               boxShadow: [
-                "inset 0 0 0 1px rgba(196,165,116,0.35)",
-                "inset 0 0 0 1px rgba(240,226,196,0.75)",
-                "inset 0 0 0 1px rgba(196,165,116,0.35)",
+                "inset 0 0 0 1px rgba(196,165,116,0.45), inset 0 0 14px 1px rgba(196,165,116,0.16), 0 0 10px 1px rgba(196,165,116,0.22), 0 0 28px 6px rgba(196,165,116,0.12)",
+                "inset 0 0 0 2px rgba(255,236,200,0.95), inset 0 0 26px 4px rgba(240,226,196,0.5), 0 0 22px 4px rgba(240,226,196,0.65), 0 0 52px 14px rgba(196,165,116,0.42)",
+                "inset 0 0 0 1px rgba(196,165,116,0.45), inset 0 0 14px 1px rgba(196,165,116,0.16), 0 0 10px 1px rgba(196,165,116,0.22), 0 0 28px 6px rgba(196,165,116,0.12)",
               ],
             }}
-            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           />
 
           <motion.div
