@@ -1228,7 +1228,7 @@ export function ScrollHero() {
   const featherOpacity = useTransform(
     driveProgress,
     [SCRUB_HANDOFF_START - 0.06, SCRUB_HANDOFF_START + 0.08, 1],
-    [0, 0.45, 0.62],
+    [0, 0.4, 0.55],
   );
   const videoFade = useTransform(
     driveProgress,
@@ -1417,13 +1417,17 @@ export function ScrollHero() {
               isMobile={isMobile}
             />
 
-            {/* Soft veil — never solid black; keeps lower hero readable under contact */}
+            {/* Tall soft spill — hero bleeds into contact, no hard band */}
             <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[55%] md:h-[58%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[72%] md:h-[75%]"
               style={{
                 opacity: featherOpacity,
                 background:
-                  "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.12) 28%, rgba(8,9,11,0.38) 58%, rgba(8,9,11,0.62) 82%, rgba(8,9,11,0.78) 100%)",
+                  "linear-gradient(to bottom, transparent 0%, transparent 18%, rgba(8,9,11,0.06) 36%, rgba(8,9,11,0.18) 52%, rgba(8,9,11,0.36) 68%, rgba(8,9,11,0.55) 84%, rgba(8,9,11,0.7) 100%)",
+                maskImage:
+                  "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
+                WebkitMaskImage:
+                  "linear-gradient(to bottom, transparent 0%, black 22%, black 100%)",
               }}
             />
           </motion.div>
@@ -1436,21 +1440,39 @@ export function ScrollHero() {
           */}
           <motion.div
             id="contact"
-            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[58dvh] flex-col justify-end px-5 pb-8 md:max-h-[55dvh] md:px-6 md:pb-12"
-            style={{ y: contactParallax, opacity: contactOpacity }}
+            className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[62dvh] flex-col justify-end px-5 pb-8 md:max-h-[58dvh] md:px-6 md:pb-12"
+            style={{
+              y: contactParallax,
+              opacity: contactOpacity,
+              // Feather the whole contact slab so its top never reads as a hard cut
+              maskImage:
+                "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 18%, rgba(0,0,0,0.75) 38%, black 58%, black 100%)",
+              WebkitMaskImage:
+                "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 18%, rgba(0,0,0,0.75) 38%, black 58%, black 100%)",
+            }}
           >
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0 top-0"
               style={{
                 background:
-                  "linear-gradient(to bottom, transparent 0%, rgba(196,165,116,0.04) 22%, rgba(196,165,116,0.07) 36%, rgba(8,9,11,0.35) 58%, rgba(8,9,11,0.82) 82%, #08090b 100%)",
+                  "linear-gradient(to bottom, transparent 0%, transparent 12%, rgba(196,165,116,0.03) 28%, rgba(196,165,116,0.055) 40%, rgba(8,9,11,0.2) 55%, rgba(8,9,11,0.48) 72%, rgba(8,9,11,0.78) 90%, rgba(8,9,11,0.92) 100%)",
+              }}
+            />
+            {/* Extra soft hero spill under the join — video-tint haze into contact dark */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-[55%]"
+              style={{
+                background:
+                  "linear-gradient(to bottom, rgba(8,9,11,0) 0%, rgba(8,9,11,0.08) 40%, rgba(8,9,11,0.22) 100%)",
+                filter: "blur(18px)",
+                opacity: 0.85,
               }}
             />
             <div
               className="pointer-events-none absolute inset-x-0 top-0 h-full"
               style={{
                 background:
-                  "radial-gradient(ellipse 95% 50% at 50% 30%, rgba(196,165,116,0.1) 0%, rgba(196,165,116,0.04) 40%, transparent 72%)",
+                  "radial-gradient(ellipse 100% 55% at 50% 18%, rgba(196,165,116,0.08) 0%, rgba(196,165,116,0.03) 42%, transparent 70%)",
               }}
             />
 
