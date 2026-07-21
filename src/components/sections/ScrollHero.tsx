@@ -617,6 +617,11 @@ function ScrollCue({ progress }: { progress: MotionValue<number> }) {
   );
 }
 
+/** First ~9s of the ~10s clip play in the sticky scrub; last second shares scroll with contact entry. */
+const VIDEO_HANDOFF = 0.9;
+/** Portion of scrub scroll reserved for that last second + contact reveal */
+const SCRUB_HANDOFF_START = 0.8;
+
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -631,10 +636,31 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  useMotionValueEvent(scrollYProgress, "change", (p) => {
+  // Map scroll so contact can enter while the final second of video still scrubs
+  const videoProgress = useTransform(scrollYProgress, (p) => {
+    if (p <= SCRUB_HANDOFF_START) {
+      return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
+    }
+    const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
+    return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
+  });
+
+  useMotionValueEvent(videoProgress, "change", (p) => {
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
     targetTime.current = Math.min(video.duration - 0.001, Math.max(0, p) * video.duration);
+    // Keep bleed plate in sync during the handoff so the join never freezes early
+    const bleed = bleedRef.current;
+    if (bleed && Number.isFinite(bleed.duration) && bleed.duration > 0) {
+      const t = Math.min(bleed.duration - 0.001, Math.max(0, p) * bleed.duration);
+      if (Math.abs(bleed.currentTime - t) > 0.04) {
+        try {
+          bleed.currentTime = t;
+        } catch {
+          /* ignore */
+        }
+      }
+    }
   });
 
   useEffect(() => {
@@ -649,7 +675,10 @@ export function ScrollHero() {
       if (!bleed || !Number.isFinite(video.duration) || video.duration <= 0) return;
       bleed.pause();
       try {
-        bleed.currentTime = Math.max(0, video.duration - 0.04);
+        bleed.currentTime = Math.min(
+          video.duration - 0.001,
+          Math.max(0, videoProgress.get()) * video.duration,
+        );
       } catch {
         /* ignore */
       }
@@ -658,7 +687,7 @@ export function ScrollHero() {
     const onMeta = () => {
       targetTime.current = Math.min(
         video.duration - 0.001,
-        Math.max(0, scrollYProgress.get()) * video.duration,
+        Math.max(0, videoProgress.get()) * video.duration,
       );
       syncBleed();
     };
@@ -696,11 +725,12 @@ export function ScrollHero() {
       bleed?.removeEventListener("loadedmetadata", syncBleed);
       cancelAnimationFrame(rafRef.current);
     };
-  }, [scrollYProgress]);
+  }, [videoProgress]);
 
   return (
     <>
-      <section ref={scrubRef} className="relative h-[560vh] bg-black">
+      {/* Extra length on the handoff so last second + contact entry share scroll room */}
+      <section ref={scrubRef} className="relative h-[620vh] bg-black">
         <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
           <video
             ref={videoRef}
@@ -712,7 +742,6 @@ export function ScrollHero() {
             aria-hidden
           />
 
-          {/* Logo inset from corner */}
           <div className="absolute top-10 left-10 z-30 md:top-14 md:left-14">
             <Magnetic strength={0.14}>
               <Image
@@ -727,19 +756,19 @@ export function ScrollHero() {
           </div>
 
           {BEATS.map((beat) => (
-            <BeatCard key={beat.id} beat={beat} progress={scrollYProgress} />
+            <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
           ))}
 
-          <ScrollCue progress={scrollYProgress} />
+          <ScrollCue progress={videoProgress} />
         </div>
       </section>
 
-      {/* Continuous join: last frame bleeds under contact so sections read as one */}
+      {/* Pull contact in earlier so it meets the last second of scrub */}
       <section
         id="contact"
-        className="relative -mt-[42vh] overflow-hidden px-6 pb-28 pt-[38vh] md:-mt-[48vh] md:pb-36 md:pt-[44vh]"
+        className="relative -mt-[72vh] overflow-hidden px-6 pb-28 pt-[52vh] md:-mt-[78vh] md:pb-36 md:pt-[58vh]"
       >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[70vh] overflow-hidden">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[78vh] overflow-hidden">
           <video
             ref={bleedRef}
             className="absolute inset-0 h-full w-full scale-[1.04] object-cover object-center"
@@ -750,7 +779,6 @@ export function ScrollHero() {
             tabIndex={-1}
             aria-hidden
           />
-          {/* Gentle dissolve — video into contact, no hard blur veil */}
           <div
             className="absolute inset-0"
             style={{
