@@ -26,7 +26,10 @@ type BeatVariant = {
   edgeGlow: string;
   shimmerAngle: number;
   top: string;
-  /** Vertical rest on small screens (safer band, less extreme) */
+  /**
+   * Mobile vertical rest — keep in upper third (left-side beats) or
+   * lower third (right-side beats); never the middle band.
+   */
   topMobile: string;
   /** Glass thickness in px for side edge */
   thickness: number;
@@ -67,7 +70,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(196,165,116,0.38)",
       shimmerAngle: 118,
       top: "68%",
-      topMobile: "58%",
+      topMobile: "18%",
       thickness: 82,
     },
   },
@@ -90,7 +93,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(150,200,210,0.35)",
       shimmerAngle: 64,
       top: "34%",
-      topMobile: "40%",
+      topMobile: "80%",
       thickness: 88,
     },
   },
@@ -113,7 +116,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(196,165,116,0.42)",
       shimmerAngle: 108,
       top: "50%",
-      topMobile: "50%",
+      topMobile: "22%",
       thickness: 78,
     },
   },
@@ -136,7 +139,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(240,226,196,0.4)",
       shimmerAngle: 52,
       top: "60%",
-      topMobile: "56%",
+      topMobile: "76%",
       thickness: 90,
     },
   },
