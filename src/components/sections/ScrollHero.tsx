@@ -781,7 +781,7 @@ function BeatCard({
               }}
             >
               <p
-                className="mx-auto max-w-full text-balance text-center font-serif text-[1.3rem] leading-snug tracking-normal text-white sm:text-3xl sm:leading-snug md:text-[2.35rem] md:leading-[1.25]"
+                className="mx-auto max-w-full text-balance text-center font-serif text-[1.34rem] font-[450] leading-snug tracking-normal text-white sm:text-[1.92rem] sm:leading-snug md:text-[2.39rem] md:leading-[1.25]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
@@ -805,7 +805,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mx-auto mt-3 max-w-full text-pretty text-center text-[0.65rem] leading-relaxed tracking-[0.08em] text-white/60 uppercase sm:mt-5 sm:text-sm sm:tracking-[0.1em] md:mt-6 md:text-[0.9rem] md:tracking-[0.12em]"
+                className="mx-auto mt-3 max-w-full text-pretty text-center text-[0.69rem] font-[450] leading-relaxed tracking-[0.08em] text-white/60 uppercase sm:mt-5 sm:text-[0.92rem] sm:tracking-[0.1em] md:mt-6 md:text-[0.94rem] md:tracking-[0.12em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
