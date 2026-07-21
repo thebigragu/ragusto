@@ -784,7 +784,7 @@ export function ScrollHero() {
 
       <section
         id="contact"
-        className="relative z-10 -mt-[50vh] bg-[#08090b] px-6 pt-[28vh] pb-28 md:pb-36"
+        className="relative z-10 -mt-[50vh] bg-[#08090b] px-6 pt-[28vh] pb-16 md:pb-20"
       >
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-32"
