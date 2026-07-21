@@ -66,7 +66,7 @@ const BEATS: Beat[] = [
     start: 0.02,
     end: 0.24,
     variant: {
-      orbitR: 520,
+      orbitR: 720,
       radius: "1.4rem",
       glass: "rgba(38,40,48,0.98)",
       rim: "rgba(255,255,255,0.28)",
@@ -90,7 +90,7 @@ const BEATS: Beat[] = [
     start: 0.26,
     end: 0.48,
     variant: {
-      orbitR: 560,
+      orbitR: 780,
       radius: "1.15rem",
       glass: "rgba(28,36,44,0.98)",
       rim: "rgba(220,240,250,0.26)",
@@ -114,7 +114,7 @@ const BEATS: Beat[] = [
     start: 0.5,
     end: 0.72,
     variant: {
-      orbitR: 500,
+      orbitR: 700,
       radius: "1.7rem",
       glass: "rgba(40,36,32,0.98)",
       rim: "rgba(196,165,116,0.32)",
