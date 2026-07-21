@@ -389,6 +389,7 @@ function BeatCard({
   // Subtle prism pose at rest so depth edges read; stronger angles only on enter/exit
   const restY = -exitDir * (isMobile ? 7 : 11);
   const restX = isMobile ? 3 : 5;
+  const twistAmp = (isMobile ? 28 : 40) * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -408,15 +409,41 @@ function BeatCard({
 
   const orbitZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return isMobile ? 36 : 72;
+    const restZ = isMobile ? 36 : 72;
+    if (t < ENTER_END) {
+      // Brief push toward camera during the depth-reveal twist
+      const u = t / ENTER_END;
+      if (u > 0.55 && u < 1) {
+        const twistU = (u - 0.55) / 0.45;
+        const bump = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 18 : 28);
+        return restZ + bump;
+      }
+      return restZ;
+    }
+    if (t <= EXIT_START) return restZ;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     const theta = e * Math.PI * 0.92;
-    return (isMobile ? 36 : 72) - v.orbitR * orbitScale * Math.sin(theta) * 1.05;
+    return restZ - v.orbitR * orbitScale * Math.sin(theta) * 1.05;
   });
 
   const rotateX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return restX + (1 - smoothstep(t / ENTER_END)) * 20 * tiltScale;
+    if (t < ENTER_END) {
+      const u = t / ENTER_END;
+      const startX = restX + 20 * tiltScale;
+      if (u < 0.55) {
+        return startX + (restX - startX) * smoothstep(u / 0.55);
+      }
+      // Lift slightly during horizontal twist so the top bevel reads
+      const twistU = (u - 0.55) / 0.45;
+      const lift = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 6 : 9);
+      if (u < 0.78) {
+        const e = smoothstep((u - 0.55) / 0.23);
+        return restX + lift * e;
+      }
+      const e = smoothstep((u - 0.78) / 0.22);
+      return restX + lift * (1 - e);
+    }
     if (t <= EXIT_START) return restX;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     return restX - e * 78 * tiltScale;
@@ -424,7 +451,23 @@ function BeatCard({
 
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return restY + exitDir * (1 - smoothstep(t / ENTER_END)) * 28 * tiltScale;
+    if (t < ENTER_END) {
+      const u = t / ENTER_END;
+      const startY = restY + exitDir * 28 * tiltScale;
+      // Opposite-side peak: reveals the elongated prism edge, then springs to rest
+      const peakY = restY + exitDir * twistAmp;
+      if (u < 0.55) {
+        return startY + (restY - startY) * smoothstep(u / 0.55);
+      }
+      if (u < 0.78) {
+        const e = smoothstep((u - 0.55) / 0.23);
+        return restY + (peakY - restY) * e;
+      }
+      // Spring back — slight ease past then settle
+      const e = smoothstep((u - 0.78) / 0.22);
+      const overshoot = Math.sin(e * Math.PI) * exitDir * -3;
+      return peakY + (restY - peakY) * e + overshoot * (1 - e);
+    }
     if (t <= EXIT_START) return restY;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     return restY + exitDir * e * 118 * tiltScale;
@@ -432,7 +475,14 @@ function BeatCard({
 
   const rotateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return exitDir * (1 - smoothstep(t / ENTER_END)) * -10 * tiltScale;
+    if (t < ENTER_END) {
+      const u = t / ENTER_END;
+      const startZ = exitDir * -10 * tiltScale;
+      if (u < 0.55) return startZ * (1 - smoothstep(u / 0.55));
+      // Counter-roll with the yaw twist
+      const twistU = (u - 0.55) / 0.45;
+      return exitDir * Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 5 : 8);
+    }
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     return exitDir * e * 42 * tiltScale;
