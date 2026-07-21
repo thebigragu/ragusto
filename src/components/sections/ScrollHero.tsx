@@ -512,21 +512,21 @@ function BeatCard({
     const t = beatT(p, beat);
     const shimmerEnd = ENTER_END + 0.14;
     if (t < 0.05) return 0;
-    if (t < ENTER_END * 0.45) return (t - 0.05) / Math.max(0.01, ENTER_END * 0.45 - 0.05);
-    if (t < ENTER_END) return 0.85;
-    if (t < shimmerEnd) return 0.85 * (1 - (t - ENTER_END) / (shimmerEnd - ENTER_END));
+    if (t < ENTER_END * 0.45) return ((t - 0.05) / Math.max(0.01, ENTER_END * 0.45 - 0.05)) * 0.68;
+    if (t < ENTER_END) return 0.68;
+    if (t < shimmerEnd) return 0.68 * (1 - (t - ENTER_END) / (shimmerEnd - ENTER_END));
     return 0;
   });
 
-  // Wide metallic specular band
+  // Wide metallic specular band — kept soft so it reads as sheen, not glare
   const shimmerBackground = useMotionTemplate`linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
       transparent ${shimmerPos}%,
-      rgba(255,255,255,0.05) calc(${shimmerPos}% + 3%),
-      rgba(255,252,245,0.55) calc(${shimmerPos}% + 10%),
-      rgba(240,226,196,0.42) calc(${shimmerPos}% + 16%),
-      rgba(196,165,116,0.28) calc(${shimmerPos}% + 22%),
-      rgba(255,255,255,0.12) calc(${shimmerPos}% + 28%),
+      rgba(255,255,255,0.04) calc(${shimmerPos}% + 3%),
+      rgba(255,252,245,0.38) calc(${shimmerPos}% + 10%),
+      rgba(240,226,196,0.28) calc(${shimmerPos}% + 16%),
+      rgba(196,165,116,0.18) calc(${shimmerPos}% + 22%),
+      rgba(255,255,255,0.08) calc(${shimmerPos}% + 28%),
       transparent calc(${shimmerPos}% + 38%),
       transparent 100%)`;
 
