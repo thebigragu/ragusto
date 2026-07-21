@@ -32,7 +32,8 @@ type BeatVariant = {
    * Mobile vertical rest — keep in upper third (left-side beats) or
    * lower third (right-side beats); never the middle band.
    */
-  topMobile: string;
+  /** Desktop vertical center; mobile band: top | bottom third */
+  topMobile: "top" | "bottom";
   /** Glass thickness in px for side edge */
   thickness: number;
 };
@@ -73,7 +74,7 @@ const BEATS: Beat[] = [
       depthTint: "rgba(232,210,168,0.9)",
       shimmerAngle: 118,
       top: "68%",
-      topMobile: "18%",
+      topMobile: "top",
       thickness: 112,
     },
   },
@@ -97,7 +98,7 @@ const BEATS: Beat[] = [
       depthTint: "rgba(190,220,232,0.88)",
       shimmerAngle: 62,
       top: "34%",
-      topMobile: "80%",
+      topMobile: "bottom",
       thickness: 120,
     },
   },
@@ -121,7 +122,7 @@ const BEATS: Beat[] = [
       depthTint: "rgba(236,214,178,0.92)",
       shimmerAngle: 108,
       top: "50%",
-      topMobile: "22%",
+      topMobile: "top",
       thickness: 108,
     },
   },
@@ -145,7 +146,7 @@ const BEATS: Beat[] = [
       depthTint: "rgba(245,230,200,0.92)",
       shimmerAngle: 72,
       top: "60%",
-      topMobile: "76%",
+      topMobile: "bottom",
       thickness: 124,
     },
   },
@@ -345,15 +346,17 @@ function BeatCard({
   // Slim continuous rim — depth without a chunky multi-pane stack
   const T = Math.max(14, isMobile ? Math.round(v.thickness * 0.38) : Math.round(v.thickness * 0.48));
   const halfT = T / 2;
-  const restTop = isMobile ? v.topMobile : v.top;
+  const restTop = isMobile ? undefined : v.top;
+  const mobileBand = v.topMobile;
 
   const enterY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (p < beat.start) return "110vh";
-    if (p >= beat.end) return "-40vh";
+    if (p < beat.start) return isMobile ? "70vh" : "110vh";
+    if (p >= beat.end) return isMobile ? "-30vh" : "-40vh";
     if (t < ENTER_END) {
       const eased = smoothstep(t / ENTER_END);
-      return `${110 - 110 * eased}vh`;
+      const from = isMobile ? 70 : 110;
+      return `${from - from * eased}vh`;
     }
     return "0vh";
   });
@@ -380,9 +383,9 @@ function BeatCard({
 
   // At rest: left panes aim right across the hero; right panes aim left (subtle).
   const restY =
-    beat.side === "left" ? (isMobile ? 16 : 22) : isMobile ? -16 : -22;
-  const restX = isMobile ? 3 : 5;
-  const twistAmp = (isMobile ? 22 : 30) * tiltScale;
+    beat.side === "left" ? (isMobile ? 8 : 22) : isMobile ? -8 : -22;
+  const restX = isMobile ? 2 : 5;
+  const twistAmp = (isMobile ? 12 : 30) * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -584,11 +587,21 @@ function BeatCard({
     WebkitBackfaceVisibility: "hidden",
   };
 
+  const mobilePosStyle: CSSProperties = isMobile
+    ? mobileBand === "top"
+      ? { top: "max(0.75rem, 8dvh)", bottom: "auto" }
+      : { top: "auto", bottom: "max(0.75rem, 10dvh)" }
+    : { top: restTop };
+
   return (
     <motion.div
-      className={`pointer-events-auto absolute z-20 max-w-[min(84vw,19.5rem)] -translate-y-1/2 will-change-transform md:max-w-[min(94vw,36rem)] ${sideClass}`}
+      className={`pointer-events-auto absolute z-20 will-change-transform ${
+        isMobile
+          ? "left-1/2 w-[min(88vw,20rem)] max-w-[min(88vw,20rem)]"
+          : `max-w-[min(94vw,36rem)] -translate-y-1/2 ${sideClass}`
+      }`}
       style={{
-        top: restTop,
+        ...mobilePosStyle,
         x: isMobile ? "-50%" : 0,
         opacity,
         y: enterY,
