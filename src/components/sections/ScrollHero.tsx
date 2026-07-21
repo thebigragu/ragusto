@@ -747,6 +747,18 @@ export function ScrollHero() {
 
   return (
     <>
+      {/* Fixed brand mark — stays put across hero scrub and contact */}
+      <div className="pointer-events-auto fixed top-10 right-10 z-50 md:top-14 md:right-14">
+        <Image
+          src="/brand/ragusto-logo.png"
+          alt="Ragusto"
+          width={220}
+          height={260}
+          priority
+          className="h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
+        />
+      </div>
+
       <section ref={scrubRef} className="relative h-[620vh] bg-[#08090b]">
         <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden">
           <motion.div className="relative h-full w-full" style={{ y: stickyLift }}>
@@ -760,17 +772,6 @@ export function ScrollHero() {
                 preload="auto"
                 aria-hidden
               />
-
-              <div className="absolute top-10 left-10 z-30 md:top-14 md:left-14">
-                <Image
-                  src="/brand/ragusto-logo.png"
-                  alt="Ragusto"
-                  width={220}
-                  height={260}
-                  priority
-                  className="h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
-                />
-              </div>
 
               {BEATS.map((beat) => (
                 <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
