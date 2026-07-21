@@ -445,28 +445,83 @@ function BeatCard({
 }
 
 function ScrollCue({ progress }: { progress: MotionValue<number> }) {
-  const opacity = useTransform(progress, [0, 0.05, 0.9, 1], [0, 1, 0.85, 0.2]);
+  // Visible from first paint; only softens near the end of the scrub
+  const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.45, 0.15]);
 
   return (
     <motion.div
-      className="pointer-events-none absolute right-5 bottom-6 z-30 md:right-8 md:bottom-8"
+      className="pointer-events-none absolute right-5 bottom-7 z-40 md:right-10 md:bottom-10"
       style={{ opacity }}
+      initial={{ y: 14 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       aria-hidden
     >
-      <div className="flex flex-col items-center gap-2">
-        <span className="text-[10px] tracking-[0.35em] text-white/50 uppercase">Scroll</span>
-        <motion.div
-          className="flex h-12 w-7 items-start justify-center rounded-full border border-white/25 bg-black/30 p-1.5 backdrop-blur-sm"
-          animate={{ y: [0, 4, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <motion.span
-            className="h-2 w-2 rounded-full bg-[#c4a574] shadow-[0_0_12px_rgba(196,165,116,0.75)]"
-            animate={{ y: [0, 16, 0], opacity: [1, 0.35, 1] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+      <motion.div
+        className="flex flex-col items-center gap-3"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <span className="text-[11px] font-medium tracking-[0.42em] text-[#e8d5b0] uppercase drop-shadow-[0_0_12px_rgba(196,165,116,0.55)] md:text-xs">
+          Scroll
+        </span>
+
+        <div className="relative">
+          {/* Soft gold halo */}
+          <motion.div
+            className="absolute -inset-3 rounded-full bg-[#c4a574]/25 blur-md"
+            animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.92, 1.08, 0.92] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           />
+          <motion.div
+            className="relative flex h-16 w-9 items-start justify-center rounded-full border-2 border-[#c4a574]/70 bg-black/45 p-2 shadow-[0_0_28px_rgba(196,165,116,0.45),inset_0_0_18px_rgba(196,165,116,0.12)] backdrop-blur-md md:h-[4.5rem] md:w-10"
+            animate={{
+              borderColor: [
+                "rgba(196,165,116,0.55)",
+                "rgba(240,226,196,0.95)",
+                "rgba(196,165,116,0.55)",
+              ],
+              boxShadow: [
+                "0 0 22px rgba(196,165,116,0.35), inset 0 0 14px rgba(196,165,116,0.1)",
+                "0 0 36px rgba(196,165,116,0.7), inset 0 0 20px rgba(240,226,196,0.18)",
+                "0 0 22px rgba(196,165,116,0.35), inset 0 0 14px rgba(196,165,116,0.1)",
+              ],
+            }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <motion.span
+              className="mt-0.5 h-2.5 w-2.5 rounded-full bg-[#f0e2c4] shadow-[0_0_16px_rgba(240,226,196,0.95)] md:h-3 md:w-3"
+              animate={{ y: [0, 26, 0], opacity: [1, 0.35, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+        </div>
+
+        <motion.div
+          className="flex flex-col items-center gap-0.5 text-[#c4a574]"
+          animate={{ opacity: [0.4, 1, 0.4] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>
+            <path
+              d="M1 1.5L7 7.5L13 1.5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="none" className="-mt-1.5 opacity-55" aria-hidden>
+            <path
+              d="M1 1.5L7 7.5L13 1.5"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </motion.div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
