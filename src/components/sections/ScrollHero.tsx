@@ -1230,6 +1230,18 @@ export function ScrollHero() {
     [SCRUB_HANDOFF_START - 0.06, SCRUB_HANDOFF_START + 0.08, 1],
     [0, 0.4, 0.55],
   );
+  // Mask stays fully opaque through the scrub so the video isn’t pre-dimmed;
+  // bottom feather only dissolves in as contact approaches.
+  const heroMask = useTransform(
+    driveProgress,
+    [0, SCRUB_HANDOFF_START - 0.08, SCRUB_HANDOFF_START + 0.06, 1],
+    [
+      "linear-gradient(to bottom, #000 0%, #000 100%, #000 100%, #000 100%, #000 100%, #000 100%)",
+      "linear-gradient(to bottom, #000 0%, #000 100%, #000 100%, #000 100%, #000 100%, #000 100%)",
+      "linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,0.85) 58%, rgba(0,0,0,0.45) 74%, rgba(0,0,0,0.12) 88%, transparent 100%)",
+      "linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,0.85) 58%, rgba(0,0,0,0.45) 74%, rgba(0,0,0,0.12) 88%, transparent 100%)",
+    ],
+  );
   const videoFade = useTransform(
     driveProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
@@ -1399,11 +1411,9 @@ export function ScrollHero() {
             className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#08090b] will-change-transform"
             style={{
               y: stickyLift,
-              // Feather the HERO out at the bottom so it spills into contact — not the CTA
-              maskImage:
-                "linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,0.85) 58%, rgba(0,0,0,0.45) 74%, rgba(0,0,0,0.12) 88%, transparent 100%)",
-              WebkitMaskImage:
-                "linear-gradient(to bottom, #000 0%, #000 42%, rgba(0,0,0,0.85) 58%, rgba(0,0,0,0.45) 74%, rgba(0,0,0,0.12) 88%, transparent 100%)",
+              // Bottom feather only during contact handoff (see heroMask)
+              maskImage: heroMask,
+              WebkitMaskImage: heroMask,
             }}
           >
             <motion.video
