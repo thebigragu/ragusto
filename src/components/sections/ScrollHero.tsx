@@ -555,53 +555,53 @@ function BeatCard({
       : "right-4 origin-center md:right-10 lg:right-16";
 
   const radius = isMobile ? "1.05rem" : v.radius;
-  // Meet the faces tightly so depth reads as one prism
-  const edgeInset = isMobile ? 1 : 2;
-  // Side walls: solid chrome at the front lip → continuous body → soft dissolve at rear
+  // Flush to the faces so thickness walls meet front/rear as one prism
+  const edgeInset = 0;
+  // Side walls carry the volume: solid through the body, soften only at the rear lip
   const metalRight = `linear-gradient(90deg,
     rgba(255,252,245,1) 0%,
-    rgba(236,220,180,1) 6%,
-    ${v.depthTint} 16%,
-    ${v.edgeGlow} 28%,
-    rgba(120,100,70,1) 42%,
-    rgba(48,44,40,1) 58%,
-    rgba(22,22,26,0.92) 72%,
-    rgba(12,12,14,0.45) 88%,
-    rgba(8,8,10,0) 100%)`;
+    rgba(236,220,180,1) 5%,
+    ${v.depthTint} 14%,
+    ${v.edgeGlow} 26%,
+    rgba(120,100,70,1) 40%,
+    rgba(52,48,44,1) 58%,
+    rgba(28,28,32,1) 74%,
+    rgba(16,16,18,0.75) 88%,
+    rgba(10,10,12,0.25) 100%)`;
   const metalLeft = `linear-gradient(270deg,
     rgba(255,250,240,1) 0%,
     ${v.depthTint} 12%,
-    rgba(150,128,88,1) 30%,
-    rgba(56,50,42,1) 50%,
-    rgba(24,24,28,0.9) 70%,
-    rgba(12,12,14,0.4) 88%,
-    rgba(8,8,10,0) 100%)`;
+    rgba(150,128,88,1) 28%,
+    rgba(56,50,42,1) 48%,
+    rgba(28,28,32,1) 70%,
+    rgba(16,16,18,0.7) 88%,
+    rgba(10,10,12,0.22) 100%)`;
   const metalTop = `linear-gradient(0deg,
     rgba(255,255,250,1) 0%,
     rgba(245,235,210,1) 8%,
-    ${v.depthTint} 20%,
-    ${v.edgeGlow} 34%,
-    rgba(90,78,56,1) 52%,
-    rgba(28,28,32,0.92) 70%,
-    rgba(12,12,14,0.4) 88%,
-    rgba(8,8,10,0) 100%)`;
+    ${v.depthTint} 18%,
+    ${v.edgeGlow} 32%,
+    rgba(90,78,56,1) 50%,
+    rgba(30,30,34,1) 72%,
+    rgba(16,16,18,0.7) 88%,
+    rgba(10,10,12,0.22) 100%)`;
   const metalBottom = `linear-gradient(180deg,
-    rgba(255,248,230,0.7) 0%,
-    rgba(90,78,58,1) 18%,
-    rgba(36,34,38,1) 42%,
-    rgba(18,18,22,0.9) 68%,
-    rgba(10,10,12,0.35) 88%,
-    rgba(8,8,10,0) 100%)`;
+    rgba(255,248,230,0.75) 0%,
+    rgba(90,78,58,1) 16%,
+    rgba(40,38,42,1) 40%,
+    rgba(24,24,28,1) 68%,
+    rgba(14,14,16,0.65) 88%,
+    rgba(10,10,12,0.2) 100%)`;
 
-  // Soft dissolve on walls toward the rear lip
+  // Keep walls fully present through most of the depth; dissolve only near the rear
   const wallFadeRight =
-    "linear-gradient(90deg, #000 0%, #000 52%, rgba(0,0,0,0.7) 74%, transparent 100%)";
+    "linear-gradient(90deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
   const wallFadeLeft =
-    "linear-gradient(270deg, #000 0%, #000 52%, rgba(0,0,0,0.7) 74%, transparent 100%)";
+    "linear-gradient(270deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
   const wallFadeTop =
-    "linear-gradient(0deg, #000 0%, #000 52%, rgba(0,0,0,0.7) 74%, transparent 100%)";
+    "linear-gradient(0deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
   const wallFadeBottom =
-    "linear-gradient(180deg, #000 0%, #000 52%, rgba(0,0,0,0.7) 74%, transparent 100%)";
+    "linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
 
   // Front face: solid brushed metal (steel body + gold specular bands)
   const faceMetal = `
@@ -673,38 +673,23 @@ function BeatCard({
           transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
         >
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Soft rear plane — no CSS blur (blur paints a rectangular ghost when yawing) */}
+          {/* Soft rear plane — fades at the lip; connection is the thickness walls */}
           <div
             aria-hidden
-            className="absolute inset-[3px]"
+            className="absolute inset-[4px]"
             style={{
               ...faceStyle,
-              background: `radial-gradient(ellipse 80% 74% at 50% 46%,
-                rgba(48,50,58,0.72) 0%,
-                rgba(24,26,32,0.45) 48%,
-                rgba(10,11,14,0.18) 78%,
+              background: `radial-gradient(ellipse 82% 76% at 50% 46%,
+                rgba(42,44,52,0.55) 0%,
+                rgba(20,22,28,0.32) 50%,
+                rgba(10,11,14,0.1) 78%,
                 transparent 100%)`,
               transform: `translateZ(${-halfT}px)`,
-              opacity: 0.75,
+              opacity: 0.7,
             }}
           />
 
-          {/* Single mid-depth fill — bridges volume without stacked rectangular slabs */}
-          <div
-            aria-hidden
-            className="absolute inset-[2px]"
-            style={{
-              ...faceStyle,
-              background: `linear-gradient(180deg,
-                ${v.depthTint.replace(/[\d.]+\)$/, "0.16)")} 0%,
-                rgba(24,26,32,0.88) 45%,
-                rgba(10,11,14,0.55) 100%)`,
-              transform: "translateZ(0px)",
-              opacity: 0.9,
-            }}
-          />
-
-          {/* Right wall — solid front connection, soft fade at rear */}
+          {/* Right thickness wall — joins front lip to rear */}
           <div
             aria-hidden
             style={{
@@ -712,15 +697,15 @@ function BeatCard({
               right: 0,
               transformOrigin: "right center",
               transform: `translateZ(${-halfT}px) rotateY(-90deg)`,
-              borderRadius: 1,
+              borderRadius: 0,
               background: metalRight,
-              boxShadow: "inset 0 0 8px rgba(255,252,240,0.16)",
+              boxShadow: "inset 0 0 10px rgba(255,252,240,0.14)",
               maskImage: wallFadeRight,
               WebkitMaskImage: wallFadeRight,
             }}
           />
 
-          {/* Left wall */}
+          {/* Left thickness wall */}
           <div
             aria-hidden
             style={{
@@ -728,15 +713,15 @@ function BeatCard({
               left: 0,
               transformOrigin: "left center",
               transform: `translateZ(${-halfT}px) rotateY(90deg)`,
-              borderRadius: 1,
+              borderRadius: 0,
               background: metalLeft,
-              boxShadow: "inset 0 0 6px rgba(255,255,255,0.08)",
+              boxShadow: "inset 0 0 8px rgba(255,255,255,0.06)",
               maskImage: wallFadeLeft,
               WebkitMaskImage: wallFadeLeft,
             }}
           />
 
-          {/* Top wall */}
+          {/* Top thickness wall */}
           <div
             aria-hidden
             style={{
@@ -747,9 +732,9 @@ function BeatCard({
               right: edgeInset,
               transformOrigin: "center top",
               transform: `translateZ(${-halfT}px) rotateX(90deg)`,
-              borderRadius: 1,
+              borderRadius: 0,
               background: metalTop,
-              boxShadow: "inset 0 0 8px rgba(255,252,240,0.16)",
+              boxShadow: "inset 0 0 10px rgba(255,252,240,0.14)",
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
               maskImage: wallFadeTop,
@@ -757,7 +742,7 @@ function BeatCard({
             }}
           />
 
-          {/* Bottom wall */}
+          {/* Bottom thickness wall */}
           <div
             aria-hidden
             style={{
@@ -768,7 +753,7 @@ function BeatCard({
               right: edgeInset,
               transformOrigin: "center bottom",
               transform: `translateZ(${-halfT}px) rotateX(-90deg)`,
-              borderRadius: 1,
+              borderRadius: 0,
               background: metalBottom,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
