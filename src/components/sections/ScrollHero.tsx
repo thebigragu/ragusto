@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { ContactModal } from "@/components/ui/ContactModal";
 import { Magnetic } from "@/components/ui/Magnetic";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { SITE } from "@/lib/seo";
 import {
   motion,
@@ -24,6 +25,8 @@ type BeatVariant = {
   edgeGlow: string;
   shimmerAngle: number;
   top: string;
+  /** Vertical rest on small screens (safer band, less extreme) */
+  topMobile: string;
   /** Glass thickness in px for side edge */
   thickness: number;
 };
@@ -63,6 +66,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(196,165,116,0.3)",
       shimmerAngle: 118,
       top: "68%",
+      topMobile: "58%",
       thickness: 34,
     },
   },
@@ -85,6 +89,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(150,200,210,0.28)",
       shimmerAngle: 64,
       top: "34%",
+      topMobile: "40%",
       thickness: 36,
     },
   },
@@ -107,6 +112,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(196,165,116,0.38)",
       shimmerAngle: 108,
       top: "50%",
+      topMobile: "50%",
       thickness: 32,
     },
   },
@@ -129,6 +135,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(240,226,196,0.32)",
       shimmerAngle: 52,
       top: "60%",
+      topMobile: "56%",
       thickness: 38,
     },
   },
@@ -316,15 +323,20 @@ function AsyncWord({
 function BeatCard({
   beat,
   progress,
+  isMobile,
 }: {
   beat: Beat;
   progress: MotionValue<number>;
+  isMobile: boolean;
 }) {
   const v = beat.variant;
   // Left panes exit up/right; right panes exit up/left (diagonally opposite)
   const exitDir = beat.side === "left" ? 1 : -1;
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
-  const T = Math.max(10, v.thickness);
+  const orbitScale = isMobile ? 0.42 : 1;
+  const tiltScale = isMobile ? 0.55 : 1;
+  const T = Math.max(10, isMobile ? Math.round(v.thickness * 0.48) : v.thickness);
+  const restTop = isMobile ? v.topMobile : v.top;
 
   const enterY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -367,8 +379,8 @@ function BeatCard({
   });
 
   // Resting tilt so prism depth reads while held; keep mild so type stays clear of folds
-  const restY = -exitDir * 7;
-  const restX = 4;
+  const restY = -exitDir * (isMobile ? 4 : 7);
+  const restX = isMobile ? 2 : 4;
 
   // Diagonal opposite orbit: left → up/right, right → up/left
   const orbitX = useTransform(progress, (p) => {
@@ -376,7 +388,7 @@ function BeatCard({
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     const theta = e * Math.PI * 0.92;
-    return exitDir * v.orbitR * Math.sin(theta);
+    return exitDir * v.orbitR * orbitScale * Math.sin(theta);
   });
 
   const orbitY = useTransform(progress, (p) => {
@@ -384,44 +396,42 @@ function BeatCard({
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     const theta = e * Math.PI * 0.92;
-    return -v.orbitR * (1 - Math.cos(theta)) - e * 340;
+    return -v.orbitR * orbitScale * (1 - Math.cos(theta)) - e * (isMobile ? 160 : 340);
   });
 
   const orbitZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return 40;
+    if (t <= EXIT_START) return isMobile ? 18 : 40;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
     const theta = e * Math.PI * 0.92;
-    return 40 - v.orbitR * Math.sin(theta) * 1.05;
+    return (isMobile ? 18 : 40) - v.orbitR * orbitScale * Math.sin(theta) * 1.05;
   });
 
   const rotateX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t < ENTER_END) {
-      return restX + (1 - smoothstep(t / ENTER_END)) * 18;
+      return restX + (1 - smoothstep(t / ENTER_END)) * 18 * tiltScale;
     }
     if (t <= EXIT_START) return restX;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    // Flip back as it climbs the arc
-    return restX - e * 78;
+    return restX - e * 78 * tiltScale;
   });
 
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t < ENTER_END) {
-      return restY + exitDir * (1 - smoothstep(t / ENTER_END)) * 28;
+      return restY + exitDir * (1 - smoothstep(t / ENTER_END)) * 28 * tiltScale;
     }
     if (t <= EXIT_START) return restY;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    // Twist toward exit direction — nearly edge-on mid-flight
-    return restY + exitDir * e * 118;
+    return restY + exitDir * e * 118 * tiltScale;
   });
 
   const rotateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t <= EXIT_START) return exitDir * -3;
+    if (t <= EXIT_START) return exitDir * -3 * tiltScale;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * (-3 + e * 42);
+    return exitDir * (-3 + e * 42) * tiltScale;
   });
 
   const orbitTransform = useMotionTemplate`translate3d(${orbitX}px, ${orbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
@@ -444,16 +454,16 @@ function BeatCard({
   const shimmerLocalRx = useTransform(rotateX, (rx) => rx * 0.1);
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px) rotateX(${shimmerLocalRx}deg) rotateY(${shimmerLocalRy}deg)`;
 
-  const contentZ = useTransform(layerBoost, (b) => T * 0.55 * b + 10);
-  const contentRx = useTransform(rotateX, (rx) => rx * 0.1);
-  const contentRy = useTransform(rotateY, (ry) => ry * 0.12);
-  const contentParX = useTransform(rotateY, (ry) => Math.sin((ry * Math.PI) / 180) * 10);
-  const contentParY = useTransform(rotateX, (rx) => -Math.sin((rx * Math.PI) / 180) * 8);
+  const contentZ = useTransform(layerBoost, (b) => T * (isMobile ? 0.35 : 0.55) * b + (isMobile ? 4 : 10));
+  const contentRx = useTransform(rotateX, (rx) => rx * (isMobile ? 0.06 : 0.1));
+  const contentRy = useTransform(rotateY, (ry) => ry * (isMobile ? 0.08 : 0.12));
+  const contentParX = useTransform(rotateY, (ry) => Math.sin((ry * Math.PI) / 180) * (isMobile ? 4 : 10));
+  const contentParY = useTransform(rotateX, (rx) => -Math.sin((rx * Math.PI) / 180) * (isMobile ? 3 : 8));
   const contentTransform = useMotionTemplate`translate3d(${contentParX}px, ${contentParY}px, ${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => 22 * b + 8);
-  const lineRx = useTransform(rotateX, (rx) => rx * 0.35);
-  const lineRy = useTransform(rotateY, (ry) => ry * 0.2);
+  const lineZ = useTransform(layerBoost, (b) => (isMobile ? 12 : 22) * b + (isMobile ? 4 : 8));
+  const lineRx = useTransform(rotateX, (rx) => rx * (isMobile ? 0.2 : 0.35));
+  const lineRy = useTransform(rotateY, (ry) => ry * (isMobile ? 0.12 : 0.2));
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
 
   const sheenShift = useTransform(rotateY, (ry) => {
@@ -496,13 +506,14 @@ function BeatCard({
       transparent calc(${shimmerPos}% + 22%),
       transparent 100%)`;
 
-  const sideClass =
-    beat.side === "left"
+  const sideClass = isMobile
+    ? "left-1/2 origin-center"
+    : beat.side === "left"
       ? "left-4 origin-center md:left-10 lg:left-16"
       : "right-4 origin-center md:right-10 lg:right-16";
 
   const faceStyle: CSSProperties = {
-    borderRadius: v.radius,
+    borderRadius: isMobile ? "1rem" : v.radius,
     background: `linear-gradient(145deg, ${v.glass} 0%, rgba(255,255,255,0.06) 45%, rgba(255,255,255,0.03) 100%)`,
     border: "none",
     outline: "none",
@@ -510,14 +521,15 @@ function BeatCard({
 
   return (
     <motion.div
-      className={`pointer-events-auto absolute z-20 max-w-[min(94vw,36rem)] -translate-y-1/2 ${sideClass}`}
+      className={`pointer-events-auto absolute z-20 max-w-[min(84vw,19.5rem)] -translate-y-1/2 md:max-w-[min(94vw,36rem)] ${sideClass}`}
       style={{
-        top: v.top,
+        top: restTop,
+        x: isMobile ? "-50%" : 0,
         opacity,
         y: enterY,
         filter,
         scale,
-        perspective: 1600,
+        perspective: isMobile ? 900 : 1600,
         transformStyle: "preserve-3d",
       }}
     >
@@ -646,8 +658,10 @@ function BeatCard({
               className="absolute inset-0"
               style={{
                 ...faceStyle,
-                backdropFilter: "blur(28px) saturate(1.2)",
-                WebkitBackdropFilter: "blur(28px) saturate(1.2)",
+                backdropFilter: isMobile ? "blur(16px) saturate(1.1)" : "blur(28px) saturate(1.2)",
+                WebkitBackdropFilter: isMobile
+                  ? "blur(16px) saturate(1.1)"
+                  : "blur(28px) saturate(1.2)",
                 boxShadow: `
                   inset 0 18px 36px rgba(255,255,255,0.07),
                   inset 0 -24px 40px rgba(0,0,0,0.18),
@@ -682,7 +696,7 @@ function BeatCard({
             />
 
             <motion.div
-              className={`relative overflow-visible px-12 py-10 md:px-16 md:py-12 ${
+              className={`relative overflow-visible px-5 py-5 sm:px-8 sm:py-7 md:px-16 md:py-12 ${
                 beat.side === "left" ? "md:pe-[4.5rem]" : "md:ps-[4.5rem]"
               }`}
               style={{
@@ -691,7 +705,7 @@ function BeatCard({
               }}
             >
               <p
-                className="overflow-visible whitespace-nowrap font-serif text-3xl leading-[1.45] tracking-normal text-white sm:text-4xl md:text-[2.75rem] md:leading-[1.42]"
+                className="overflow-visible text-center font-serif text-[1.35rem] leading-[1.35] tracking-normal text-white whitespace-normal sm:text-left sm:text-3xl sm:leading-[1.45] md:whitespace-nowrap md:text-[2.75rem] md:leading-[1.42]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
@@ -700,9 +714,9 @@ function BeatCard({
                     className="inline overflow-visible"
                     style={{ transformStyle: "preserve-3d" }}
                   >
-                    {i > 0 ? "\u00A0" : null}
+                    {i > 0 ? (isMobile ? " " : "\u00A0") : null}
                     <AsyncWord
-                      text={w.t.replace(/ /g, "\u00A0")}
+                      text={isMobile ? w.t : w.t.replace(/ /g, "\u00A0")}
                       emph={w.emph}
                       progress={progress}
                       beat={beat}
@@ -715,7 +729,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mt-6 overflow-visible text-sm tracking-[0.12em] text-white/60 uppercase md:mt-7 md:text-[0.95rem] md:leading-relaxed md:tracking-[0.14em]"
+                className="mt-3 overflow-visible text-center text-[0.65rem] tracking-[0.1em] text-white/60 uppercase sm:mt-5 sm:text-left sm:text-sm sm:tracking-[0.12em] md:mt-7 md:text-[0.95rem] md:leading-relaxed md:tracking-[0.14em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
@@ -742,7 +756,7 @@ function BeatCard({
 
               {/* Gold underline — floats ahead of type, tilts with the prism */}
               <motion.div
-                className="relative mt-6 h-3 w-full overflow-visible md:mt-7"
+                className="relative mt-4 h-3 w-full overflow-visible sm:mt-6 md:mt-7"
                 style={{
                   transform: lineTransform,
                   transformStyle: "preserve-3d",
@@ -809,20 +823,22 @@ function BeatCard({
 function ScrollCue({
   progress,
   scrollProgress,
+  isMobile,
 }: {
   progress: MotionValue<number>;
   scrollProgress: MotionValue<number>;
+  isMobile: boolean;
 }) {
-  const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.4, 0.12]);
+  const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.35, 0.1]);
 
-  // Right-middle (larger) → bottom-right (smaller)
-  const left = useTransform(scrollProgress, [0, 0.16], [91, 94]);
-  const top = useTransform(scrollProgress, [0, 0.16], [48, 90]);
+  // Desktop: mid-right → bottom-right. Mobile: quieter lower-right, smaller.
+  const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [86, 90] : [91, 94]);
+  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [62, 88] : [48, 90]);
   const leftPct = useMotionTemplate`${left}%`;
   const topPct = useMotionTemplate`${top}%`;
   const anchorX = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
   const anchorY = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
-  const scale = useTransform(scrollProgress, [0, 0.16], [1.35, 1]);
+  const scale = useTransform(scrollProgress, [0, 0.16], isMobile ? [1.05, 0.85] : [1.35, 1]);
   const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) scale(${scale})`;
 
   return (
@@ -837,22 +853,22 @@ function ScrollCue({
       aria-hidden
     >
       <motion.div
-        className="flex flex-col items-center gap-3"
+        className="flex flex-col items-center gap-2 md:gap-3"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
       >
-        <span className="text-[11px] font-medium tracking-[0.42em] text-[#e8d5b0] uppercase drop-shadow-[0_0_12px_rgba(196,165,116,0.55)] md:text-xs">
+        <span className="text-[9px] font-medium tracking-[0.36em] text-[#e8d5b0] uppercase drop-shadow-[0_0_12px_rgba(196,165,116,0.55)] md:text-xs md:tracking-[0.42em]">
           Scroll
         </span>
 
         <div className="relative">
           <motion.div
-            className="absolute -inset-3 rounded-full bg-[#c4a574]/25 blur-md"
+            className="absolute -inset-2 rounded-full bg-[#c4a574]/25 blur-md md:-inset-3"
             animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.92, 1.08, 0.92] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           />
           <motion.div
-            className="relative flex h-16 w-9 items-start justify-center rounded-full border-2 border-[#c4a574]/70 bg-black/45 p-2 shadow-[0_0_28px_rgba(196,165,116,0.45),inset_0_0_18px_rgba(196,165,116,0.12)] backdrop-blur-md md:h-[4.5rem] md:w-10"
+            className="relative flex h-11 w-6 items-start justify-center rounded-full border-2 border-[#c4a574]/70 bg-black/45 p-1.5 shadow-[0_0_28px_rgba(196,165,116,0.45),inset_0_0_18px_rgba(196,165,116,0.12)] backdrop-blur-md md:h-[4.5rem] md:w-10 md:p-2"
             animate={{
               borderColor: [
                 "rgba(196,165,116,0.55)",
@@ -868,8 +884,8 @@ function ScrollCue({
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           >
             <motion.span
-              className="mt-0.5 h-2.5 w-2.5 rounded-full bg-[#f0e2c4] shadow-[0_0_16px_rgba(240,226,196,0.95)] md:h-3 md:w-3"
-              animate={{ y: [0, 26, 0], opacity: [1, 0.35, 1] }}
+              className="mt-0.5 h-1.5 w-1.5 rounded-full bg-[#f0e2c4] shadow-[0_0_16px_rgba(240,226,196,0.95)] md:h-3 md:w-3"
+              animate={{ y: [0, isMobile ? 14 : 26, 0], opacity: [1, 0.35, 1] }}
               transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>
@@ -880,7 +896,7 @@ function ScrollCue({
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         >
-          <svg width="14" height="10" viewBox="0 0 14 10" fill="none" aria-hidden>
+          <svg width="12" height="8" viewBox="0 0 14 10" fill="none" aria-hidden className="md:h-[10px] md:w-[14px]">
             <path
               d="M1 1.5L7 7.5L13 1.5"
               stroke="currentColor"
@@ -890,11 +906,11 @@ function ScrollCue({
             />
           </svg>
           <svg
-            width="14"
-            height="10"
+            width="12"
+            height="8"
             viewBox="0 0 14 10"
             fill="none"
-            className="-mt-1.5 opacity-55"
+            className="-mt-1 opacity-55 md:-mt-1.5 md:h-[10px] md:w-[14px]"
             aria-hidden
           >
             <path
@@ -922,6 +938,7 @@ export function ScrollHero() {
   const rafRef = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
+  const isMobile = useIsMobile();
 
   const { scrollYProgress } = useScroll({
     target: scrubRef,
@@ -937,7 +954,11 @@ export function ScrollHero() {
   });
 
   // Lift sticky so contact enters during the last second of video (not after it ends)
-  const stickyLift = useTransform(scrollYProgress, [SCRUB_HANDOFF_START, 1], ["0%", "-58%"]);
+  const stickyLift = useTransform(
+    scrollYProgress,
+    [SCRUB_HANDOFF_START, 1],
+    isMobile ? ["0%", "-48%"] : ["0%", "-58%"],
+  );
   const featherOpacity = useTransform(
     scrollYProgress,
     [SCRUB_HANDOFF_START - 0.04, SCRUB_HANDOFF_START + 0.06, 1],
@@ -998,12 +1019,12 @@ export function ScrollHero() {
 
   return (
     <>
-      <div className="pointer-events-auto fixed top-10 left-10 z-50 md:top-14 md:left-14">
+      <div className="pointer-events-auto fixed top-5 left-5 z-50 sm:top-8 sm:left-8 md:top-14 md:left-14">
         <div className="relative inline-flex items-center justify-center">
           {/* Outer breath — soft gold bloom */}
           <motion.span
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[200%] w-[220%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+            className="pointer-events-none absolute left-1/2 top-[42%] -z-10 h-[170%] w-[190%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl md:h-[200%] md:w-[220%] md:blur-3xl"
             style={{
               background:
                 "radial-gradient(ellipse 58% 52% at 50% 45%, rgba(196,165,116,0.7) 0%, rgba(196,165,116,0.35) 32%, rgba(240,226,196,0.14) 52%, transparent 72%)",
@@ -1017,7 +1038,7 @@ export function ScrollHero() {
           {/* Mid breath — warmer core */}
           <motion.span
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[40%] -z-10 h-[150%] w-[165%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+            className="pointer-events-none absolute left-1/2 top-[40%] -z-10 h-[130%] w-[145%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl md:h-[150%] md:w-[165%] md:blur-2xl"
             style={{
               background:
                 "radial-gradient(circle at 50% 42%, rgba(240,226,196,0.65) 0%, rgba(196,165,116,0.35) 38%, rgba(196,165,116,0.1) 62%, transparent 76%)",
@@ -1031,7 +1052,7 @@ export function ScrollHero() {
           {/* Inner pulse — tight halo on the emblem */}
           <motion.span
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[38%] -z-10 h-[95%] w-[110%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl"
+            className="pointer-events-none absolute left-1/2 top-[38%] -z-10 h-[90%] w-[105%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-lg md:h-[95%] md:w-[110%] md:blur-xl"
             style={{
               background:
                 "radial-gradient(circle at 50% 40%, rgba(255,240,210,0.55) 0%, rgba(196,165,116,0.28) 45%, transparent 70%)",
@@ -1048,18 +1069,18 @@ export function ScrollHero() {
             width={220}
             height={260}
             priority
-            className="relative h-16 w-auto opacity-95 transition duration-500 hover:brightness-125 md:h-[4.75rem] lg:h-20"
+            className="relative h-11 w-auto opacity-95 transition duration-500 hover:brightness-125 sm:h-14 md:h-[4.75rem] lg:h-20"
           />
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[680vh] bg-[#08090b]">
+      <section ref={scrubRef} className="relative h-[440vh] bg-[#08090b] md:h-[680vh]">
         <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden">
           <motion.div className="relative h-full w-full" style={{ y: stickyLift }}>
-            <div className="relative h-[100svh] w-full overflow-hidden bg-black">
+            <div className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-black">
               <video
                 ref={videoRef}
-                className="absolute inset-0 h-full w-full object-cover object-center"
+                className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-center max-md:h-[88%] max-md:w-[96%] max-md:object-contain max-md:scale-[0.92] md:inset-0 md:left-0 md:top-0 md:h-full md:w-full md:translate-x-0 md:translate-y-0 md:object-cover md:scale-100"
                 src="/videos/hero-kling.mp4"
                 muted
                 playsInline
@@ -1068,14 +1089,23 @@ export function ScrollHero() {
               />
 
               {BEATS.map((beat) => (
-                <BeatCard key={beat.id} beat={beat} progress={videoProgress} />
+                <BeatCard
+                  key={beat.id}
+                  beat={beat}
+                  progress={videoProgress}
+                  isMobile={isMobile}
+                />
               ))}
 
-              <ScrollCue progress={videoProgress} scrollProgress={scrollYProgress} />
+              <ScrollCue
+                progress={videoProgress}
+                scrollProgress={scrollYProgress}
+                isMobile={isMobile}
+              />
 
               {/* Deep feather into contact during last-second handoff */}
               <motion.div
-                className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[70%]"
+                className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[55%] md:h-[70%]"
                 style={{
                   opacity: featherOpacity,
                   background:
@@ -1090,7 +1120,7 @@ export function ScrollHero() {
       {/* Overlaps handoff so contact appears as last second plays — continuous blend, no hard break */}
       <section
         id="contact"
-        className="relative z-10 -mt-[58vh] bg-[#08090b] px-6 pt-[18vh] pb-16 md:pb-20"
+        className="relative z-10 -mt-[42vh] bg-[#08090b] px-5 pt-[12vh] pb-14 md:-mt-[58vh] md:px-6 md:pt-[18vh] md:pb-20"
       >
         <div
           className="pointer-events-none absolute inset-x-0 -top-24 h-48"
@@ -1103,17 +1133,17 @@ export function ScrollHero() {
         <div className="pointer-events-none absolute inset-0 ambient-grid opacity-15" />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <p className="text-[11.5pt] tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-[13pt]">
+          <p className="text-[10.5pt] tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-[13pt]">
             Begin
           </p>
-          <h2 className="mt-5 font-serif text-4xl tracking-tight text-white md:text-6xl lg:text-7xl">
+          <h2 className="mt-4 font-serif text-[2rem] leading-tight tracking-tight text-white sm:text-4xl md:mt-5 md:text-6xl lg:text-7xl">
             Ready to build something{" "}
             <span className="inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text pe-[0.28em] pb-[0.08em] italic text-transparent">
               exceptional
             </span>
             ?
           </h2>
-          <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/60 md:text-lg">
+          <p className="mx-auto mt-5 max-w-xl text-[0.95rem] leading-relaxed text-white/60 md:mt-6 md:text-lg">
             {SITE.description.split(" ").map((word, i, arr) => {
               const clean = word.replace(/[.,]/g, "");
               const emph = ["cinematic", "atelier-level", "craft"].includes(clean);
@@ -1126,7 +1156,7 @@ export function ScrollHero() {
             })}
           </p>
 
-          <div className="mt-10 flex justify-center">
+          <div className="mt-8 flex justify-center md:mt-10">
             <Magnetic>
               <Button
                 type="button"
