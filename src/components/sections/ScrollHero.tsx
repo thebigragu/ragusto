@@ -1384,7 +1384,7 @@ export function ScrollHero() {
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[440vh] bg-transparent md:h-[680vh]">
+      <section ref={scrubRef} className="relative h-[780vh] bg-transparent md:h-[680vh]">
         <div className="sticky top-0 z-20 h-[100dvh] w-full overflow-hidden bg-transparent">
           <motion.div
             className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#08090b] will-change-transform"
