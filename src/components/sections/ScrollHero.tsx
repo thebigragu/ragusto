@@ -752,23 +752,17 @@ function BeatCard({
               transformStyle: "preserve-3d",
             }}
           >
-            {/* Front glass — shares rim/tint with the walls */}
+            {/* Front glass — opaque face so the rear plate never shows through */}
             <div
               aria-hidden
               className="absolute inset-0 overflow-hidden"
               style={{
                 ...faceStyle,
                 background: `linear-gradient(155deg,
-                  rgba(255,255,255,0.16) 0%,
-                  ${v.glass} 22%,
-                  rgba(18,20,26,0.55) 58%,
-                  rgba(10,11,14,0.72) 100%)`,
-                backdropFilter: isMobile
-                  ? "blur(22px) saturate(1.25) brightness(1.04)"
-                  : "blur(36px) saturate(1.35) brightness(1.06)",
-                WebkitBackdropFilter: isMobile
-                  ? "blur(22px) saturate(1.25) brightness(1.04)"
-                  : "blur(36px) saturate(1.35) brightness(1.06)",
+                  rgba(255,255,255,0.2) 0%,
+                  ${v.glass.replace(/[\d.]+\)$/, "0.82)")} 16%,
+                  rgba(22,24,30,0.97) 48%,
+                  rgba(10,11,14,0.99) 100%)`,
                 boxShadow: `
                   inset 0 1px 0 rgba(255,255,255,0.22),
                   inset 0 -1px 0 rgba(0,0,0,0.35),
