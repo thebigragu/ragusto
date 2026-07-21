@@ -748,7 +748,7 @@ export function ScrollHero() {
   return (
     <>
       {/* Fixed brand mark — stays put across hero scrub and contact */}
-      <div className="pointer-events-auto fixed top-10 right-10 z-50 md:top-14 md:right-14">
+      <div className="pointer-events-auto fixed top-10 left-10 z-50 md:top-14 md:left-14">
         <Image
           src="/brand/ragusto-logo.png"
           alt="Ragusto"
