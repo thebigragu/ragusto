@@ -228,7 +228,8 @@ function AsyncWord({
     const e = Math.min(1, Math.max(0, (local - 0.4 - start * 0.5) / 0.35));
     return e * 8;
   });
-  const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
+  // Avoid binding filter/textShadow MotionValues — WAAPI rejects them on mobile
+  const exitFade = useTransform(blur, (b) => (b < 0.05 ? 1 : Math.max(0.15, 1 - b / 10)));
 
   // Keep glyphs coplanar enough that they stay inside the rounded face
   const wordZ = useTransform(progress, (p) => {
@@ -260,37 +261,19 @@ function AsyncWord({
 
   const wordTransform = useMotionTemplate`translate3d(0px, ${wordY}px, ${wordZ}px) rotateX(${wordRx}deg) rotateY(${wordRy}deg)`;
 
-  const textShadow = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    let rx = 0;
-    let ry = 0;
-    if (t < ENTER_END) {
-      rx = (1 - smoothstep(t / ENTER_END)) * 14;
-      ry = exitDir * (1 - smoothstep(t / ENTER_END)) * 18;
-    } else if (t > EXIT_START) {
-      const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-      rx = -e * 52;
-      ry = exitDir * e * 72;
-    }
-    // At rest: tight depth shadow only (no gold glow spill)
-    if (t >= ENTER_END && t <= EXIT_START) {
-      return emph
-        ? "0 6px 14px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08)"
-        : "0 5px 12px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.08)";
-    }
-    const sx = -Math.sin((ry * Math.PI) / 180) * 8;
-    const sy = 5 + Math.sin((rx * Math.PI) / 180) * 6;
-    return `${sx}px ${sy}px 12px rgba(0,0,0,0.45)`;
-  });
+  const wordOpacity = useTransform([opacity, exitFade], ([o, f]) => (o as number) * (f as number));
+
+  const restShadow = emph
+    ? "0 6px 14px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08)"
+    : "0 5px 12px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.08)";
 
   if (kind === "sub") {
     return (
       <motion.span
         style={{
-          opacity,
-          filter,
+          opacity: wordOpacity,
           transform: wordTransform,
-          textShadow,
+          textShadow: restShadow,
           transformStyle: "preserve-3d",
         }}
         className="inline-block py-0.5"
@@ -303,10 +286,9 @@ function AsyncWord({
   return (
     <motion.span
       style={{
-        opacity,
-        filter,
+        opacity: wordOpacity,
         transform: wordTransform,
-        textShadow,
+        textShadow: restShadow,
         transformStyle: "preserve-3d",
       }}
       className={`inline-block ${
@@ -503,6 +485,7 @@ function BeatCard({
 
   const shimmerZ = useTransform(layerBoost, (b) => 2 + 5 * b);
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
+  const shimmerLayerRef = useRef<HTMLDivElement>(null);
 
   const contentZ = useTransform(layerBoost, (b) => (isMobile ? 8 : 14) * b);
   // Keep copy coplanar with the face so type stays centered inside the pane
@@ -544,6 +527,16 @@ function BeatCard({
       rgba(255,255,255,0.12) calc(${shimmerPos}% + 28%),
       transparent calc(${shimmerPos}% + 38%),
       transparent 100%)`;
+
+  // Gradient backgrounds can't go through Framer→WAAPI style binding on mobile
+  useMotionValueEvent(shimmerBackground, "change", (bg) => {
+    const el = shimmerLayerRef.current;
+    if (el) el.style.background = bg;
+  });
+  useEffect(() => {
+    const el = shimmerLayerRef.current;
+    if (el) el.style.background = shimmerBackground.get();
+  }, [shimmerBackground]);
 
   const sideClass = isMobile
     ? "left-1/2 origin-center"
@@ -749,26 +742,19 @@ function BeatCard({
             style={{
               borderRadius: radius,
               boxShadow:
-                "inset 0 0 0 1px rgba(196,165,116,0.55), inset 0 0 18px 2px rgba(196,165,116,0.22), 0 0 14px 2px rgba(196,165,116,0.28), 0 0 36px 8px rgba(196,165,116,0.16)",
+                "inset 0 0 0 1.5px rgba(240,226,196,0.75), inset 0 0 22px 3px rgba(196,165,116,0.35), 0 0 18px 3px rgba(196,165,116,0.4), 0 0 44px 10px rgba(196,165,116,0.28)",
             }}
-            animate={{
-              opacity: [0.55, 1, 0.55],
-              boxShadow: [
-                "inset 0 0 0 1px rgba(196,165,116,0.45), inset 0 0 14px 1px rgba(196,165,116,0.16), 0 0 10px 1px rgba(196,165,116,0.22), 0 0 28px 6px rgba(196,165,116,0.12)",
-                "inset 0 0 0 2px rgba(255,236,200,0.95), inset 0 0 26px 4px rgba(240,226,196,0.5), 0 0 22px 4px rgba(240,226,196,0.65), 0 0 52px 14px rgba(196,165,116,0.42)",
-                "inset 0 0 0 1px rgba(196,165,116,0.45), inset 0 0 14px 1px rgba(196,165,116,0.16), 0 0 10px 1px rgba(196,165,116,0.22), 0 0 28px 6px rgba(196,165,116,0.12)",
-              ],
-            }}
+            animate={{ opacity: [0.55, 1, 0.55] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           />
 
           <motion.div
+            ref={shimmerLayerRef}
             aria-hidden
             className="pointer-events-none absolute inset-0 overflow-hidden"
             style={{
               opacity: shimmerOpacity,
               borderRadius: radius,
-              background: shimmerBackground,
               transform: shimmerLayerTransform,
               transformStyle: "preserve-3d",
             }}
@@ -882,19 +868,29 @@ function ScrollCue({
   // Mobile: horizontal center, upper-third → bottom-right.
   const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [50, 92] : [91, 94]);
   const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [24, 88] : [48, 90]);
-  const leftPct = useMotionTemplate`${left}%`;
-  const topPct = useMotionTemplate`${top}%`;
+  const cueRef = useRef<HTMLDivElement>(null);
   const anchorX = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
   const anchorY = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
   const scale = useTransform(scrollProgress, [0, 0.16], isMobile ? [1.12, 0.85] : [1.35, 1]);
   const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) scale(${scale})`;
 
+  useMotionValueEvent(left, "change", (v) => {
+    if (cueRef.current) cueRef.current.style.left = `${v}%`;
+  });
+  useMotionValueEvent(top, "change", (v) => {
+    if (cueRef.current) cueRef.current.style.top = `${v}%`;
+  });
+  useEffect(() => {
+    if (!cueRef.current) return;
+    cueRef.current.style.left = `${left.get()}%`;
+    cueRef.current.style.top = `${top.get()}%`;
+  }, [left, top]);
+
   return (
     <motion.div
+      ref={cueRef}
       className="pointer-events-none absolute z-40"
       style={{
-        left: leftPct,
-        top: topPct,
         opacity,
         transform: cueTransform,
       }}
@@ -917,18 +913,7 @@ function ScrollCue({
           />
           <motion.div
             className="relative flex h-11 w-6 items-start justify-center rounded-full border-2 border-[#c4a574]/70 bg-black/45 p-1.5 shadow-[0_0_28px_rgba(196,165,116,0.45),inset_0_0_18px_rgba(196,165,116,0.12)] backdrop-blur-md md:h-[4.5rem] md:w-10 md:p-2"
-            animate={{
-              borderColor: [
-                "rgba(196,165,116,0.55)",
-                "rgba(240,226,196,0.95)",
-                "rgba(196,165,116,0.55)",
-              ],
-              boxShadow: [
-                "0 0 22px rgba(196,165,116,0.35), inset 0 0 14px rgba(196,165,116,0.1)",
-                "0 0 36px rgba(196,165,116,0.7), inset 0 0 20px rgba(240,226,196,0.18)",
-                "0 0 22px rgba(196,165,116,0.35), inset 0 0 14px rgba(196,165,116,0.1)",
-              ],
-            }}
+            animate={{ opacity: [0.85, 1, 0.85] }}
             transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
           >
             <motion.span
@@ -1093,6 +1078,22 @@ export function ScrollHero() {
     [0, 0.3, 0.7, 1],
   );
 
+  const heroFrameRef = useRef<HTMLDivElement>(null);
+  // mask-image gradients crash mobile WAAPI when bound as MotionValues
+  useMotionValueEvent(heroMask, "change", (mask) => {
+    const el = heroFrameRef.current;
+    if (!el) return;
+    el.style.maskImage = mask;
+    el.style.webkitMaskImage = mask;
+  });
+  useEffect(() => {
+    const el = heroFrameRef.current;
+    if (!el) return;
+    const mask = heroMask.get();
+    el.style.maskImage = mask;
+    el.style.webkitMaskImage = mask;
+  }, [heroMask]);
+
   useMotionValueEvent(videoProgress, "change", (p) => {
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
@@ -1105,6 +1106,8 @@ export function ScrollHero() {
 
     video.pause();
     video.playsInline = true;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
     try {
       video.disableRemotePlayback = true;
     } catch {
@@ -1245,12 +1248,10 @@ export function ScrollHero() {
       <section ref={scrubRef} className="relative h-[620vh] bg-transparent md:h-[680vh]">
         <div className="sticky top-0 z-20 h-[100dvh] w-full overflow-hidden bg-transparent">
           <motion.div
+            ref={heroFrameRef}
             className="relative flex h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#08090b] will-change-transform"
             style={{
               y: stickyLift,
-              // Bottom feather only during contact handoff (see heroMask)
-              maskImage: heroMask,
-              WebkitMaskImage: heroMask,
             }}
           >
             <motion.video
@@ -1260,7 +1261,7 @@ export function ScrollHero() {
               src={videoSrc}
               muted
               playsInline
-              preload="auto"
+              preload={isMobile ? "metadata" : "auto"}
               aria-hidden
               style={{ opacity: videoFade }}
             />
