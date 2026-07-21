@@ -67,10 +67,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 520,
       radius: "1.4rem",
-      glass: "rgba(255,255,255,0.08)",
-      rim: "rgba(255,255,255,0.18)",
+      glass: "rgba(255,255,255,0.045)",
+      rim: "rgba(255,255,255,0.14)",
       edgeGlow: "rgba(196,165,116,0.38)",
-      depthTint: "rgba(236,216,178,0.72)",
+      depthTint: "rgba(236,216,178,0.58)",
       shimmerAngle: 118,
       top: "68%",
       topMobile: "18%",
@@ -91,10 +91,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 560,
       radius: "1.15rem",
-      glass: "rgba(210,230,240,0.07)",
-      rim: "rgba(230,245,255,0.16)",
+      glass: "rgba(210,230,240,0.04)",
+      rim: "rgba(230,245,255,0.12)",
       edgeGlow: "rgba(150,200,210,0.35)",
-      depthTint: "rgba(198,228,238,0.68)",
+      depthTint: "rgba(198,228,238,0.55)",
       shimmerAngle: 64,
       top: "34%",
       topMobile: "80%",
@@ -115,10 +115,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 500,
       radius: "1.7rem",
-      glass: "rgba(255,248,235,0.08)",
-      rim: "rgba(196,165,116,0.2)",
+      glass: "rgba(255,248,235,0.045)",
+      rim: "rgba(196,165,116,0.16)",
       edgeGlow: "rgba(196,165,116,0.42)",
-      depthTint: "rgba(242,224,196,0.7)",
+      depthTint: "rgba(242,224,196,0.56)",
       shimmerAngle: 108,
       top: "50%",
       topMobile: "22%",
@@ -139,10 +139,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 580,
       radius: "1rem",
-      glass: "rgba(255,255,255,0.09)",
-      rim: "rgba(255,255,255,0.18)",
+      glass: "rgba(255,255,255,0.05)",
+      rim: "rgba(255,255,255,0.14)",
       edgeGlow: "rgba(240,226,196,0.4)",
-      depthTint: "rgba(248,236,214,0.74)",
+      depthTint: "rgba(248,236,214,0.58)",
       shimmerAngle: 52,
       top: "60%",
       topMobile: "76%",
@@ -375,8 +375,8 @@ function AsyncWord({
     // At rest: soft forward extrusion shadow (depth without tilt)
     if (t >= ENTER_END && t <= EXIT_START) {
       return emph
-        ? "0 10px 22px rgba(0,0,0,0.45), 0 2px 0 rgba(255,255,255,0.08), 0 0 24px rgba(196,165,116,0.28)"
-        : "0 8px 18px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.1)";
+        ? "0 10px 22px rgba(0,0,0,0.55), 0 2px 0 rgba(255,255,255,0.1), 0 0 28px rgba(196,165,116,0.32)"
+        : "0 8px 20px rgba(0,0,0,0.52), 0 1px 0 rgba(255,255,255,0.12)";
     }
     const sx = -Math.sin((ry * Math.PI) / 180) * 10;
     const sy = 6 + Math.sin((rx * Math.PI) / 180) * 8;
@@ -760,9 +760,10 @@ function BeatCard({
             style={{
               ...faceStyle,
               background:
-                "linear-gradient(165deg, rgba(22,26,34,0.98), rgba(2,4,8,1))",
-              boxShadow: "inset 0 0 56px rgba(0,0,0,0.62)",
+                "linear-gradient(165deg, rgba(22,26,34,0.42), rgba(2,4,8,0.55))",
+              boxShadow: "inset 0 0 56px rgba(0,0,0,0.28)",
               transform: `translateZ(${-halfT}px)`,
+              opacity: 0.7,
             }}
           />
 
@@ -773,7 +774,7 @@ function BeatCard({
               borderRadius: radius,
               background: `radial-gradient(ellipse 80% 70% at 50% 40%, ${v.glass}, transparent 70%)`,
               transform: "translateZ(0px)",
-              opacity: 0.45,
+              opacity: 0.28,
               filter: "blur(8px)",
               backfaceVisibility: "hidden",
             }}
@@ -876,20 +877,20 @@ function BeatCard({
               style={{
                 ...faceStyle,
                 background: `linear-gradient(155deg,
-                  rgba(255,255,255,0.1) 0%,
+                  rgba(255,255,255,0.055) 0%,
                   ${v.glass} 30%,
-                  rgba(255,255,255,0.03) 64%,
-                  rgba(8,10,14,0.28) 100%)`,
+                  rgba(255,255,255,0.018) 64%,
+                  rgba(8,10,14,0.12) 100%)`,
                 backdropFilter: isMobile
-                  ? "blur(22px) saturate(1.2) brightness(1.04)"
-                  : "blur(36px) saturate(1.28) brightness(1.06)",
+                  ? "blur(18px) saturate(1.15) brightness(1.03)"
+                  : "blur(32px) saturate(1.2) brightness(1.04)",
                 WebkitBackdropFilter: isMobile
-                  ? "blur(22px) saturate(1.2) brightness(1.04)"
-                  : "blur(36px) saturate(1.28) brightness(1.06)",
+                  ? "blur(18px) saturate(1.15) brightness(1.03)"
+                  : "blur(32px) saturate(1.2) brightness(1.04)",
                 boxShadow: `
-                  inset 0 22px 48px rgba(255,255,255,0.07),
-                  inset 0 -32px 56px rgba(0,0,0,0.28),
-                  0 40px 90px rgba(0,0,0,0.55),
+                  inset 0 22px 48px rgba(255,255,255,0.045),
+                  inset 0 -32px 56px rgba(0,0,0,0.16),
+                  0 40px 90px rgba(0,0,0,0.38),
                   0 0 72px ${softGlow}
                 `,
               }}
@@ -901,11 +902,11 @@ function BeatCard({
               style={{
                 borderRadius: radius,
                 boxShadow: `
-                  inset 0 0 0 1px rgba(255,255,255,0.04),
-                  inset 0 0 28px rgba(8,9,11,0.35)
+                  inset 0 0 0 1px rgba(255,255,255,0.03),
+                  inset 0 0 28px rgba(8,9,11,0.22)
                 `,
                 mixBlendMode: "multiply",
-                opacity: 0.65,
+                opacity: 0.45,
               }}
             />
 
@@ -915,10 +916,10 @@ function BeatCard({
               style={{
                 borderRadius: radius,
                 background: `
-                  radial-gradient(ellipse 95% 70% at 16% 8%, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.06) 32%, transparent 58%),
-                  linear-gradient(148deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 28%, transparent 52%)
+                  radial-gradient(ellipse 95% 70% at 16% 8%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 32%, transparent 58%),
+                  linear-gradient(148deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 28%, transparent 52%)
                 `,
-                opacity: 0.72,
+                opacity: 0.55,
                 filter: "blur(2.5px)",
                 maskImage:
                   "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
