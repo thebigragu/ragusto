@@ -739,6 +739,8 @@ function BeatCard({
           animate={{ y: [0, -5, 0] }}
           transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
         >
+        <GoldDustAura seed={beat.id} isMobile={isMobile} />
+
         <motion.div
           aria-hidden
           className="pointer-events-none absolute left-[8%] right-[8%] top-[97%] h-14 rounded-[100%]"
@@ -1217,21 +1219,27 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
 
-  // Hero lifts out as the last second begins; contact feathers in over it
+  // Hero lifts only ~halfway — remaining lower frame stays visible under contact
   const stickyLift = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
-    ["0%", "-42%", "-110%"],
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
+    ["0%", "-28%", "-50%"],
   );
   const featherOpacity = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START - 0.08, SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
-    [0, 0.4, 0.8, 1],
+    [SCRUB_HANDOFF_START - 0.06, SCRUB_HANDOFF_START + 0.08, 1],
+    [0, 0.45, 0.62],
   );
   const videoFade = useTransform(
     driveProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
-    [1, 0.45, 0.12],
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
+    [1, 0.85, 0.7],
+  );
+  // Contact rises into the lower half over the lingering hero
+  const contactParallax = useTransform(
+    driveProgress,
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
+    ["36vh", "14vh", "0vh"],
   );
 
   useMotionValueEvent(videoProgress, "change", (p) => {
@@ -1404,44 +1412,45 @@ export function ScrollHero() {
               isMobile={isMobile}
             />
 
-            {/* Continuous veil into contact — soft, tall, no hard band */}
+            {/* Soft veil — never solid black; keeps lower hero readable under contact */}
             <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[85%] md:h-[90%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[55%] md:h-[58%]"
               style={{
                 opacity: featherOpacity,
                 background:
-                  "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.08) 18%, rgba(8,9,11,0.28) 38%, rgba(8,9,11,0.55) 55%, rgba(8,9,11,0.82) 72%, rgba(8,9,11,0.96) 88%, #08090b 100%)",
+                  "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.12) 28%, rgba(8,9,11,0.38) 58%, rgba(8,9,11,0.62) 82%, rgba(8,9,11,0.78) 100%)",
               }}
             />
           </motion.div>
         </div>
       </section>
 
-      {/* Overlaps hero; tight Begin spacing; soft gold wash without a hard seam */}
-      <section
+      {/* Parallax contact over the remaining ~50% hero — transparent top, no black gap */}
+      <motion.section
         id="contact"
-        className="relative z-30 -mt-[82vh] bg-transparent px-5 pt-[10vh] pb-14 md:-mt-[96vh] md:px-6 md:pt-[12vh] md:pb-20"
+        className="relative z-30 -mt-[52vh] bg-transparent px-5 pt-[8vh] pb-14 md:-mt-[54vh] md:px-6 md:pt-[10vh] md:pb-20"
+        style={{ y: contactParallax }}
       >
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[38vh] md:h-[42vh]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[48vh] md:h-[52vh]"
           style={{
             background:
-              "linear-gradient(to bottom, transparent 0%, rgba(196,165,116,0.035) 10%, rgba(196,165,116,0.06) 22%, rgba(8,9,11,0.28) 40%, rgba(8,9,11,0.7) 68%, rgba(8,9,11,0.94) 88%, #08090b 100%)",
+              "linear-gradient(to bottom, transparent 0%, transparent 18%, rgba(196,165,116,0.04) 32%, rgba(196,165,116,0.07) 42%, rgba(8,9,11,0.22) 58%, rgba(8,9,11,0.55) 78%, rgba(8,9,11,0.88) 100%)",
           }}
         />
-        <div className="pointer-events-none absolute inset-x-0 top-[28vh] bottom-0 bg-[#08090b] md:top-[32vh]" />
+        <div className="pointer-events-none absolute inset-x-0 top-[42vh] bottom-0 bg-[#08090b] md:top-[46vh]" />
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-[55vh]"
           style={{
             background:
-              "radial-gradient(ellipse 95% 60% at 50% 12%, rgba(196,165,116,0.1) 0%, rgba(196,165,116,0.04) 38%, transparent 72%)",
+              "radial-gradient(ellipse 95% 55% at 50% 28%, rgba(196,165,116,0.1) 0%, rgba(196,165,116,0.04) 40%, transparent 72%)",
           }}
         />
         <div
-          className="pointer-events-none absolute inset-x-0 top-[18vh] bottom-0 ambient-grid opacity-10"
+          className="pointer-events-none absolute inset-x-0 top-[28vh] bottom-0 ambient-grid opacity-10"
           style={{
-            maskImage: "linear-gradient(to bottom, transparent 0%, black 28%)",
-            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 28%)",
+            maskImage: "linear-gradient(to bottom, transparent 0%, black 32%)",
+            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 32%)",
           }}
         />
 
@@ -1481,7 +1490,7 @@ export function ScrollHero() {
             </Magnetic>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       <ContactModal open={contactOpen} onClose={closeContact} />
     </>
