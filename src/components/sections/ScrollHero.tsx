@@ -1014,16 +1014,21 @@ export function ScrollHero() {
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
 
-  // Contact scrolls over the hero during the last second — no sticky lift (that left a black void)
+  // Hero lifts out as the last second begins; contact feathers in over it
+  const stickyLift = useTransform(
+    scrollYProgress,
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
+    ["0%", "-42%", "-110%"],
+  );
   const featherOpacity = useTransform(
     scrollYProgress,
-    [SCRUB_HANDOFF_START - 0.1, SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
-    [0, 0.45, 0.85, 1],
+    [SCRUB_HANDOFF_START - 0.08, SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.1, 1],
+    [0, 0.4, 0.8, 1],
   );
   const videoFade = useTransform(
     scrollYProgress,
-    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.14, 1],
-    [1, 0.55, 0.2],
+    [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, 1],
+    [1, 0.45, 0.12],
   );
 
   useMotionValueEvent(videoProgress, "change", (p) => {
@@ -1137,7 +1142,10 @@ export function ScrollHero() {
 
       <section ref={scrubRef} className="relative h-[440vh] bg-transparent md:h-[680vh]">
         <div className="sticky top-0 z-20 h-[100svh] w-full overflow-hidden bg-transparent">
-          <div className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-[#08090b]">
+          <motion.div
+            className="relative flex h-[100svh] w-full items-center justify-center overflow-hidden bg-[#08090b]"
+            style={{ y: stickyLift }}
+          >
             <motion.video
               key={videoSrc}
               ref={videoRef}
@@ -1174,26 +1182,37 @@ export function ScrollHero() {
                   "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.08) 18%, rgba(8,9,11,0.28) 38%, rgba(8,9,11,0.55) 55%, rgba(8,9,11,0.82) 72%, rgba(8,9,11,0.96) 88%, #08090b 100%)",
               }}
             />
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Overlaps hero (above sticky) so contact arrives over the video — no black gap */}
+      {/* Overlaps hero; tight Begin spacing; soft gold wash without a hard seam */}
       <section
         id="contact"
-        className="relative z-30 -mt-[78vh] bg-transparent px-5 pt-[32vh] pb-14 md:-mt-[92vh] md:px-6 md:pt-[42vh] md:pb-20"
+        className="relative z-30 -mt-[82vh] bg-transparent px-5 pt-[10vh] pb-14 md:-mt-[96vh] md:px-6 md:pt-[12vh] md:pb-20"
       >
-        {/* Top of contact is transparent → solid so video feathers through */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-[48vh] md:h-[56vh]"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[38vh] md:h-[42vh]"
           style={{
             background:
-              "linear-gradient(to bottom, transparent 0%, rgba(8,9,11,0.12) 20%, rgba(8,9,11,0.4) 42%, rgba(8,9,11,0.78) 68%, rgba(8,9,11,0.96) 88%, #08090b 100%)",
+              "linear-gradient(to bottom, transparent 0%, rgba(196,165,116,0.035) 10%, rgba(196,165,116,0.06) 22%, rgba(8,9,11,0.28) 40%, rgba(8,9,11,0.7) 68%, rgba(8,9,11,0.94) 88%, #08090b 100%)",
           }}
         />
-        <div className="pointer-events-none absolute inset-x-0 top-[40vh] bottom-0 bg-[#08090b] md:top-[48vh]" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(196,165,116,0.1),transparent_55%)]" />
-        <div className="pointer-events-none absolute inset-0 ambient-grid opacity-15" />
+        <div className="pointer-events-none absolute inset-x-0 top-[28vh] bottom-0 bg-[#08090b] md:top-[32vh]" />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-[55vh]"
+          style={{
+            background:
+              "radial-gradient(ellipse 95% 60% at 50% 12%, rgba(196,165,116,0.1) 0%, rgba(196,165,116,0.04) 38%, transparent 72%)",
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 top-[18vh] bottom-0 ambient-grid opacity-10"
+          style={{
+            maskImage: "linear-gradient(to bottom, transparent 0%, black 28%)",
+            WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 28%)",
+          }}
+        />
 
         <div className="relative mx-auto max-w-3xl text-center">
           <p className="text-[10.5pt] tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-[13pt]">
