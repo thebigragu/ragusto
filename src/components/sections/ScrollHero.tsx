@@ -67,10 +67,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 520,
       radius: "1.4rem",
-      glass: "rgba(255,255,255,0.045)",
-      rim: "rgba(255,255,255,0.14)",
-      edgeGlow: "rgba(196,165,116,0.38)",
-      depthTint: "rgba(236,216,178,0.58)",
+      glass: "rgba(255,255,255,0.028)",
+      rim: "rgba(255,255,255,0.1)",
+      edgeGlow: "rgba(196,165,116,0.32)",
+      depthTint: "rgba(236,216,178,0.42)",
       shimmerAngle: 118,
       top: "68%",
       topMobile: "18%",
@@ -91,10 +91,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 560,
       radius: "1.15rem",
-      glass: "rgba(210,230,240,0.04)",
-      rim: "rgba(230,245,255,0.12)",
-      edgeGlow: "rgba(150,200,210,0.35)",
-      depthTint: "rgba(198,228,238,0.55)",
+      glass: "rgba(210,230,240,0.025)",
+      rim: "rgba(230,245,255,0.1)",
+      edgeGlow: "rgba(150,200,210,0.28)",
+      depthTint: "rgba(198,228,238,0.4)",
       shimmerAngle: 64,
       top: "34%",
       topMobile: "80%",
@@ -115,10 +115,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 500,
       radius: "1.7rem",
-      glass: "rgba(255,248,235,0.045)",
-      rim: "rgba(196,165,116,0.16)",
-      edgeGlow: "rgba(196,165,116,0.42)",
-      depthTint: "rgba(242,224,196,0.56)",
+      glass: "rgba(255,248,235,0.028)",
+      rim: "rgba(196,165,116,0.12)",
+      edgeGlow: "rgba(196,165,116,0.34)",
+      depthTint: "rgba(242,224,196,0.4)",
       shimmerAngle: 108,
       top: "50%",
       topMobile: "22%",
@@ -139,10 +139,10 @@ const BEATS: Beat[] = [
     variant: {
       orbitR: 580,
       radius: "1rem",
-      glass: "rgba(255,255,255,0.05)",
-      rim: "rgba(255,255,255,0.14)",
-      edgeGlow: "rgba(240,226,196,0.4)",
-      depthTint: "rgba(248,236,214,0.58)",
+      glass: "rgba(255,255,255,0.03)",
+      rim: "rgba(255,255,255,0.1)",
+      edgeGlow: "rgba(240,226,196,0.32)",
+      depthTint: "rgba(248,236,214,0.42)",
       shimmerAngle: 52,
       top: "60%",
       topMobile: "76%",
@@ -497,8 +497,8 @@ function BeatCard({
     return 1;
   });
 
-  // Rest yaw always leans toward the opposite side (left pane → right, right pane → left)
-  const restY = -exitDir * (isMobile ? 22 : 32);
+  // Rest yaw: left panes face right; right panes face left (toward center / opposite side)
+  const restY = -exitDir * (isMobile ? 28 : 42);
   const restX = isMobile ? 6 : 9;
   const twistAmp = (isMobile ? 24 : 34) * tiltScale;
 
@@ -760,10 +760,10 @@ function BeatCard({
             style={{
               ...faceStyle,
               background:
-                "linear-gradient(165deg, rgba(22,26,34,0.42), rgba(2,4,8,0.55))",
-              boxShadow: "inset 0 0 56px rgba(0,0,0,0.28)",
+                "linear-gradient(165deg, rgba(22,26,34,0.28), rgba(2,4,8,0.36))",
+              boxShadow: "inset 0 0 56px rgba(0,0,0,0.18)",
               transform: `translateZ(${-halfT}px)`,
-              opacity: 0.7,
+              opacity: 0.55,
             }}
           />
 
@@ -877,20 +877,20 @@ function BeatCard({
               style={{
                 ...faceStyle,
                 background: `linear-gradient(155deg,
-                  rgba(255,255,255,0.055) 0%,
+                  rgba(255,255,255,0.035) 0%,
                   ${v.glass} 30%,
-                  rgba(255,255,255,0.018) 64%,
-                  rgba(8,10,14,0.12) 100%)`,
+                  rgba(255,255,255,0.012) 64%,
+                  rgba(8,10,14,0.08) 100%)`,
                 backdropFilter: isMobile
-                  ? "blur(18px) saturate(1.15) brightness(1.03)"
-                  : "blur(32px) saturate(1.2) brightness(1.04)",
+                  ? "blur(16px) saturate(1.1) brightness(1.02)"
+                  : "blur(28px) saturate(1.15) brightness(1.03)",
                 WebkitBackdropFilter: isMobile
-                  ? "blur(18px) saturate(1.15) brightness(1.03)"
-                  : "blur(32px) saturate(1.2) brightness(1.04)",
+                  ? "blur(16px) saturate(1.1) brightness(1.02)"
+                  : "blur(28px) saturate(1.15) brightness(1.03)",
                 boxShadow: `
-                  inset 0 22px 48px rgba(255,255,255,0.045),
-                  inset 0 -32px 56px rgba(0,0,0,0.16),
-                  0 40px 90px rgba(0,0,0,0.38),
+                  inset 0 22px 48px rgba(255,255,255,0.03),
+                  inset 0 -32px 56px rgba(0,0,0,0.1),
+                  0 40px 90px rgba(0,0,0,0.28),
                   0 0 72px ${softGlow}
                 `,
               }}
@@ -905,8 +905,7 @@ function BeatCard({
                   inset 0 0 0 1px rgba(255,255,255,0.03),
                   inset 0 0 28px rgba(8,9,11,0.22)
                 `,
-                mixBlendMode: "multiply",
-                opacity: 0.45,
+                opacity: 0.32,
               }}
             />
 
@@ -919,20 +918,7 @@ function BeatCard({
                   radial-gradient(ellipse 95% 70% at 16% 8%, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 32%, transparent 58%),
                   linear-gradient(148deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 28%, transparent 52%)
                 `,
-                opacity: 0.55,
-                filter: "blur(2.5px)",
-                maskImage:
-                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
-              }}
-            />
-
-            <motion.div
-              aria-hidden
-              className="pointer-events-none absolute inset-[3px]"
-              style={{
-                opacity: shimmerOpacity,
+                opacity: 0.4,
                 borderRadius: radius,
                 background: shimmerBackground,
                 mixBlendMode: "soft-light",
