@@ -9,7 +9,6 @@ import {
   useMotionTemplate,
   useMotionValueEvent,
   useScroll,
-  useSpring,
   useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -18,7 +17,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type Beat = {
   id: string;
-  /** Words in order; emphasized words get gold treatment */
   words: { t: string; emph?: boolean }[];
   sub: string;
   subEmph?: string[];
@@ -28,8 +26,8 @@ type Beat = {
 };
 
 /**
- * Longer holds so each blurb stays on screen, then evaporates upward.
- * Timed across full scrub (video completes before CTA).
+ * Timed across full scrub so the video finishes before the CTA.
+ * Each card: rise from below → hold crystal clear → levitate out the top.
  */
 const BEATS: Beat[] = [
   {
@@ -134,27 +132,46 @@ function BeatCard({
   beat: Beat;
   progress: MotionValue<number>;
 }) {
-  // Longer hold: short rise, long dwell, evaporate up
-  const local = useTransform(progress, (p) => {
+  // Rise from below hero → long clear hold → exit out the top
+  const y = useTransform(progress, (p) => {
+    if (p < beat.start) return "110vh";
+    if (p >= beat.end) return "-110vh";
+    const t = (p - beat.start) / (beat.end - beat.start);
+    if (t < 0.14) {
+      const e = t / 0.14;
+      return `${110 - 110 * e}vh`; // 110vh → 0 (hold band)
+    }
+    if (t > 0.78) {
+      const e = (t - 0.78) / 0.22;
+      return `${0 - 110 * e}vh`; // 0 → -110vh
+    }
+    return "0vh";
+  });
+
+  const opacity = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0;
     const t = (p - beat.start) / (beat.end - beat.start);
-    if (t < 0.12) return t / 0.12;
-    if (t > 0.82) return Math.max(0, (1 - t) / 0.18);
+    if (t < 0.08) return t / 0.08;
+    if (t > 0.9) return Math.max(0, (1 - t) / 0.1);
     return 1;
   });
 
-  const enterY = useTransform(local, [0, 1], [72, 0]);
-  const exitLift = useTransform(progress, (p) => {
-    if (p < beat.start || p >= beat.end) return 0;
+  // Short blur in/out — crystal clear for most of the hold
+  const blur = useTransform(progress, (p) => {
+    if (p < beat.start || p >= beat.end) return 16;
     const t = (p - beat.start) / (beat.end - beat.start);
-    if (t > 0.82) return -((t - 0.82) / 0.18) * 64;
+    if (t < 0.08) return 16 * (1 - t / 0.08);
+    if (t > 0.9) return 12 * ((t - 0.9) / 0.1);
     return 0;
   });
-  const y = useTransform([enterY, exitLift], ([a, b]) => (a as number) + (b as number));
-  const opacity = local;
-  const blur = useTransform(local, [0, 0.4, 0.85, 1], [14, 0, 0, 8]);
   const filter = useMotionTemplate`blur(${blur}px)`;
-  const scale = useTransform(local, [0, 1], [0.92, 1]);
+  const scale = useTransform(progress, (p) => {
+    if (p < beat.start || p >= beat.end) return 0.94;
+    const t = (p - beat.start) / (beat.end - beat.start);
+    if (t < 0.14) return 0.94 + 0.06 * (t / 0.14);
+    if (t > 0.78) return 1 - 0.04 * ((t - 0.78) / 0.22);
+    return 1;
+  });
   const rotateY = beat.side === "left" ? 9 : -9;
 
   const sideClass =
@@ -164,7 +181,7 @@ function BeatCard({
 
   return (
     <motion.div
-      className={`pointer-events-auto absolute bottom-[16%] z-20 max-w-[min(92vw,28rem)] md:bottom-[18%] ${sideClass}`}
+      className={`pointer-events-auto absolute top-[58%] z-20 max-w-[min(92vw,28rem)] -translate-y-1/2 md:top-[55%] ${sideClass}`}
       style={{
         opacity,
         y,
@@ -233,53 +250,77 @@ function ScrollCue({ progress }: { progress: MotionValue<number> }) {
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const targetTime = useRef(0);
+  const rafRef = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
-  const [ready, setReady] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
 
   const { scrollYProgress } = useScroll({
     target: scrubRef,
     offset: ["start start", "end end"],
   });
-  // Lighter spring so scrub tracks scroll without feeling “paused”
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 220,
-    damping: 36,
-    mass: 0.22,
-  });
 
-  useMotionValueEvent(smoothProgress, "change", (p) => {
+  // Direct scroll → time (no spring lag that feels like pausing)
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
     const video = videoRef.current;
-    if (!video || !ready || !Number.isFinite(video.duration) || video.duration <= 0) return;
-    // Use almost full duration; leave a hair so end frame is reachable
-    const t = Math.min(video.duration - 0.05, Math.max(0, p) * video.duration);
-    if (Math.abs(video.currentTime - t) > 0.02) {
-      try {
-        video.currentTime = t;
-      } catch {
-        /* ignore seek abort */
-      }
-    }
+    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+    targetTime.current = Math.min(video.duration - 0.001, Math.max(0, p) * video.duration);
   });
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+
     video.pause();
-    const onMeta = () => setReady(true);
-    if (video.readyState >= 1) setReady(true);
+    video.playsInline = true;
+
+    const onMeta = () => {
+      targetTime.current = Math.min(
+        video.duration - 0.001,
+        Math.max(0, scrollYProgress.get()) * video.duration,
+      );
+    };
+    if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
-    return () => video.removeEventListener("loadedmetadata", onMeta);
-  }, []);
+
+    // rAF seek loop: every display frame maps to the scroll-driven target
+    let seeking = false;
+    const tick = () => {
+      const v = videoRef.current;
+      if (v && Number.isFinite(v.duration) && v.duration > 0 && !seeking) {
+        const next = targetTime.current;
+        if (Math.abs(v.currentTime - next) > 0.0005) {
+          seeking = true;
+          const onSeeked = () => {
+            seeking = false;
+            v.removeEventListener("seeked", onSeeked);
+          };
+          v.addEventListener("seeked", onSeeked);
+          try {
+            v.currentTime = next;
+          } catch {
+            seeking = false;
+            v.removeEventListener("seeked", onSeeked);
+          }
+        }
+      }
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", onMeta);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [scrollYProgress]);
 
   return (
     <>
-      {/* Tall scrub so the full ~10s clip finishes before the CTA */}
       <section ref={scrubRef} className="relative h-[560vh] bg-black">
-        <div className="sticky top-0 flex h-[100svh] w-full items-center justify-center overflow-hidden bg-black">
+        <div className="sticky top-0 h-[100svh] w-full overflow-hidden bg-black">
           <video
             ref={videoRef}
-            className="h-full w-full object-contain object-center"
+            className="absolute inset-0 h-full w-full object-cover object-center"
             src="/videos/hero-kling.mp4"
             muted
             playsInline
@@ -287,9 +328,8 @@ export function ScrollHero() {
             aria-hidden
           />
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/40" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black via-black/75 to-transparent" />
-          <div className="pointer-events-none absolute right-0 bottom-0 h-28 w-44 bg-gradient-to-tl from-black via-black/90 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/35" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
           <div className="absolute top-0 right-0 z-30 p-5 md:p-8">
             <Magnetic strength={0.16}>
@@ -299,16 +339,16 @@ export function ScrollHero() {
                 width={320}
                 height={380}
                 priority
-                className="h-24 w-auto opacity-45 transition duration-500 hover:opacity-70 md:h-32 lg:h-36"
+                className="h-24 w-auto opacity-50 transition duration-500 hover:opacity-80 md:h-32 lg:h-40"
               />
             </Magnetic>
           </div>
 
           {BEATS.map((beat) => (
-            <BeatCard key={beat.id} beat={beat} progress={smoothProgress} />
+            <BeatCard key={beat.id} beat={beat} progress={scrollYProgress} />
           ))}
 
-          <ScrollCue progress={smoothProgress} />
+          <ScrollCue progress={scrollYProgress} />
         </div>
       </section>
 
