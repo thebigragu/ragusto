@@ -709,7 +709,7 @@ function BeatCard({
             style={{
               borderRadius: radius,
               background: faceMetalSheen,
-              opacity: 0.55,
+              opacity: 0.42,
             }}
           />
 
@@ -1281,11 +1281,11 @@ export function ScrollHero() {
 
             {/* Soft darkening toward the join — taller field behind contact / Begin */}
             <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[62%] md:h-[66%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[70%] md:h-[74%]"
               style={{
                 opacity: featherOpacity,
                 background:
-                  "linear-gradient(to bottom, transparent 0%, transparent 12%, rgba(8,9,11,0.08) 28%, rgba(8,9,11,0.22) 45%, rgba(8,9,11,0.48) 62%, rgba(8,9,11,0.72) 80%, rgba(8,9,11,0.9) 92%, rgba(8,9,11,0.96) 100%)",
+                  "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.06) 24%, rgba(8,9,11,0.2) 42%, rgba(8,9,11,0.45) 58%, rgba(8,9,11,0.7) 76%, rgba(8,9,11,0.88) 90%, rgba(8,9,11,0.96) 100%)",
               }}
             />
           </motion.div>
