@@ -167,6 +167,107 @@ function smoothstep(e: number) {
   return e * e * (3 - 2 * e);
 }
 
+type DustSpec = {
+  id: number;
+  left: string;
+  bottom: string;
+  size: number;
+  duration: number;
+  delay: number;
+  drift: number;
+  peak: number;
+  blur: number;
+};
+
+function makeGoldDust(seed: string, count: number): DustSpec[] {
+  return Array.from({ length: count }, (_, i) => {
+    const r = hashSeed(`${seed}-dust-${i}`);
+    const r2 = hashSeed(`${seed}-dust2-${i}`);
+    const r3 = hashSeed(`${seed}-dust3-${i}`);
+    // Bias particles to a soft halo around the box (edges more than dead-center)
+    const ring = 0.12 + r * 0.76;
+    const sideBias = r2 > 0.5 ? ring : 1 - ring;
+    return {
+      id: i,
+      left: `${sideBias * 100}%`,
+      bottom: `${-12 + r3 * 55}%`,
+      size: 1.1 + r * 2.2,
+      duration: 4.2 + r2 * 4.8,
+      delay: r * 6.2,
+      drift: (r2 - 0.5) * 32,
+      peak: 0.22 + r3 * 0.38,
+      blur: r > 0.65 ? 1.4 : 0.35,
+    };
+  });
+}
+
+/** Subtle gold glitter rising around a beat bubble — rides the same transforms. */
+function GoldDustAura({ seed, isMobile }: { seed: string; isMobile: boolean }) {
+  const specs = useMemo(
+    () => makeGoldDust(seed, isMobile ? 14 : 20),
+    [seed, isMobile],
+  );
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute -inset-[22%] z-[1] overflow-visible md:-inset-[26%]"
+      style={{ transform: "translateZ(28px)" }}
+    >
+      {/* Soft gold breath that frames the box */}
+      <motion.div
+        className="absolute inset-[12%] rounded-[2rem]"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 55%, rgba(196,165,116,0.14) 0%, rgba(196,165,116,0.04) 42%, transparent 72%)",
+        }}
+        animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.96, 1.04, 0.96] }}
+        transition={{ duration: 5.2, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {specs.map((p) => {
+        const tone =
+          p.id % 3 === 0
+            ? "rgba(240,226,196,0.95)"
+            : p.id % 3 === 1
+              ? "rgba(196,165,116,0.88)"
+              : "rgba(255,248,230,0.9)";
+        return (
+          <motion.span
+            key={p.id}
+            className="absolute rounded-full"
+            style={{
+              left: p.left,
+              bottom: p.bottom,
+              width: p.size,
+              height: p.size,
+              marginLeft: -p.size / 2,
+              background: tone,
+              boxShadow:
+                p.size > 2
+                  ? "0 0 5px rgba(196,165,116,0.55), 0 0 10px rgba(240,226,196,0.28)"
+                  : "0 0 3px rgba(196,165,116,0.45)",
+              filter: p.blur > 0.8 ? `blur(${p.blur}px)` : undefined,
+            }}
+            animate={{
+              y: [0, -(55 + Math.abs(p.drift) * 0.4), -(120 + Math.abs(p.drift) * 0.85)],
+              x: [0, p.drift * 0.4, p.drift * 0.95],
+              opacity: [0, p.peak, p.peak * 0.55, 0],
+              scale: [0.55, 1.2, 0.9, 0.35],
+            }}
+            transition={{
+              duration: p.duration,
+              delay: p.delay,
+              repeat: Infinity,
+              ease: "easeOut",
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 /** Longer enter/exit windows = slower rise, twist settle & leave */
 const ENTER_END = 0.4;
 const EXIT_START = 0.7;
