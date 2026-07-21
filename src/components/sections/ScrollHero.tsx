@@ -95,7 +95,7 @@ const BEATS: Beat[] = [
       rim: "rgba(220,240,250,0.26)",
       edgeGlow: "rgba(160,205,220,0.5)",
       depthTint: "rgba(190,220,232,0.88)",
-      shimmerAngle: 64,
+      shimmerAngle: 62,
       top: "34%",
       topMobile: "80%",
       thickness: 120,
@@ -143,7 +143,7 @@ const BEATS: Beat[] = [
       rim: "rgba(255,255,255,0.28)",
       edgeGlow: "rgba(240,226,196,0.55)",
       depthTint: "rgba(245,230,200,0.92)",
-      shimmerAngle: 52,
+      shimmerAngle: 72,
       top: "60%",
       topMobile: "76%",
       thickness: 124,
@@ -603,16 +603,23 @@ function BeatCard({
   const wallFadeBottom =
     "linear-gradient(180deg, #000 0%, #000 72%, rgba(0,0,0,0.85) 86%, transparent 100%)";
 
-  // Front face: solid brushed metal (steel body + gold specular bands)
+  // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
+  const sheenAngle = beat.side === "left" ? 118 : 62;
+  const faceWashAngle = beat.side === "left" ? 155 : 205;
+  const cornerSheen =
+    beat.side === "left"
+      ? "radial-gradient(ellipse 58% 48% at 14% 10%, rgba(255,255,255,0.32) 0%, rgba(240,226,196,0.14) 38%, transparent 72%)"
+      : "radial-gradient(ellipse 58% 48% at 86% 10%, rgba(255,255,255,0.32) 0%, rgba(240,226,196,0.14) 38%, transparent 72%)";
   const faceMetal = `
-    linear-gradient(118deg,
+    ${cornerSheen},
+    linear-gradient(${sheenAngle}deg,
       transparent 0%,
       rgba(255,255,255,0.18) 12%,
       transparent 22%,
       transparent 48%,
       rgba(240,226,196,0.14) 61%,
       transparent 74%),
-    linear-gradient(155deg,
+    linear-gradient(${faceWashAngle}deg,
       rgba(210,205,198,1) 0%,
       rgba(120,118,122,1) 14%,
       ${v.glass} 32%,
