@@ -238,7 +238,7 @@ function AsyncWord({
     else if (t > EXIT_START) {
       boost = 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.2;
     }
-    const base = kind === "title" ? 6 + depth * 3 : 4 + depth * 2;
+    const base = kind === "title" ? 10 + depth * 4 : 6 + depth * 2.5;
     return base * boost;
   });
 
@@ -343,11 +343,16 @@ function BeatCard({
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
   const orbitScale = isMobile ? 0.42 : 1;
   const tiltScale = isMobile ? 0.55 : 1;
-  // Slim continuous rim — depth without a chunky multi-pane stack
-  const T = Math.max(14, isMobile ? Math.round(v.thickness * 0.38) : Math.round(v.thickness * 0.48));
+  // Elongated prism depth — visible at rest via opposite-side tilt
+  const T = Math.max(
+    isMobile ? 26 : 36,
+    isMobile ? Math.round(v.thickness * 0.52) : Math.round(v.thickness * 0.7),
+  );
   const halfT = T / 2;
   const restTop = isMobile ? undefined : v.top;
   const mobileBand = v.topMobile;
+  // Near edge (toward hero center) carries the thickness wall
+  const depthOnLeft = beat.side === "left";
 
   const enterY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -381,11 +386,12 @@ function BeatCard({
     return 1;
   });
 
-  // At rest: left panes aim right across the hero; right panes aim left (subtle).
+  // At rest: left panes aim right across the hero; right panes aim left —
+  // enough yaw that the prism edge reads as real depth.
   const restY =
-    beat.side === "left" ? (isMobile ? 8 : 22) : isMobile ? -8 : -22;
-  const restX = isMobile ? 2 : 5;
-  const twistAmp = (isMobile ? 12 : 30) * tiltScale;
+    beat.side === "left" ? (isMobile ? 14 : 28) : isMobile ? -14 : -28;
+  const restX = isMobile ? 3 : 6;
+  const twistAmp = (isMobile ? 14 : 34) * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -493,16 +499,16 @@ function BeatCard({
     return 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.35;
   });
 
-  const shimmerZ = useTransform(layerBoost, (b) => halfT + 6 * b);
+  const shimmerZ = useTransform(layerBoost, (b) => 2 + 5 * b);
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
 
-  const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 10 : 18) * b);
+  const contentZ = useTransform(layerBoost, (b) => (isMobile ? 8 : 14) * b);
   // Keep copy coplanar with the face so type stays centered inside the pane
   const contentRx = useTransform(rotateX, () => 0);
   const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 8 : 22) * b);
+  const lineZ = useTransform(layerBoost, (b) => (isMobile ? 6 : 16) * b);
   const lineRx = useTransform(rotateX, () => 0);
   const lineRy = useTransform(rotateY, () => 0);
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
@@ -615,18 +621,98 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Single solid face only. Side/bottom walls caused the flat “platform”
-          under the card and the rectangular ghost behind the rounded corners.
-          Depth is implied with bevel + soft drop shadow — no extra planes.
+          Floating prism: front face + soft depth stack + one near-side edge.
+          No bottom wall (that read as a flat platform) and no rear plate /
+          filter blur (those painted rectangular ghosts behind rounded corners).
         */}
-        <div
-          className="relative"
-          style={{
-            borderRadius: radius,
-            transform: `translateZ(${halfT}px)`,
-            transformStyle: "preserve-3d",
-          }}
-        >
+        <div className="relative" style={{ transformStyle: "preserve-3d" }}>
+          {/* Soft depth plates — complementary tint, fade toward rear */}
+          {[0.22, 0.42, 0.62, 0.82].map((t, i) => {
+            const z = halfT - t * T;
+            const fade = 1 - t;
+            return (
+              <div
+                key={`depth-${i}`}
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  borderRadius: radius,
+                  transform: `translateZ(${z}px)`,
+                  background: `linear-gradient(${depthOnLeft ? 95 : 265}deg,
+                    ${v.depthTint} 0%,
+                    rgba(210,200,185,0.55) 28%,
+                    ${v.glass} 58%,
+                    rgba(12,13,16,0.55) 100%)`,
+                  opacity: 0.18 + fade * 0.28,
+                  boxShadow: `inset 0 0 0 1px rgba(255,255,255,${0.04 + fade * 0.06})`,
+                }}
+              />
+            );
+          })}
+
+          <div
+            className="relative"
+            style={{
+              borderRadius: radius,
+              transform: `translateZ(${halfT}px)`,
+              transformStyle: "preserve-3d",
+            }}
+          >
+          {/* Near-side thickness edge — gradient softens toward rear + vertical fade */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute"
+            style={{
+              top: 0,
+              bottom: 0,
+              width: T,
+              ...(depthOnLeft
+                ? { left: 0, transformOrigin: "left center", transform: "rotateY(90deg)" }
+                : { right: 0, transformOrigin: "right center", transform: "rotateY(-90deg)" }),
+              background: depthOnLeft
+                ? `linear-gradient(90deg,
+                    rgba(255,248,230,0.55) 0%,
+                    ${v.depthTint} 14%,
+                    rgba(160,145,120,0.7) 42%,
+                    rgba(40,38,42,0.55) 72%,
+                    rgba(8,9,11,0.15) 100%)`
+                : `linear-gradient(270deg,
+                    rgba(255,248,230,0.55) 0%,
+                    ${v.depthTint} 14%,
+                    rgba(160,145,120,0.7) 42%,
+                    rgba(40,38,42,0.55) 72%,
+                    rgba(8,9,11,0.15) 100%)`,
+              WebkitMaskImage:
+                "linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%)",
+              maskImage:
+                "linear-gradient(to bottom, transparent 0%, #000 10%, #000 90%, transparent 100%)",
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.22), 0 0 18px ${v.edgeGlow}`,
+            }}
+          />
+
+          {/* Slim top bevel — reads as glass edge without a bottom platform */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute"
+            style={{
+              left: 0,
+              right: 0,
+              top: 0,
+              height: Math.max(10, Math.round(T * 0.28)),
+              transformOrigin: "top center",
+              transform: "rotateX(-90deg)",
+              background: `linear-gradient(to bottom,
+                rgba(255,255,255,0.42) 0%,
+                ${v.depthTint} 35%,
+                rgba(40,38,42,0.35) 100%)`,
+              WebkitMaskImage:
+                "linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)",
+              maskImage:
+                "linear-gradient(to right, transparent 0%, #000 12%, #000 88%, transparent 100%)",
+              opacity: 0.85,
+            }}
+          />
+
           <div
             aria-hidden
             className="absolute inset-0"
@@ -638,7 +724,9 @@ function BeatCard({
                 inset 0 -1px 0 rgba(0,0,0,0.5),
                 inset 18px 0 28px -18px rgba(255,248,230,0.08),
                 inset -18px 0 28px -18px rgba(0,0,0,0.35),
-                0 0 0 1px ${v.rim}
+                0 0 0 1px ${v.rim},
+                ${depthOnLeft ? "10px" : "-10px"} 14px 28px rgba(0,0,0,0.35),
+                0 22px 40px rgba(0,0,0,0.28)
               `,
             }}
           />
@@ -649,7 +737,7 @@ function BeatCard({
             style={{
               borderRadius: radius,
               background: faceMetalSheen,
-              opacity: 0.7,
+              opacity: 0.55,
             }}
           />
 
@@ -771,6 +859,7 @@ function BeatCard({
               </div>
             </motion.div>
           </div>
+        </div>
       </motion.div>
     </motion.div>
   );
