@@ -400,7 +400,7 @@ function BeatCard({
 
   return (
     <motion.div
-      className={`pointer-events-auto absolute z-20 max-w-[min(92vw,30rem)] -translate-y-1/2 ${sideClass}`}
+      className={`pointer-events-auto absolute z-20 max-w-[min(94vw,36rem)] -translate-y-1/2 ${sideClass}`}
       style={{
         top: v.top,
         opacity,
@@ -454,11 +454,10 @@ function BeatCard({
               transform: "rotateY(90deg) translateZ(0px)",
               borderRadius: `0 ${v.radius} ${v.radius} 0`,
               background: `linear-gradient(180deg,
-                rgba(255,255,255,0.38) 0%,
-                ${v.edgeGlow} 28%,
-                rgba(255,255,255,0.12) 55%,
-                rgba(0,0,0,0.55) 100%)`,
-              boxShadow: `inset -2px 0 12px rgba(255,255,255,0.15)`,
+                rgba(255,255,255,0.22) 0%,
+                ${v.edgeGlow} 32%,
+                rgba(255,255,255,0.06) 62%,
+                rgba(0,0,0,0.5) 100%)`,
             }}
           />
 
@@ -473,9 +472,9 @@ function BeatCard({
               transform: "rotateY(-90deg) translateZ(0px)",
               borderRadius: `${v.radius} 0 0 ${v.radius}`,
               background: `linear-gradient(180deg,
-                rgba(255,255,255,0.14) 0%,
-                rgba(40,44,54,0.55) 40%,
-                rgba(0,0,0,0.65) 100%)`,
+                rgba(255,255,255,0.08) 0%,
+                rgba(40,44,54,0.45) 40%,
+                rgba(0,0,0,0.55) 100%)`,
             }}
           />
 
@@ -490,11 +489,11 @@ function BeatCard({
               transform: "rotateX(-90deg) translateZ(0px)",
               borderRadius: `${v.radius} ${v.radius} 0 0`,
               background: `linear-gradient(90deg,
-                rgba(255,255,255,0.06),
-                rgba(255,255,255,0.42),
+                rgba(255,255,255,0.04),
+                rgba(255,255,255,0.28),
                 ${v.edgeGlow},
-                rgba(255,255,255,0.42),
-                rgba(255,255,255,0.06))`,
+                rgba(255,255,255,0.28),
+                rgba(255,255,255,0.04))`,
             }}
           />
 
@@ -562,19 +561,17 @@ function BeatCard({
             />
 
             <div
-              className={`relative overflow-visible py-8 md:py-10 ${
-                beat.side === "left"
-                  ? "ps-7 pe-11 md:ps-10 md:pe-14"
-                  : "ps-11 pe-7 md:ps-14 md:pe-10"
+              className={`relative overflow-visible px-10 py-9 md:px-14 md:py-11 ${
+                beat.side === "left" ? "md:pe-16" : "md:ps-16"
               }`}
               style={{ transform: `translateZ(${T * 0.45}px)` }}
             >
-              <p className="overflow-visible font-serif text-3xl leading-[1.4] tracking-normal text-white sm:text-4xl md:text-[2.75rem] md:leading-[1.38]">
+              <p className="overflow-visible whitespace-nowrap font-serif text-3xl leading-[1.45] tracking-normal text-white sm:text-4xl md:text-[2.75rem] md:leading-[1.42]">
                 {beat.words.map((w, i) => (
                   <span key={`${w.t}-${i}`} className="inline overflow-visible">
                     {i > 0 ? "\u00A0" : null}
                     <AsyncWord
-                      text={w.t}
+                      text={w.t.replace(/ /g, "\u00A0")}
                       emph={w.emph}
                       progress={progress}
                       beat={beat}
@@ -584,7 +581,7 @@ function BeatCard({
                   </span>
                 ))}
               </p>
-              <p className="mt-4 overflow-visible text-sm tracking-[0.16em] text-white/60 uppercase md:text-[0.95rem] md:leading-relaxed">
+              <p className="mt-5 overflow-visible text-sm tracking-[0.16em] text-white/60 uppercase md:mt-6 md:text-[0.95rem] md:leading-relaxed">
                 {subTokens.map((part, i) => {
                   if (/^\s+$/.test(part)) return <span key={i}>{part}</span>;
                   const clean = part.replace(/[.—,]/g, "");
