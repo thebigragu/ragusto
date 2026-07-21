@@ -919,6 +919,19 @@ function BeatCard({
                   linear-gradient(148deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 28%, transparent 52%)
                 `,
                 opacity: 0.4,
+                filter: "blur(2.5px)",
+                maskImage:
+                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 92% 88% at 50% 45%, black 40%, transparent 78%)",
+              }}
+            />
+
+            <motion.div
+              aria-hidden
+              className="pointer-events-none absolute inset-[3px]"
+              style={{
+                opacity: shimmerOpacity,
                 borderRadius: radius,
                 background: shimmerBackground,
                 mixBlendMode: "soft-light",
