@@ -797,7 +797,7 @@ export function ScrollHero() {
         <div className="pointer-events-none absolute inset-0 ambient-grid opacity-15" />
 
         <div className="relative mx-auto max-w-3xl text-center">
-          <p className="text-base tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-lg">
+          <p className="text-[11.5pt] tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-[13pt]">
             Begin
           </p>
           <h2 className="mt-5 font-serif text-4xl tracking-tight text-white md:text-6xl lg:text-7xl">
