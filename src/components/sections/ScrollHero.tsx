@@ -292,8 +292,8 @@ function BeatCard({
   });
 
   // Resting tilt so prism depth reads while held; keep mild so type stays clear of folds
-  const restY = -exitDir * 10;
-  const restX = 5;
+  const restY = -exitDir * 7;
+  const restX = 4;
 
   // Diagonal opposite orbit: left → up/right, right → up/left
   const orbitX = useTransform(progress, (p) => {
@@ -443,74 +443,82 @@ function BeatCard({
             }}
           />
 
-          {/* Right prism face — lit edge */}
+          {/* Right prism face — inset so corners don't poke past rounded front */}
           <div
             aria-hidden
-            className="absolute top-0 bottom-0"
+            className="absolute"
             style={{
               width: T,
               right: 0,
+              top: 10,
+              bottom: 10,
               transformOrigin: "right center",
               transform: "rotateY(90deg) translateZ(0px)",
               borderRadius: `0 ${v.radius} ${v.radius} 0`,
               background: `linear-gradient(180deg,
-                rgba(255,255,255,0.22) 0%,
+                rgba(255,255,255,0.2) 0%,
                 ${v.edgeGlow} 32%,
-                rgba(255,255,255,0.06) 62%,
-                rgba(0,0,0,0.5) 100%)`,
+                rgba(255,255,255,0.05) 62%,
+                rgba(0,0,0,0.48) 100%)`,
             }}
           />
 
           {/* Left prism face — shadowed volume */}
           <div
             aria-hidden
-            className="absolute top-0 bottom-0"
+            className="absolute"
             style={{
               width: T,
               left: 0,
+              top: 10,
+              bottom: 10,
               transformOrigin: "left center",
               transform: "rotateY(-90deg) translateZ(0px)",
               borderRadius: `${v.radius} 0 0 ${v.radius}`,
               background: `linear-gradient(180deg,
-                rgba(255,255,255,0.08) 0%,
-                rgba(40,44,54,0.45) 40%,
-                rgba(0,0,0,0.55) 100%)`,
+                rgba(255,255,255,0.07) 0%,
+                rgba(40,44,54,0.4) 40%,
+                rgba(0,0,0,0.5) 100%)`,
             }}
           />
 
           {/* Top prism face — bright bevel */}
           <div
             aria-hidden
-            className="absolute inset-x-0"
+            className="absolute"
             style={{
               height: T,
               top: 0,
+              left: 10,
+              right: 10,
               transformOrigin: "center top",
               transform: "rotateX(-90deg) translateZ(0px)",
               borderRadius: `${v.radius} ${v.radius} 0 0`,
               background: `linear-gradient(90deg,
-                rgba(255,255,255,0.04),
-                rgba(255,255,255,0.28),
+                rgba(255,255,255,0.03),
+                rgba(255,255,255,0.24),
                 ${v.edgeGlow},
-                rgba(255,255,255,0.28),
-                rgba(255,255,255,0.04))`,
+                rgba(255,255,255,0.24),
+                rgba(255,255,255,0.03))`,
             }}
           />
 
           {/* Bottom prism face */}
           <div
             aria-hidden
-            className="absolute inset-x-0"
+            className="absolute"
             style={{
               height: T,
               bottom: 0,
+              left: 10,
+              right: 10,
               transformOrigin: "center bottom",
               transform: "rotateX(90deg) translateZ(0px)",
               borderRadius: `0 0 ${v.radius} ${v.radius}`,
               background: `linear-gradient(90deg,
-                rgba(0,0,0,0.55),
-                rgba(20,22,28,0.7),
-                rgba(0,0,0,0.55))`,
+                rgba(0,0,0,0.5),
+                rgba(20,22,28,0.65),
+                rgba(0,0,0,0.5))`,
             }}
           />
 
@@ -561,8 +569,8 @@ function BeatCard({
             />
 
             <div
-              className={`relative overflow-visible px-10 py-9 md:px-14 md:py-11 ${
-                beat.side === "left" ? "md:pe-16" : "md:ps-16"
+              className={`relative overflow-visible px-12 py-10 md:px-16 md:py-12 ${
+                beat.side === "left" ? "md:pe-[4.5rem]" : "md:ps-[4.5rem]"
               }`}
               style={{ transform: `translateZ(${T * 0.45}px)` }}
             >
@@ -581,7 +589,7 @@ function BeatCard({
                   </span>
                 ))}
               </p>
-              <p className="mt-5 overflow-visible text-sm tracking-[0.16em] text-white/60 uppercase md:mt-6 md:text-[0.95rem] md:leading-relaxed">
+              <p className="mt-6 overflow-visible text-sm tracking-[0.12em] text-white/60 uppercase md:mt-7 md:text-[0.95rem] md:leading-relaxed md:tracking-[0.14em]">
                 {subTokens.map((part, i) => {
                   if (/^\s+$/.test(part)) return <span key={i}>{part}</span>;
                   const clean = part.replace(/[.—,]/g, "");
@@ -603,7 +611,7 @@ function BeatCard({
               </p>
 
               {/* Gold underline — pulses and sweeps across the pane */}
-              <div className="relative mt-5 h-px w-full overflow-hidden">
+              <div className="relative mt-6 h-px w-full overflow-hidden md:mt-7">
                 <motion.span
                   className="absolute top-0 left-0 block h-px origin-left bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
                   style={{ width: "100%", boxShadow: `0 0 10px ${v.edgeGlow}` }}
