@@ -229,32 +229,32 @@ function AsyncWord({
   });
   const filter = useTransform(blur, (b) => (b < 0.05 ? "none" : `blur(${b}px)`));
 
-  // Depth floats with the prism; tilt only during enter/exit (flat at rest)
+  // Keep glyphs coplanar enough that they stay inside the rounded face
   const wordZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     let boost = 1;
     if (t < ENTER_END) boost = 0.45 + 0.55 * smoothstep(t / ENTER_END);
     else if (t > EXIT_START) {
-      boost = 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.8;
+      boost = 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.2;
     }
-    const base = kind === "title" ? 18 + depth * 8 : 10 + depth * 4;
+    const base = kind === "title" ? 6 + depth * 3 : 4 + depth * 2;
     return base * boost;
   });
 
   const wordRx = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return (1 - smoothstep(t / ENTER_END)) * 14;
+    if (t < ENTER_END) return (1 - smoothstep(t / ENTER_END)) * 8;
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return -e * 52;
+    return -e * 28;
   });
 
   const wordRy = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return exitDir * (1 - smoothstep(t / ENTER_END)) * 18;
+    if (t < ENTER_END) return exitDir * (1 - smoothstep(t / ENTER_END)) * 10;
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * e * 72;
+    return exitDir * e * 36;
   });
 
   const wordTransform = useMotionTemplate`translate3d(0px, ${wordY}px, ${wordZ}px) rotateX(${wordRx}deg) rotateY(${wordRy}deg)`;
@@ -308,16 +308,16 @@ function AsyncWord({
         textShadow,
         transformStyle: "preserve-3d",
       }}
-      className={`inline-block overflow-visible ${
+      className={`inline-block ${
         emph
-          ? "px-[0.08em] pe-[0.38em] pt-[0.06em] pb-[0.14em]"
-          : "pe-[0.08em] pb-[0.1em]"
+          ? "px-[0.04em] pe-[0.18em] pt-[0.04em] pb-[0.08em]"
+          : "pe-[0.04em] pb-[0.04em]"
       }`}
     >
       <span
         className={
           emph
-            ? "inline-block overflow-visible bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text font-serif italic text-transparent"
+            ? "inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text font-serif italic text-transparent"
             : undefined
         }
       >
@@ -508,15 +508,15 @@ function BeatCard({
   const shimmerZ = useTransform(layerBoost, (b) => halfT + 6 * b);
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
 
-  const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 22 : 38) * b);
-  // Mobile: keep copy coplanar with the face so underlines can’t yaw outside the card
-  const contentRx = useTransform(rotateX, (rx) => (isMobile ? 0 : rx * 0.18));
-  const contentRy = useTransform(rotateY, (ry) => (isMobile ? 0 : ry * 0.22));
+  const contentZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 10 : 18) * b);
+  // Keep copy coplanar with the face so type stays centered inside the pane
+  const contentRx = useTransform(rotateX, () => 0);
+  const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 8 : 48) * b);
-  const lineRx = useTransform(rotateX, (rx) => (isMobile ? 0 : rx * 0.25));
-  const lineRy = useTransform(rotateY, (ry) => (isMobile ? 0 : ry * 0.18));
+  const lineZ = useTransform(layerBoost, (b) => halfT + (isMobile ? 8 : 22) * b);
+  const lineRx = useTransform(rotateX, () => 0);
+  const lineRy = useTransform(rotateY, () => 0);
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
 
   const shimmerPos = useTransform(progress, (p) => {
@@ -838,28 +838,26 @@ function BeatCard({
             />
 
             <motion.div
-              className={`relative overflow-hidden px-5 py-5 sm:overflow-visible sm:px-8 sm:py-7 md:px-16 md:py-12 ${
-                beat.side === "left" ? "md:pe-[4.5rem]" : "md:ps-[4.5rem]"
-              }`}
+              className="relative overflow-hidden px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-10"
               style={{
-                borderRadius: isMobile ? radius : undefined,
+                borderRadius: radius,
                 transform: contentTransform,
                 transformStyle: "preserve-3d",
               }}
             >
               <p
-                className="overflow-visible text-center font-serif text-[1.35rem] leading-[1.35] tracking-normal text-white whitespace-normal sm:text-left sm:text-3xl sm:leading-[1.45] md:whitespace-nowrap md:text-[2.75rem] md:leading-[1.42]"
+                className="mx-auto max-w-full text-balance text-center font-serif text-[1.3rem] leading-snug tracking-normal text-white sm:text-3xl sm:leading-snug md:text-[2.35rem] md:leading-[1.25]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
                   <span
                     key={`${w.t}-${i}`}
-                    className="inline overflow-visible"
+                    className="inline"
                     style={{ transformStyle: "preserve-3d" }}
                   >
-                    {i > 0 ? (isMobile ? " " : "\u00A0") : null}
+                    {i > 0 ? " " : null}
                     <AsyncWord
-                      text={isMobile ? w.t : w.t.replace(/ /g, "\u00A0")}
+                      text={w.t}
                       emph={w.emph}
                       progress={progress}
                       beat={beat}
@@ -872,7 +870,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mt-3 overflow-visible text-center text-[0.65rem] tracking-[0.1em] text-white/60 uppercase sm:mt-5 sm:text-left sm:text-sm sm:tracking-[0.12em] md:mt-7 md:text-[0.95rem] md:leading-relaxed md:tracking-[0.14em]"
+                className="mx-auto mt-3 max-w-full text-pretty text-center text-[0.65rem] leading-relaxed tracking-[0.08em] text-white/60 uppercase sm:mt-5 sm:text-sm sm:tracking-[0.1em] md:mt-6 md:text-[0.9rem] md:tracking-[0.12em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
@@ -897,8 +895,8 @@ function BeatCard({
                 })}
               </p>
 
-              {/* Gold underline — clipped flat on mobile so it can’t leave the card */}
-              <div className="relative mt-4 w-full overflow-hidden rounded-full sm:mt-6 md:mt-7">
+              {/* Gold underline — clipped inside the pane */}
+              <div className="relative mx-auto mt-4 w-[min(100%,12rem)] overflow-hidden rounded-full sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7">
                 <motion.div
                   className="relative h-[2px] w-full overflow-hidden rounded-full"
                   style={
@@ -911,7 +909,7 @@ function BeatCard({
                   }
                 >
                   <motion.span
-                    className="absolute inset-0 block origin-left rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
+                    className="absolute inset-0 block origin-center rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
                     animate={{
                       scaleX: [0.12, 1, 0.12],
                       opacity: [0.5, 1, 0.5],
