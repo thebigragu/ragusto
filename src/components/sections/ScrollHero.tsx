@@ -1067,15 +1067,23 @@ export function ScrollHero() {
   });
   const driveProgress = sprungProgress;
 
-  // Video scrub tracks scroll 1:1 (Lenis already eases the page). No second spring —
-  // that was skipping/bunching frames and reading as jumps.
-  const videoProgress = useTransform(scrollYProgress, (p) => {
+  // Video scrub: mobile eases toward scroll so flings play through frames;
+  // desktop stays 1:1 with Lenis wheel smoothing.
+  const videoProgressRaw = useTransform(scrollYProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
     }
     const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
+  const videoProgressSmooth = useSpring(videoProgressRaw, {
+    stiffness: isMobile ? 110 : 400,
+    damping: isMobile ? 30 : 42,
+    mass: isMobile ? 0.32 : 0.08,
+    restDelta: 0.00001,
+    restSpeed: 0.00001,
+  });
+  const videoProgress = isMobile ? videoProgressSmooth : videoProgressRaw;
 
   // Hero lifts only ~halfway — remaining lower frame stays visible under contact
   const stickyLift = useTransform(
@@ -1163,8 +1171,8 @@ export function ScrollHero() {
 
     /**
      * Both desktop + mobile assets are 24fps all-intra H.264 — every frame is a
-     * keyframe, so we can seek every frame index directly. Avoid seeked-queueing
-     * (drops intermediate frames) and avoid coarse time thresholds (skips frames).
+     * keyframe. On mobile, advance at most one frame per display tick so fast
+     * flicks play through the sequence instead of skipping.
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
@@ -1172,7 +1180,18 @@ export function ScrollHero() {
 
       const fps = fpsRef.current;
       const maxFrame = Math.max(0, Math.round(v.duration * fps) - 1);
-      const frameIndex = Math.min(maxFrame, Math.max(0, Math.round(t * fps)));
+      const targetFrame = Math.min(maxFrame, Math.max(0, Math.round(t * fps)));
+
+      let frameIndex = targetFrame;
+      const prev = lastFrameIndex.current;
+      if (prev >= 0 && isMobile) {
+        const delta = targetFrame - prev;
+        // 1 frame / raf ≈ realtime playback ceiling during a fling catch-up
+        if (Math.abs(delta) > 1) {
+          frameIndex = prev + Math.sign(delta);
+        }
+      }
+
       if (frameIndex === lastFrameIndex.current) return;
       lastFrameIndex.current = frameIndex;
 
@@ -1222,7 +1241,7 @@ export function ScrollHero() {
       cancelAnimationFrame(rafRef.current);
       lastFrameIndex.current = -1;
     };
-  }, [videoProgress, videoSrc]);
+  }, [videoProgress, videoSrc, isMobile]);
 
   return (
     <>
