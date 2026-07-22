@@ -239,7 +239,8 @@ function AsyncWord({
     else if (t > EXIT_START) {
       boost = 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.2;
     }
-    const base = kind === "title" ? 10 + depth * 4 : 6 + depth * 2.5;
+    // Slight braille-like lift toward camera
+    const base = kind === "title" ? 14 + depth * 4 : 10 + depth * 2.5;
     return base * boost;
   });
 
@@ -263,9 +264,10 @@ function AsyncWord({
 
   const wordOpacity = useTransform([opacity, exitFade], ([o, f]) => (o as number) * (f as number));
 
+  // Raised “braille” emboss — light catch on top, soft depth below
   const restShadow = emph
-    ? "0 6px 14px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.08)"
-    : "0 5px 12px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.08)";
+    ? "0 -1px 0 rgba(255,248,230,0.45), 0 1px 0 rgba(0,0,0,0.55), 0 2px 2px rgba(0,0,0,0.4), 0 5px 12px rgba(0,0,0,0.45), 0 10px 22px rgba(196,165,116,0.18)"
+    : "0 -1px 0 rgba(255,255,255,0.28), 0 1px 0 rgba(0,0,0,0.5), 0 2px 2px rgba(0,0,0,0.35), 0 4px 10px rgba(0,0,0,0.4), 0 8px 18px rgba(0,0,0,0.28)";
 
   if (kind === "sub") {
     return (
@@ -492,13 +494,13 @@ function BeatCard({
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
   const shimmerLayerRef = useRef<HTMLDivElement>(null);
 
-  const contentZ = useTransform(layerBoost, (b) => (isMobile ? 8 : 14) * b);
+  const contentZ = useTransform(layerBoost, (b) => (isMobile ? 12 : 20) * b);
   // Keep copy coplanar with the face so type stays centered inside the pane
   const contentRx = useTransform(rotateX, () => 0);
   const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => (isMobile ? 6 : 16) * b);
+  const lineZ = useTransform(layerBoost, (b) => (isMobile ? 10 : 22) * b);
   const lineRx = useTransform(rotateX, () => 0);
   const lineRy = useTransform(rotateY, () => 0);
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
@@ -704,10 +706,20 @@ function BeatCard({
             className="pointer-events-none absolute inset-0"
             style={{
               borderRadius: radius,
-              boxShadow:
-                "inset 0 0 0 1px rgba(240,226,196,0.55), inset 0 0 16px 2px rgba(196,165,116,0.22), 0 0 12px 2px rgba(196,165,116,0.28), 0 0 32px 8px rgba(196,165,116,0.16)",
+              transform: `translateZ(${isMobile ? 5 : 8}px)`,
+              transformStyle: "preserve-3d",
+              boxShadow: `
+                inset 0 1px 0 rgba(255,248,230,0.55),
+                inset 0 -1px 0 rgba(0,0,0,0.35),
+                inset 0 0 0 1px rgba(240,226,196,0.6),
+                inset 0 0 14px 2px rgba(196,165,116,0.2),
+                0 1px 0 rgba(255,248,230,0.35),
+                0 3px 6px rgba(0,0,0,0.35),
+                0 0 14px 2px rgba(196,165,116,0.32),
+                0 0 28px 6px rgba(196,165,116,0.18)
+              `,
             }}
-            animate={{ opacity: [0.4, 0.72, 0.4] }}
+            animate={{ opacity: [0.45, 0.85, 0.45] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           />
 
@@ -724,7 +736,7 @@ function BeatCard({
           />
 
             <motion.div
-              className="relative overflow-hidden px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-10"
+              className="relative px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-10"
               style={{
                 borderRadius: radius,
                 transform: contentTransform,
@@ -781,16 +793,23 @@ function BeatCard({
                 })}
               </p>
 
-              {/* Gold underline — clipped inside the pane */}
-              <div className="relative mx-auto mt-4 w-[min(100%,12rem)] overflow-hidden rounded-full sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7">
+              {/* Gold underline — raised bead with emboss + breath */}
+              <div className="relative mx-auto mt-4 w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7">
                 <motion.div
-                  className="relative h-[2px] w-full overflow-hidden rounded-full"
+                  className="relative h-[3px] w-full rounded-full"
                   style={
                     isMobile
-                      ? undefined
+                      ? {
+                          transform: "translateZ(8px)",
+                          transformStyle: "preserve-3d",
+                          boxShadow:
+                            "0 -1px 0 rgba(255,248,230,0.55), 0 2px 4px rgba(0,0,0,0.45), 0 0 12px rgba(196,165,116,0.55), 0 6px 14px rgba(196,165,116,0.28)",
+                        }
                       : {
                           transform: lineTransform,
                           transformStyle: "preserve-3d",
+                          boxShadow:
+                            "0 -1px 0 rgba(255,248,230,0.55), 0 2px 4px rgba(0,0,0,0.45), 0 0 14px rgba(196,165,116,0.6), 0 8px 18px rgba(196,165,116,0.3)",
                         }
                   }
                 >
@@ -798,7 +817,7 @@ function BeatCard({
                     className="absolute inset-0 block origin-center rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
                     animate={{
                       scaleX: [0.12, 1, 0.12],
-                      opacity: [0.5, 1, 0.5],
+                      opacity: [0.55, 1, 0.55],
                     }}
                     transition={{
                       duration: 2.6,
