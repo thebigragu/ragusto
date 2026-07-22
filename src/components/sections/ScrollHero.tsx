@@ -1324,7 +1324,7 @@ export function ScrollHero() {
 
             {/* Soft darkening toward the join — taller field behind contact / Begin */}
             <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[70%] md:h-[74%]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[49%] md:h-[74%]"
               style={{
                 opacity: featherOpacity,
                 background:
