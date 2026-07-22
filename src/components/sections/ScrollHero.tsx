@@ -173,6 +173,12 @@ const ENTER_END = 0.4;
 const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
+/** Opaque stem colors for extruded type — base sits on the face, tip is the letter face */
+const TYPE_STEM_SILVER = ["#0c0d10", "#121318", "#181a20", "#22252c", "#2e323a", "#3c414c", "#525866"];
+const TYPE_STEM_GOLD = ["#1a1410", "#241c14", "#2e2418", "#3a2e1c", "#4a3a24", "#5c4a2e", "#6e5a38"];
+const TYPE_FACE_SILVER = "#f4f1ea";
+const TYPE_FACE_GOLD = "#e8d2a8";
+
 function AsyncWord({
   text,
   emph,
@@ -181,7 +187,7 @@ function AsyncWord({
   index,
   kind,
   exitDir,
-  depth,
+  isMobile,
 }: {
   text: string;
   emph?: boolean;
@@ -190,7 +196,7 @@ function AsyncWord({
   index: number;
   kind: "title" | "sub";
   exitDir: number;
-  depth: number;
+  isMobile: boolean;
 }) {
   const delay = useMemo(() => {
     const base = hashSeed(`${beat.id}-${kind}-${index}-${text}`);
@@ -222,29 +228,21 @@ function AsyncWord({
     const t = beatT(p, beat);
     if (t < EXIT_START) return 0;
     const local = (t - EXIT_START) / EXIT_LEN;
-    // Delay word blur until late in exit
     if (local < 0.4) return 0;
     const start = delay;
     const e = Math.min(1, Math.max(0, (local - 0.4 - start * 0.5) / 0.35));
     return e * 8;
   });
-  // Avoid binding filter/textShadow MotionValues — WAAPI rejects them on mobile
+  // Avoid binding filter MotionValues — WAAPI rejects them on mobile
   const exitFade = useTransform(blur, (b) => (b < 0.05 ? 1 : Math.max(0.15, 1 - b / 10)));
 
-  // Shared Z for every word in the line — per-glyph depth offsets
-  // misalign baselines when the card is tilted in perspective.
+  // Exit-only lift of the whole extruded unit (rest stays planted on the face)
   const wordZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    let boost = 1;
-    if (t < ENTER_END) boost = 0.55 + 0.45 * smoothstep(t / ENTER_END);
-    else if (t > EXIT_START) {
-      boost = 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 0.85;
-    }
-    const base = kind === "title" ? 22 : 18;
-    return base * boost;
+    if (t <= EXIT_START) return 0;
+    return smoothstep((t - EXIT_START) / EXIT_LEN) * (isMobile ? 10 : 16);
   });
 
-  // No per-word tilt at rest — keeps the line cohesive
   const wordRx = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t <= EXIT_START) return 0;
@@ -260,64 +258,55 @@ function AsyncWord({
   });
 
   const wordTransform = useMotionTemplate`translate3d(0px, ${wordY}px, ${wordZ}px) rotateX(${wordRx}deg) rotateY(${wordRy}deg)`;
-
   const wordOpacity = useTransform([opacity, exitFade], ([o, f]) => (o as number) * (f as number));
 
-  // Solid opaque emboss steps (braille / letterpress extrusion)
-  const restShadow = emph
-    ? [
-        "0 -1px 0 rgba(255,248,230,0.7)",
-        "0 1px 0 #2a2418",
-        "0 2px 0 #221e16",
-        "0 3px 0 #1a1712",
-        "0 4px 0 #12100e",
-        "0 5px 0 #0c0b0a",
-        "0 7px 10px rgba(0,0,0,0.55)",
-        "0 12px 22px rgba(0,0,0,0.4)",
-      ].join(", ")
-    : [
-        "0 -1px 0 rgba(255,255,255,0.55)",
-        "0 1px 0 #1c1d22",
-        "0 2px 0 #16171b",
-        "0 3px 0 #101114",
-        "0 4px 0 #0c0d10",
-        "0 5px 0 #08090b",
-        "0 7px 10px rgba(0,0,0,0.55)",
-        "0 12px 20px rgba(0,0,0,0.38)",
-      ].join(", ");
-
-  if (kind === "sub") {
-    return (
-      <motion.span
-        style={{
-          opacity: wordOpacity,
-          transform: wordTransform,
-          textShadow: restShadow,
-          transformStyle: "preserve-3d",
-        }}
-        className="inline align-baseline"
-      >
-        {emph ? <span className="text-[#d4b888]">{text}</span> : text}
-      </motion.span>
-    );
-  }
+  // Physical extrusion: stacked glyph plates from the face up — no soft drop shadow
+  const stem = emph ? TYPE_STEM_GOLD : TYPE_STEM_SILVER;
+  const steps = isMobile
+    ? kind === "title"
+      ? 5
+      : 4
+    : kind === "title"
+      ? 7
+      : 6;
+  const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? "#d8d4cc" : TYPE_FACE_SILVER;
+  const faceClass = emph && kind === "title" ? "font-serif italic" : "";
 
   return (
     <motion.span
       style={{
         opacity: wordOpacity,
         transform: wordTransform,
-        textShadow: restShadow,
-        color: emph ? undefined : "#f4f1ea",
         transformStyle: "preserve-3d",
       }}
-      className="inline align-baseline"
+      className="relative inline-block align-baseline"
     >
-      {emph ? (
-        <span className="font-serif italic text-[#d4b888]">{text}</span>
-      ) : (
-        text
-      )}
+      {stem.slice(0, steps).map((color, i) => (
+        <span
+          key={i}
+          aria-hidden
+          className={`absolute top-0 left-0 whitespace-nowrap ${faceClass}`}
+          style={{
+            transform: `translateZ(${i}px)`,
+            color,
+          }}
+        >
+          {text}
+        </span>
+      ))}
+      <span
+        className={`relative inline-block whitespace-nowrap ${faceClass}`}
+        style={{
+          transform: `translateZ(${steps}px)`,
+          color: faceColor,
+          // Hard rim highlight on the letter face only — not a hover shadow
+          textShadow: emph
+            ? "0 -1px 0 rgba(255,248,230,0.55)"
+            : "0 -1px 0 rgba(255,255,255,0.4)",
+        }}
+      >
+        {text}
+      </span>
     </motion.span>
   );
 }
@@ -493,7 +482,7 @@ function BeatCard({
 
   const orbitTransform = useMotionTemplate`translate3d(${orbitX}px, ${orbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
 
-  // Content floats forward of the glass slab; extra extrude only on exit
+  // Keep content planted on the face — extrusion stacks provide the raise
   const layerBoost = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     if (t < ENTER_END) return 0.55 + 0.45 * smoothstep(t / ENTER_END);
@@ -501,20 +490,20 @@ function BeatCard({
     return 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.35;
   });
 
-  const shimmerZ = useTransform(layerBoost, (b) => 2 + 5 * b);
+  const shimmerZ = useTransform(layerBoost, (b) => 1 + 2 * b);
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
   const shimmerLayerRef = useRef<HTMLDivElement>(null);
 
-  const contentZ = useTransform(layerBoost, (b) => (isMobile ? 14 : 24) * b);
-  // Keep copy coplanar with the face so type stays centered inside the pane
+  // Near-flush to the metal face so raised type/rim/bar stay connected
+  const contentZ = useTransform(layerBoost, (b) => (isMobile ? 1 : 2) * b);
   const contentRx = useTransform(rotateX, () => 0);
   const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => (isMobile ? 16 : 28) * b);
-  const lineRx = useTransform(rotateX, () => 0);
-  const lineRy = useTransform(rotateY, () => 0);
-  const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
+  const rimSteps = isMobile ? 6 : 9;
+  const barSteps = isMobile ? 5 : 7;
+  const rimStem = ["#5c4a2e", "#6e5a38", "#8a7350", "#a68558", "#b8956a", "#c4a574", "#d4b888", "#e0c898", "#f0e2c4"];
+  const barStem = ["#5c4a2e", "#7a6340", "#8a7350", "#a68558", "#c4a574", "#d4b888", "#e8d2a8"];
 
   const shimmerPos = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -730,23 +719,37 @@ function BeatCard({
             className="pointer-events-none absolute inset-0"
             style={{
               borderRadius: radius,
-              transform: `translateZ(${isMobile ? 8 : 12}px)`,
               transformStyle: "preserve-3d",
-              boxShadow: `
-                inset 0 1px 0 rgba(255,248,230,0.75),
-                inset 0 -1px 0 rgba(0,0,0,0.55),
-                inset 0 0 0 1.5px rgba(212,184,136,0.95),
-                0 1px 0 #3a3224,
-                0 2px 0 #2a2418,
-                0 3px 0 #1c1812,
-                0 4px 0 #12100c,
-                0 6px 10px rgba(0,0,0,0.45),
-                0 0 18px rgba(196,165,116,0.4)
-              `,
             }}
-            animate={{ opacity: [0.72, 1, 0.72] }}
+            animate={{ opacity: [0.82, 1, 0.82] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
-          />
+          >
+            {/* Gold rim extrusion — stacked plates from the face up (connected, not floating) */}
+            {rimStem.slice(0, rimSteps).map((color, i) => (
+              <div
+                key={i}
+                className="absolute inset-0"
+                style={{
+                  borderRadius: radius,
+                  transform: `translateZ(${i}px)`,
+                  boxShadow: `inset 0 0 0 ${i === rimSteps - 1 ? 1.6 : 1.35}px ${color}`,
+                }}
+              />
+            ))}
+            {/* Bright top face of the rim */}
+            <div
+              className="absolute inset-0"
+              style={{
+                borderRadius: radius,
+                transform: `translateZ(${rimSteps}px)`,
+                boxShadow: `
+                  inset 0 1px 0 rgba(255,248,230,0.7),
+                  inset 0 -1px 0 rgba(0,0,0,0.35),
+                  inset 0 0 0 1.6px #f0e2c4
+                `,
+              }}
+            />
+          </motion.div>
 
           <motion.div
             ref={shimmerLayerRef}
@@ -783,7 +786,7 @@ function BeatCard({
                       index={i}
                       kind="title"
                       exitDir={exitDir}
-                      depth={0}
+                      isMobile={isMobile}
                     />
                   </span>
                 ))}
@@ -808,31 +811,35 @@ function BeatCard({
                       index={i + 10}
                       kind="sub"
                       exitDir={exitDir}
-                      depth={0}
+                      isMobile={isMobile}
                     />
                   );
                 })}
               </p>
 
-              {/* Gold underline — solid raised bead */}
-              <div className="relative mx-auto mt-4 w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7">
+              {/* Gold underline — extruded bead planted on the face */}
+              <div
+                className="relative mx-auto mt-4 h-[3px] w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7"
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                {barStem.slice(0, barSteps).map((color, i) => (
+                  <div
+                    key={i}
+                    aria-hidden
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      transform: `translateZ(${i}px)`,
+                      background: color,
+                    }}
+                  />
+                ))}
                 <motion.div
-                  className="relative h-[3px] w-full rounded-full bg-[#c4a574]"
-                  style={
-                    isMobile
-                      ? {
-                          transform: "translateZ(14px)",
-                          transformStyle: "preserve-3d",
-                          boxShadow:
-                            "0 -1px 0 rgba(255,248,230,0.75), 0 1px 0 #3a3224, 0 2px 0 #2a2418, 0 3px 0 #1c1812, 0 4px 0 #12100c, 0 6px 10px rgba(0,0,0,0.5), 0 0 14px rgba(196,165,116,0.55)",
-                        }
-                      : {
-                          transform: lineTransform,
-                          transformStyle: "preserve-3d",
-                          boxShadow:
-                            "0 -1px 0 rgba(255,248,230,0.75), 0 1px 0 #3a3224, 0 2px 0 #2a2418, 0 3px 0 #1c1812, 0 4px 0 #12100c, 0 6px 10px rgba(0,0,0,0.5), 0 0 16px rgba(196,165,116,0.6)",
-                        }
-                  }
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    transform: `translateZ(${barSteps}px)`,
+                    background: "#f0e2c4",
+                    transformStyle: "preserve-3d",
+                  }}
                 >
                   <motion.span
                     className="absolute inset-0 block origin-center rounded-full bg-gradient-to-r from-[#8a7350] via-[#f0e2c4] to-[#c4a574]"
