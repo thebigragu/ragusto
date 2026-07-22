@@ -327,8 +327,8 @@ function BeatCard({
   const tiltScale = isMobile ? 0.55 : 1;
   // Elongated prism depth — visible at rest via opposite-side tilt
   const T = Math.max(
-    isMobile ? 18 : 24,
-    isMobile ? Math.round(v.thickness * 0.36) : Math.round(v.thickness * 0.48),
+    isMobile ? 22 : 32,
+    isMobile ? Math.round(v.thickness * 0.42) : Math.round(v.thickness * 0.58),
   );
   const halfT = T / 2;
   const restTop = isMobile ? undefined : v.top;
@@ -374,11 +374,10 @@ function BeatCard({
   });
 
   // At rest: left panes aim right across the hero; right panes aim left —
-  // enough yaw that the prism edge reads as real depth (kept modest so
-  // the side reads as a rim, not a flat panel).
+  // enough yaw that the full-depth side glow is visible.
   const restY =
-    beat.side === "left" ? (isMobile ? 10 : 18) : isMobile ? -10 : -18;
-  const restX = isMobile ? 2 : 4;
+    beat.side === "left" ? (isMobile ? 12 : 22) : isMobile ? -12 : -22;
+  const restX = isMobile ? 2 : 5;
   const twistAmp = (isMobile ? 14 : 34) * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
@@ -633,8 +632,9 @@ function BeatCard({
             }}
           >
           {/*
-            Thickness rim — only along the straight side, dissolved at the
-            rear so it never reads as a flat square panel behind the card.
+            Full-depth side face — glow runs front→rear across the whole
+            thickness (not a thin strip stuck to the front edge). Soft fade
+            only at the very rear tip + vertical ends so corners stay round.
           */}
           <div
             aria-hidden
@@ -648,25 +648,26 @@ function BeatCard({
                 : { right: 0, transformOrigin: "right center", transform: "rotateY(-90deg)" }),
               background: depthOnLeft
                 ? `linear-gradient(90deg,
-                    rgba(255,248,230,0.42) 0%,
-                    ${v.depthTint} 18%,
-                    rgba(120,112,98,0.55) 48%,
-                    rgba(30,30,34,0.25) 78%,
+                    rgba(255,248,230,0.62) 0%,
+                    ${v.depthTint} 16%,
+                    rgba(196,165,116,0.55) 38%,
+                    rgba(140,128,108,0.48) 62%,
+                    rgba(70,66,58,0.4) 82%,
+                    rgba(28,28,32,0.22) 94%,
                     transparent 100%)`
                 : `linear-gradient(270deg,
-                    rgba(255,248,230,0.42) 0%,
-                    ${v.depthTint} 18%,
-                    rgba(120,112,98,0.55) 48%,
-                    rgba(30,30,34,0.25) 78%,
+                    rgba(255,248,230,0.62) 0%,
+                    ${v.depthTint} 16%,
+                    rgba(196,165,116,0.55) 38%,
+                    rgba(140,128,108,0.48) 62%,
+                    rgba(70,66,58,0.4) 82%,
+                    rgba(28,28,32,0.22) 94%,
                     transparent 100%)`,
-              WebkitMaskImage: depthOnLeft
-                ? "linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%), linear-gradient(90deg, #000 0%, #000 42%, transparent 100%)"
-                : "linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%), linear-gradient(270deg, #000 0%, #000 42%, transparent 100%)",
-              maskImage: depthOnLeft
-                ? "linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%), linear-gradient(90deg, #000 0%, #000 42%, transparent 100%)"
-                : "linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%), linear-gradient(270deg, #000 0%, #000 42%, transparent 100%)",
-              WebkitMaskComposite: "source-in",
-              maskComposite: "intersect",
+              WebkitMaskImage:
+                "linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%)",
+              maskImage:
+                "linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%)",
+              boxShadow: `0 0 18px ${v.edgeGlow}`,
             }}
           />
 
