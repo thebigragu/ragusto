@@ -621,10 +621,32 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Subtle prism: front face + one near-side rim (inset past rounded
-          corners, faded toward the rear). No top/bottom walls, no mid-stack.
+          Prism: full-width rear glow (L→R) + near-side thickness + front face.
+          Rear carries the warm light across the whole card; side only bridges depth.
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
+          {/* Rear face — glow spans the full left→right width of the bubble */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              borderRadius: radius,
+              transform: `translateZ(${-halfT}px)`,
+              background: `
+                radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255,248,230,0.35) 0%, ${v.depthTint} 32%, rgba(196,165,116,0.28) 58%, rgba(20,20,24,0.55) 100%),
+                linear-gradient(180deg, rgba(240,226,196,0.22) 0%, rgba(40,38,42,0.65) 100%)
+              `,
+              boxShadow: `
+                inset 0 0 0 1px rgba(240,226,196,0.28),
+                0 0 28px ${v.edgeGlow},
+                0 0 48px rgba(196,165,116,0.22)
+              `,
+              opacity: 0.9,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+            }}
+          />
+
           <div
             className="relative"
             style={{
@@ -634,9 +656,8 @@ function BeatCard({
             }}
           >
           {/*
-            Full-depth side face — glow runs front→rear across the whole
-            thickness (not a thin strip stuck to the front edge). Soft fade
-            only at the very rear tip + vertical ends so corners stay round.
+            Side bridge — joins front to the full-width rear glow without
+            becoming a lone strip of light on one edge.
           */}
           <div
             aria-hidden
@@ -650,26 +671,21 @@ function BeatCard({
                 : { right: 0, transformOrigin: "right center", transform: "rotateY(-90deg)" }),
               background: depthOnLeft
                 ? `linear-gradient(90deg,
-                    rgba(255,248,230,0.62) 0%,
-                    ${v.depthTint} 16%,
-                    rgba(196,165,116,0.55) 38%,
-                    rgba(140,128,108,0.48) 62%,
-                    rgba(70,66,58,0.4) 82%,
-                    rgba(28,28,32,0.22) 94%,
-                    transparent 100%)`
+                    rgba(255,248,230,0.5) 0%,
+                    ${v.depthTint} 22%,
+                    rgba(196,165,116,0.45) 48%,
+                    rgba(140,128,108,0.4) 72%,
+                    rgba(60,56,50,0.55) 100%)`
                 : `linear-gradient(270deg,
-                    rgba(255,248,230,0.62) 0%,
-                    ${v.depthTint} 16%,
-                    rgba(196,165,116,0.55) 38%,
-                    rgba(140,128,108,0.48) 62%,
-                    rgba(70,66,58,0.4) 82%,
-                    rgba(28,28,32,0.22) 94%,
-                    transparent 100%)`,
+                    rgba(255,248,230,0.5) 0%,
+                    ${v.depthTint} 22%,
+                    rgba(196,165,116,0.45) 48%,
+                    rgba(140,128,108,0.4) 72%,
+                    rgba(60,56,50,0.55) 100%)`,
               WebkitMaskImage:
-                "linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%)",
+                "linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%)",
               maskImage:
-                "linear-gradient(to bottom, transparent 0%, #000 18%, #000 82%, transparent 100%)",
-              boxShadow: `0 0 18px ${v.edgeGlow}`,
+                "linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%)",
             }}
           />
 
