@@ -321,10 +321,10 @@ function BeatCard({
 
   // At rest: left panes aim right across the hero; right panes aim left —
   // enough yaw that the full-depth side glow is visible.
-  const restY =
-    beat.side === "left" ? (isMobile ? 12 : 22) : isMobile ? -12 : -22;
-  const restX = isMobile ? 2 : 5;
-  const twistAmp = (isMobile ? 14 : 34) * tiltScale;
+  // Mobile: rest square-on to the viewer (no yaw/pitch). Desktop keeps opposite-side tilt.
+  const restY = isMobile ? 0 : beat.side === "left" ? 22 : -22;
+  const restX = isMobile ? 0 : 5;
+  const twistAmp = isMobile ? 0 : 34 * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
