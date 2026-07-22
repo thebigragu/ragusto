@@ -16,15 +16,20 @@ export function ContactModal({
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open, onClose]);
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4 md:p-8"
+          className="fixed inset-0 z-[80] flex items-end justify-center p-0 sm:items-center sm:p-4 md:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -40,43 +45,44 @@ export function ContactModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="contact-modal-title"
-            className="relative z-10 max-h-[min(94svh,960px)] w-full max-w-4xl overflow-y-auto overscroll-contain rounded-3xl border border-white/10 bg-[#12141a]/95 shadow-2xl dark md:max-w-5xl md:overflow-hidden md:[scrollbar-width:none] md:[&::-webkit-scrollbar]:hidden"
+            className="relative z-10 flex max-h-[min(96dvh,920px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl border border-white/10 bg-[#12141a]/95 shadow-2xl dark sm:rounded-3xl md:max-w-4xl"
             initial={{ opacity: 0, y: 18, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
           >
-            {/*
-              Inner pad wrapper — padding on the scroll container itself often
-              clips at the bottom on mobile; keep top/bottom equal and responsive.
-            */}
-            <div className="px-6 pt-6 pb-6 sm:px-8 sm:pt-8 sm:pb-8 md:px-12 md:pt-12 md:pb-12">
-              <div className="mb-6 flex items-start justify-between gap-4 md:mb-8">
-                <div>
-                  <p className="text-xs tracking-[0.28em] text-white/45 uppercase">Contact</p>
+            <div className="flex min-h-0 flex-1 flex-col px-5 pt-5 pb-0 sm:px-8 sm:pt-7 md:px-10 md:pt-8">
+              <div className="mb-4 flex shrink-0 items-start justify-between gap-3 sm:mb-5 md:mb-6">
+                <div className="min-w-0">
+                  <p className="text-[10px] tracking-[0.28em] text-white/45 uppercase sm:text-xs">
+                    Contact
+                  </p>
                   <h2
                     id="contact-modal-title"
-                    className="mt-2 font-serif text-3xl tracking-tight text-white md:text-5xl"
+                    className="mt-1 font-serif text-[1.65rem] leading-tight tracking-tight text-white sm:mt-2 sm:text-4xl md:text-5xl"
                   >
                     Get in{" "}
-                    <span className="bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text italic text-transparent">
+                    <span className="inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text pe-[0.2em] pb-[0.06em] italic text-transparent">
                       touch
                     </span>
                   </h2>
-                  <p className="mt-2 text-sm text-white/60">
+                  <p className="mt-1.5 text-xs text-white/60 sm:mt-2 sm:text-sm">
                     Tell us what you&apos;re building — we&apos;ll reply with a clear next step.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-white/70 transition hover:border-white/35 hover:text-white"
+                  className="shrink-0 rounded-full border border-white/15 px-3 py-1.5 text-sm text-white/70 transition hover:border-white/35 hover:text-white"
                   aria-label="Close"
                 >
                   Close
                 </button>
               </div>
-              <ContactForm />
+
+              <div className="flex min-h-0 flex-1 flex-col">
+                <ContactForm />
+              </div>
             </div>
           </motion.div>
         </motion.div>

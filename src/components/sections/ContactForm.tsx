@@ -80,7 +80,7 @@ export function ContactForm() {
 
   if (status === "success") {
     return (
-      <div className="rounded-[2rem] border border-border bg-bg-elevated p-10 text-center">
+      <div className="flex min-h-0 flex-1 flex-col justify-center rounded-[1.5rem] border border-border bg-bg-elevated p-6 text-center sm:p-10">
         <h2 className="font-display text-3xl leading-[1.25] tracking-tight pb-[0.1em]">
           Message sent
         </h2>
@@ -98,7 +98,11 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-5" noValidate>
+    <form
+      onSubmit={onSubmit}
+      className="flex min-h-0 flex-1 flex-col"
+      noValidate
+    >
       <input
         type="text"
         name="company_website"
@@ -108,66 +112,87 @@ export function ContactForm() {
         aria-hidden
       />
 
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field label="Name" error={errors.name}>
-          <input name="name" required className={inputClass} placeholder="Alex Rivera" autoComplete="name" />
-        </Field>
-        <Field label="Email" error={errors.email}>
-          <input
-            name="email"
-            type="email"
+      {/* Fields scroll if needed; submit stays pinned below */}
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pb-2 sm:space-y-4 [scrollbar-width:thin]">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+          <Field label="Name" error={errors.name}>
+            <input
+              name="name"
+              required
+              className={inputClass}
+              placeholder="Alex Rivera"
+              autoComplete="name"
+            />
+          </Field>
+          <Field label="Email" error={errors.email}>
+            <input
+              name="email"
+              type="email"
+              required
+              className={inputClass}
+              placeholder="alex@company.com"
+              autoComplete="email"
+              inputMode="email"
+            />
+          </Field>
+        </div>
+
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+          <Field label="Company">
+            <input
+              name="company"
+              className={inputClass}
+              placeholder="Optional"
+              autoComplete="organization"
+            />
+          </Field>
+          <Field label="Project type">
+            <select name="projectType" className={inputClass} defaultValue={projectTypes[0]}>
+              {projectTypes.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        <Field label="Project details" error={errors.message}>
+          <textarea
+            name="message"
             required
-            className={inputClass}
-            placeholder="alex@company.com"
-            autoComplete="email"
-            inputMode="email"
+            rows={3}
+            className={`${inputClass} min-h-[4.5rem] max-h-[min(28vh,12rem)] resize-y sm:min-h-[5.5rem] sm:max-h-[min(32vh,14rem)]`}
+            placeholder="What are you building? Timeline, goals, and anything critical."
           />
         </Field>
+
+        {status === "error" && (
+          <p className="text-sm text-red-400">
+            {errorMessage || "Something went wrong."} You can also email{" "}
+            <a className="underline" href={`mailto:${SITE.email}`}>
+              {SITE.email}
+            </a>
+            .
+          </p>
+        )}
       </div>
 
-      <Field label="Company">
-        <input name="company" className={inputClass} placeholder="Optional" autoComplete="organization" />
-      </Field>
-
-      <Field label="Project type">
-        <select name="projectType" className={inputClass} defaultValue={projectTypes[0]}>
-          {projectTypes.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      <Field label="Project details" error={errors.message}>
-        <textarea
-          name="message"
-          required
-          rows={6}
-          className={`${inputClass} resize-y`}
-          placeholder="What are you building? Timeline, goals, and anything critical."
-        />
-      </Field>
-
-      {status === "error" && (
-        <p className="text-sm text-red-400">
-          {errorMessage || "Something went wrong."} You can also email{" "}
-          <a className="underline" href={`mailto:${SITE.email}`}>
-            {SITE.email}
-          </a>
-          .
-        </p>
-      )}
-
-      <Button type="submit" disabled={status === "submitting"} className="min-h-12 w-full sm:w-auto">
-        {status === "submitting" ? "Sending…" : "Send inquiry"}
-      </Button>
+      <div className="shrink-0 border-t border-white/10 bg-[#12141a]/95 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:pt-4 sm:pb-5">
+        <Button
+          type="submit"
+          disabled={status === "submitting"}
+          className="min-h-11 w-full sm:min-h-12 sm:w-auto"
+        >
+          {status === "submitting" ? "Sending…" : "Send inquiry"}
+        </Button>
+      </div>
     </form>
   );
 }
 
 const inputClass =
-  "w-full rounded-2xl border border-border bg-bg-elevated/60 px-4 py-3.5 text-base text-fg outline-none transition focus:border-accent-blue/50 md:text-sm";
+  "w-full rounded-2xl border border-border bg-bg-elevated/60 px-3.5 py-2.5 text-base text-fg outline-none transition focus:border-accent-blue/50 sm:px-4 sm:py-3 md:text-sm";
 
 function Field({
   label,
@@ -179,10 +204,16 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-2">
+    <label className="block space-y-1.5">
       <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="text-xs tracking-[0.2em] text-fg-muted uppercase">{label}</span>
-        {error ? <span className="text-xs text-red-400 normal-case tracking-normal">{error}</span> : null}
+        <span className="text-[10px] tracking-[0.2em] text-fg-muted uppercase sm:text-xs">
+          {label}
+        </span>
+        {error ? (
+          <span className="text-[11px] text-red-400 normal-case tracking-normal sm:text-xs">
+            {error}
+          </span>
+        ) : null}
       </span>
       {children}
     </label>
