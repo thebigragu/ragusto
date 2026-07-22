@@ -886,13 +886,13 @@ function ScrollCue({
   const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.35, 0.1]);
 
   // Desktop: mid-right → bottom-right.
-  // Mobile: horizontal center, upper-third → bottom-right.
-  const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [50, 92] : [91, 94]);
-  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [24, 88] : [48, 90]);
+  // Mobile: center → lower-right corner (clears the bottom-band bubble at rest).
+  const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [50, 96] : [91, 94]);
+  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [24, 97] : [48, 90]);
   const cueRef = useRef<HTMLDivElement>(null);
   const anchorX = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
   const anchorY = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
-  const scale = useTransform(scrollProgress, [0, 0.16], isMobile ? [1.12, 0.85] : [1.35, 1]);
+  const scale = useTransform(scrollProgress, [0, 0.16], isMobile ? [1.12, 0.78] : [1.35, 1]);
   const cueTransform = useMotionTemplate`translate(${anchorX}%, ${anchorY}%) scale(${scale})`;
 
   useMotionValueEvent(left, "change", (v) => {
