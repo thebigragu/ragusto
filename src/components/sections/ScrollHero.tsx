@@ -174,13 +174,13 @@ const ENTER_END = 0.4;
 const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
-const TYPE_FACE_SILVER = "#faf8f2";
-const TYPE_FACE_GOLD = "#f0e2c4";
-const TYPE_FACE_SUB = "#ebe6de";
+const TYPE_FACE_SILVER = "#ffffff";
+const TYPE_FACE_GOLD = "#f5ead0";
+const TYPE_FACE_SUB = "#f2efe8";
 
-/** Shallow type extrusion — keeps glyphs sharp (no mirror trail) */
+/** Short type extrusion — enough for 3D, light enough to stay readable */
 function typeExtrudeDepth(isMobile: boolean) {
-  return isMobile ? 3 : 4;
+  return isMobile ? 2 : 3;
 }
 
 /** Deeper chrome extrusion for gold rim + pulse bar */
@@ -189,13 +189,10 @@ function chromeExtrudeDepth(isMobile: boolean) {
 }
 
 /**
- * Solid block extrusion: one stem color repeated so sides read as a wall,
- * not a stack of ghosted letter copies.
+ * Compact extrusion wall — mid-tone stem (not near-black) so glyphs stay crisp.
  */
-function extrudeTextShadow(stem: string, depth: number, base: string) {
-  const steps = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`);
-  steps.push(`0 ${depth + 1}px 0 ${base}`);
-  return steps.join(", ");
+function extrudeTextShadow(stem: string, depth: number) {
+  return Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`).join(", ");
 }
 
 function AsyncWord({
@@ -232,8 +229,8 @@ function AsyncWord({
   });
 
   const depth = typeExtrudeDepth(isMobile);
-  const stem = emph ? "#5c4a2e" : "#1a1c22";
-  const stemBase = emph ? "#2a2016" : "#0c0d10";
+  // Mid stems — dark enough to read as depth, light enough not to muddy the face
+  const stem = emph ? "#8a7350" : "#4a4e58";
   const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? TYPE_FACE_SUB : TYPE_FACE_SILVER;
   const faceClass =
     kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "";
@@ -246,9 +243,8 @@ function AsyncWord({
         transformStyle: "preserve-3d",
         color: faceColor,
         textShadow: [
-          // Crisp top highlight — single step, not a glow
-          emph ? "0 -1px 0 rgba(255,248,230,0.45)" : "0 -1px 0 rgba(255,255,255,0.35)",
-          extrudeTextShadow(stem, depth, stemBase),
+          emph ? "0 -1px 0 rgba(255,248,230,0.55)" : "0 -1px 0 rgba(255,255,255,0.5)",
+          extrudeTextShadow(stem, depth),
         ].join(", "),
       }}
       className={`relative inline-block align-baseline whitespace-nowrap ${faceClass}`}
@@ -638,7 +634,8 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Prism: soft rear plate + one cohesive mid glow (no stacked mid slices).
+          Prism: soft rear + dense mid-volume glow fill (1px Z steps, no edge
+          lines — reads as uniform light, not stacked panes).
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
           {/* Rear face — soft continuous glow plate */}
@@ -649,38 +646,39 @@ function BeatCard({
               borderRadius: radius,
               transform: `translateZ(${-halfT}px)`,
               background: `
-                radial-gradient(ellipse 78% 68% at 50% 48%, rgba(255,248,230,0.32) 0%, ${v.depthTint} 42%, rgba(196,165,116,0.22) 72%, rgba(24,22,20,0.5) 100%),
-                linear-gradient(180deg, rgba(240,226,196,0.2) 0%, rgba(40,38,42,0.55) 100%)
+                radial-gradient(ellipse 78% 68% at 50% 48%, rgba(255,248,230,0.3) 0%, ${v.depthTint} 42%, rgba(196,165,116,0.2) 72%, rgba(24,22,20,0.45) 100%),
+                linear-gradient(180deg, rgba(240,226,196,0.18) 0%, rgba(40,38,42,0.5) 100%)
               `,
               boxShadow: `
                 0 0 36px ${v.edgeGlow},
-                0 0 64px rgba(196,165,116,0.2)
+                0 0 64px rgba(196,165,116,0.18)
               `,
-              opacity: 0.88,
+              opacity: 0.85,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
           />
 
-          {/*
-            Single mid-volume aura — one slab between panes so the depth
-            reads as a uniform glow, not sandwiched slices.
-          */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              borderRadius: radius,
-              transform: "translateZ(0px)",
-              background: `
-                radial-gradient(ellipse 90% 80% at 50% 48%, rgba(255,248,230,0.28) 0%, ${v.depthTint} 45%, rgba(196,165,116,0.2) 78%, transparent 100%)
-              `,
-              boxShadow: `0 0 42px ${v.edgeGlow}`,
-              opacity: 0.62,
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-            }}
-          />
+          {/* Dense volume fill — identical soft plates every 1px, no borders */}
+          {Array.from({ length: Math.max(10, Math.round(T)) }, (_, i) => {
+            const count = Math.max(10, Math.round(T));
+            const z = -halfT + ((i + 0.5) / count) * T;
+            return (
+              <div
+                key={`vol-${i}`}
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  borderRadius: radius,
+                  transform: `translateZ(${z}px)`,
+                  background: `radial-gradient(ellipse 92% 82% at 50% 48%, rgba(255,248,230,0.16) 0%, ${v.depthTint} 48%, rgba(196,165,116,0.14) 100%)`,
+                  opacity: 0.14,
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                }}
+              />
+            );
+          })}
 
           <div
             className="relative"
