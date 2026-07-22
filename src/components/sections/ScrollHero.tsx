@@ -1117,7 +1117,8 @@ export function ScrollHero() {
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, SCRUB_HANDOFF_START + 0.2, 1],
     [0, 0.45, 1, 1],
   );
-  // Contact dark backdrop fades separately — slower than the copy
+  // Contact dark backdrop fades separately — slower than the copy.
+  // Mobile stays lighter so the video reads through behind the headline.
   const contactBgOpacity = useTransform(
     driveProgress,
     [
@@ -1126,7 +1127,7 @@ export function ScrollHero() {
       SCRUB_HANDOFF_START + 0.2,
       1,
     ],
-    [0, 0.3, 0.7, 1],
+    isMobile ? [0, 0.18, 0.4, 0.55] : [0, 0.3, 0.7, 1],
   );
 
   const heroFrameRef = useRef<HTMLDivElement>(null);
@@ -1357,21 +1358,23 @@ export function ScrollHero() {
             className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[78dvh] flex-col justify-center px-5 pb-10 pt-4 md:max-h-[58dvh] md:justify-end md:px-6 md:pb-12 md:pt-0"
             style={{ y: contactParallax, opacity: contactOpacity }}
           >
-            {/* Tall dark backdrop — solid field behind Begin / headline */}
+            {/* Tall dark backdrop behind Begin / headline — softer on mobile so video peeks through */}
             <motion.div
               className="pointer-events-none absolute inset-x-0 bottom-0 top-0"
               style={{
                 opacity: contactBgOpacity,
-                background:
-                  "linear-gradient(to bottom, transparent 0%, transparent 8%, rgba(8,9,11,0.12) 22%, rgba(8,9,11,0.45) 38%, rgba(8,9,11,0.78) 52%, #08090b 68%, #08090b 100%)",
+                background: isMobile
+                  ? "linear-gradient(to bottom, transparent 0%, transparent 14%, rgba(8,9,11,0.06) 30%, rgba(8,9,11,0.18) 48%, rgba(8,9,11,0.32) 68%, rgba(8,9,11,0.42) 100%)"
+                  : "linear-gradient(to bottom, transparent 0%, transparent 8%, rgba(8,9,11,0.12) 22%, rgba(8,9,11,0.45) 38%, rgba(8,9,11,0.78) 52%, #08090b 68%, #08090b 100%)",
               }}
             />
             <motion.div
               className="pointer-events-none absolute inset-x-0 top-0 h-full"
               style={{
                 opacity: contactBgOpacity,
-                background:
-                  "radial-gradient(ellipse 100% 50% at 50% 35%, rgba(196,165,116,0.07) 0%, rgba(196,165,116,0.02) 45%, transparent 70%)",
+                background: isMobile
+                  ? "radial-gradient(ellipse 100% 50% at 50% 35%, rgba(196,165,116,0.04) 0%, rgba(196,165,116,0.01) 45%, transparent 70%)"
+                  : "radial-gradient(ellipse 100% 50% at 50% 35%, rgba(196,165,116,0.07) 0%, rgba(196,165,116,0.02) 45%, transparent 70%)",
               }}
             />
 
