@@ -575,8 +575,8 @@ function BeatCard({
   const sideClass = isMobile
     ? "left-1/2 origin-center"
     : beat.side === "left"
-      ? "left-4 origin-center md:left-10 lg:left-16"
-      : "right-4 origin-center md:right-10 lg:right-16";
+      ? "left-[max(1.5rem,min(14vw,20rem))] origin-center"
+      : "right-[max(1.5rem,min(14vw,20rem))] origin-center";
 
   // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
   const sheenAngle = beat.side === "left" ? 118 : 62;
@@ -634,7 +634,7 @@ function BeatCard({
       className={`pointer-events-auto absolute z-20 will-change-transform ${
         isMobile
           ? "left-1/2 w-[min(88vw,clamp(16rem,72vw,22rem))] max-w-[min(88vw,clamp(16rem,72vw,22rem))]"
-          : `w-[min(94vw,clamp(20rem,18vw+10rem,44rem))] max-w-[min(94vw,clamp(20rem,18vw+10rem,44rem))] -translate-y-1/2 ${sideClass}`
+          : `w-[min(72vw,clamp(18rem,12vw+8rem,32rem))] max-w-[min(72vw,clamp(18rem,12vw+8rem,32rem))] -translate-y-1/2 ${sideClass}`
       }`}
       style={{
         ...mobilePosStyle,

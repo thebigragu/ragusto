@@ -37,13 +37,14 @@ export function useResponsiveBubbleScale(isMobile: boolean) {
         return;
       }
 
-      // Desktop: 1100 → ~0.82, 1440 → 1, 1920 → ~1.1, 2560+ → ~1.2
-      const t = Math.min(1, Math.max(0, (w - 1100) / (2560 - 1100)));
+      // Desktop: 1100 → ~0.82, 1440 → 1, 1920 → ~1.05 — keep ultrawide restrained
+      // so yawed cards don't clip past the frame edge
+      const t = Math.min(1, Math.max(0, (w - 1100) / (2200 - 1100)));
       const eased = t * t * (3 - 2 * t);
-      let next = 0.82 + eased * (1.2 - 0.82);
+      let next = 0.82 + eased * (1.08 - 0.82);
       // Short laptop screens: pull down a touch so bubbles don't dominate height
       if (h < 800) next *= 0.92 + (h / 800) * 0.08;
-      setScale(Math.min(1.22, Math.max(0.78, next)));
+      setScale(Math.min(1.1, Math.max(0.78, next)));
     };
 
     update();
