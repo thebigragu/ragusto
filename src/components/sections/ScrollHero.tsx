@@ -579,20 +579,21 @@ function BeatCard({
       : "right-5 origin-center md:right-8 lg:right-10 xl:right-12";
 
   // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
+  // Softened at rest so white title/subtitle stay readable over the highlight
   const sheenAngle = beat.side === "left" ? 118 : 62;
   const faceWashAngle = beat.side === "left" ? 155 : 205;
   const cornerSheen =
     beat.side === "left"
-      ? "radial-gradient(ellipse 58% 48% at 14% 10%, rgba(255,255,255,0.32) 0%, rgba(240,226,196,0.14) 38%, transparent 72%)"
-      : "radial-gradient(ellipse 58% 48% at 86% 10%, rgba(255,255,255,0.32) 0%, rgba(240,226,196,0.14) 38%, transparent 72%)";
+      ? "radial-gradient(ellipse 58% 48% at 14% 10%, rgba(255,255,255,0.14) 0%, rgba(240,226,196,0.06) 38%, transparent 72%)"
+      : "radial-gradient(ellipse 58% 48% at 86% 10%, rgba(255,255,255,0.14) 0%, rgba(240,226,196,0.06) 38%, transparent 72%)";
   const faceMetal = `
     ${cornerSheen},
     linear-gradient(${sheenAngle}deg,
       transparent 0%,
-      rgba(255,255,255,0.18) 12%,
+      rgba(255,255,255,0.09) 12%,
       transparent 22%,
       transparent 48%,
-      rgba(240,226,196,0.14) 61%,
+      rgba(240,226,196,0.07) 61%,
       transparent 74%),
     linear-gradient(${faceWashAngle}deg,
       rgba(210,205,198,1) 0%,
@@ -605,10 +606,10 @@ function BeatCard({
   const faceMetalSheen = `
     linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
-      rgba(255,255,255,0.06) 28%,
-      rgba(255,248,230,0.2) 46%,
-      rgba(196,165,116,0.14) 52%,
-      rgba(255,255,255,0.04) 58%,
+      rgba(255,255,255,0.04) 28%,
+      rgba(255,248,230,0.12) 46%,
+      rgba(196,165,116,0.08) 52%,
+      rgba(255,255,255,0.03) 58%,
       transparent 78%)
   `;
 
@@ -723,7 +724,7 @@ function BeatCard({
             style={{
               borderRadius: radius,
               background: faceMetalSheen,
-              opacity: 0.42,
+              opacity: 0.28,
             }}
           />
 
