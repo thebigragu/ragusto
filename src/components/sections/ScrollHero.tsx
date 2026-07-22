@@ -1395,7 +1395,7 @@ export function ScrollHero() {
                   <Button
                     type="button"
                     onClick={() => setContactOpen(true)}
-                    className="bg-[#c4a574] text-base text-[#0c0c0e] hover:bg-[#d4b888] hover:text-[#0c0c0e] md:text-lg"
+                    className="bg-[#c4a574] text-base text-[#0c0c0e] hover:bg-[#1a5b68] hover:text-white md:text-lg"
                   >
                     Get in touch
                   </Button>
