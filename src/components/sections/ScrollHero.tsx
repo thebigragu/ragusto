@@ -634,7 +634,7 @@ function BeatCard({
       className={`pointer-events-auto absolute z-20 will-change-transform ${
         isMobile
           ? "left-1/2 w-[min(88vw,clamp(16rem,72vw,22rem))] max-w-[min(88vw,clamp(16rem,72vw,22rem))]"
-          : `w-[min(86vw,28rem)] max-w-[min(86vw,28rem)] -translate-y-1/2 ${sideClass}`
+          : `w-[min(84vw,26rem)] max-w-[min(84vw,26rem)] -translate-y-1/2 ${sideClass}`
       }`}
       style={{
         ...mobilePosStyle,
