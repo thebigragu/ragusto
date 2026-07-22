@@ -91,12 +91,12 @@ const BEATS: Beat[] = [
     start: 0.26,
     end: 0.48,
     variant: {
-      orbitR: 780,
+      orbitR: 720,
       radius: "1.15rem",
-      glass: "rgba(28,36,44,0.98)",
-      rim: "rgba(220,240,250,0.26)",
-      edgeGlow: "rgba(160,205,220,0.5)",
-      depthTint: "rgba(190,220,232,0.88)",
+      glass: "rgba(34,36,42,0.98)",
+      rim: "rgba(255,255,255,0.28)",
+      edgeGlow: "rgba(196,165,116,0.55)",
+      depthTint: "rgba(232,210,168,0.9)",
       shimmerAngle: 62,
       top: "34%",
       topMobile: "bottom",
@@ -115,7 +115,7 @@ const BEATS: Beat[] = [
     start: 0.5,
     end: 0.72,
     variant: {
-      orbitR: 700,
+      orbitR: 720,
       radius: "1.7rem",
       glass: "rgba(40,36,32,0.98)",
       rim: "rgba(196,165,116,0.32)",
@@ -139,7 +139,7 @@ const BEATS: Beat[] = [
     start: 0.74,
     end: 0.96,
     variant: {
-      orbitR: 800,
+      orbitR: 720,
       radius: "1rem",
       glass: "rgba(36,38,44,0.98)",
       rim: "rgba(255,255,255,0.28)",
@@ -178,21 +178,14 @@ const TYPE_FACE_SILVER = "#ffffff";
 const TYPE_FACE_GOLD = "#f5ead0";
 const TYPE_FACE_SUB = "#f2efe8";
 
-/** Short type extrusion — enough for 3D, light enough to stay readable */
+/** Readable bevel — one light rim + short mid-tone stem (no heavy under-shadow) */
 function typeExtrudeDepth(isMobile: boolean) {
-  return isMobile ? 2 : 3;
+  return isMobile ? 2 : 2;
 }
 
 /** Deeper chrome extrusion for gold rim + pulse bar */
 function chromeExtrudeDepth(isMobile: boolean) {
-  return isMobile ? 8 : 10;
-}
-
-/**
- * Compact extrusion wall — mid-tone stem (not near-black) so glyphs stay crisp.
- */
-function extrudeTextShadow(stem: string, depth: number) {
-  return Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`).join(", ");
+  return isMobile ? 11 : 14;
 }
 
 function AsyncWord({
@@ -229,11 +222,22 @@ function AsyncWord({
   });
 
   const depth = typeExtrudeDepth(isMobile);
-  // Mid stems — dark enough to read as depth, light enough not to muddy the face
-  const stem = emph ? "#8a7350" : "#4a4e58";
   const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? TYPE_FACE_SUB : TYPE_FACE_SILVER;
   const faceClass =
     kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "";
+
+  // Clean raised bevel: bright face, thin highlight, short warm/cool stem
+  const textShadow = emph
+    ? [
+        "0 -1px 0 rgba(255,248,230,0.65)",
+        "0 1px 0 #9a8058",
+        "0 2px 0 #7a6340",
+      ].join(", ")
+    : [
+        "0 -1px 0 rgba(255,255,255,0.55)",
+        "0 1px 0 #5a5e68",
+        "0 2px 0 #3e424c",
+      ].join(", ");
 
   return (
     <motion.span
@@ -242,10 +246,7 @@ function AsyncWord({
         transform: `translateZ(${depth}px)`,
         transformStyle: "preserve-3d",
         color: faceColor,
-        textShadow: [
-          emph ? "0 -1px 0 rgba(255,248,230,0.55)" : "0 -1px 0 rgba(255,255,255,0.5)",
-          extrudeTextShadow(stem, depth),
-        ].join(", "),
+        textShadow,
       }}
       className={`relative inline-block align-baseline whitespace-nowrap ${faceClass}`}
     >
@@ -428,7 +429,7 @@ function BeatCard({
     }
     if (t <= EXIT_START) return restX;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return restX - e * 78 * tiltScale;
+    return restX - e * 52 * tiltScale;
   });
 
   const rotateY = useTransform(progress, (p) => {
@@ -452,7 +453,8 @@ function BeatCard({
     }
     if (t <= EXIT_START) return restY;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return restY + exitDir * e * 118 * tiltScale;
+    // Shared exit yaw for every beat — keeps left/right exits matched
+    return restY + exitDir * e * 72 * tiltScale;
   });
 
   const rotateZ = useTransform(progress, (p) => {
@@ -466,7 +468,7 @@ function BeatCard({
     }
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * e * 42 * tiltScale;
+    return exitDir * e * 28 * tiltScale;
   });
 
   const orbitTransform = useMotionTemplate`translate3d(${combinedOrbitX}px, ${combinedOrbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
@@ -501,18 +503,26 @@ function BeatCard({
     "#b8956a",
     "#c4a574",
     "#d4b888",
+    "#e0c898",
+    "#e8d2a8",
+    "#f0e2c4",
+    "#f5ead0",
   ];
   const barStem = [
     "#3a2e1c",
     "#4a3a24",
     "#5c4a2e",
+    "#6e5a38",
     "#7a6340",
     "#8a7350",
     "#9a8058",
     "#a68558",
     "#b8956a",
     "#c4a574",
+    "#d4b888",
     "#e0c898",
+    "#e8d2a8",
+    "#f0e2c4",
   ];
 
   const shimmerPos = useTransform(progress, (p) => {
@@ -727,7 +737,7 @@ function BeatCard({
             animate={{ opacity: [0.82, 1, 0.82] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           >
-            {/* Gold rim — deeper extrusion, continuous stem (no thin slice rings) */}
+            {/* Gold rim — thicker, brighter, deeper extrusion */}
             {rimStem.slice(0, chromeExtrude).map((color, i) => (
               <div
                 key={i}
@@ -735,7 +745,7 @@ function BeatCard({
                 style={{
                   borderRadius: radius,
                   transform: `translateZ(${i}px)`,
-                  boxShadow: `inset 0 0 0 3px ${color}`,
+                  boxShadow: `inset 0 0 0 4px ${color}`,
                 }}
               />
             ))}
@@ -746,8 +756,9 @@ function BeatCard({
                 borderRadius: radius,
                 transform: `translateZ(${chromeExtrude}px)`,
                 boxShadow: `
-                  inset 0 1px 0 rgba(255,248,230,0.6),
-                  inset 0 0 0 3px #f5ead0
+                  inset 0 1px 0 rgba(255,248,230,0.85),
+                  inset 0 0 0 4px #f8efd4,
+                  0 0 14px rgba(196,165,116,0.45)
                 `,
               }}
             />
@@ -773,7 +784,7 @@ function BeatCard({
               }}
             >
               <p
-                className="mx-auto max-w-full text-balance text-center font-serif text-[calc(1.34rem+0.5pt)] font-[500] leading-snug tracking-normal text-[#faf8f2] sm:text-[calc(1.92rem+0.5pt)] sm:leading-snug md:text-[calc(2.39rem+0.5pt)] md:leading-[1.25]"
+                className="mx-auto max-w-full text-balance text-center font-serif text-[calc(1.34rem+0.5pt)] font-[600] leading-snug tracking-normal text-white sm:text-[calc(1.92rem+0.5pt)] sm:leading-snug md:text-[calc(2.39rem+0.5pt)] md:leading-[1.25]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
@@ -792,7 +803,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mx-auto mt-3 max-w-full text-pretty text-center text-[calc(0.69rem+0.5pt)] font-[500] leading-relaxed tracking-[0.08em] text-[#ebe6de] uppercase sm:mt-5 sm:text-[calc(0.92rem+0.5pt)] sm:tracking-[0.1em] md:mt-6 md:text-[calc(0.94rem+0.5pt)] md:tracking-[0.12em]"
+                className="mx-auto mt-3 max-w-full text-pretty text-center text-[calc(0.69rem+0.5pt)] font-[600] leading-relaxed tracking-[0.08em] text-[#f2efe8] uppercase sm:mt-5 sm:text-[calc(0.92rem+0.5pt)] sm:tracking-[0.1em] md:mt-6 md:text-[calc(0.94rem+0.5pt)] md:tracking-[0.12em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
@@ -816,9 +827,9 @@ function BeatCard({
                 })}
               </p>
 
-              {/* Gold underline — extruded bead planted on the face */}
+              {/* Gold underline — thicker extruded bead */}
               <div
-                className="relative mx-auto mt-4 h-[3px] w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7"
+                className="relative mx-auto mt-4 h-[4px] w-[min(100%,12rem)] sm:mt-6 sm:h-[5px] sm:w-[min(100%,16rem)] md:mt-7"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {barStem.slice(0, chromeExtrude).map((color, i) => (
@@ -836,8 +847,9 @@ function BeatCard({
                   className="absolute inset-0 rounded-full"
                   style={{
                     transform: `translateZ(${chromeExtrude}px)`,
-                    background: "#f0e2c4",
+                    background: "#f5ead0",
                     transformStyle: "preserve-3d",
+                    boxShadow: "0 0 12px rgba(196,165,116,0.65), 0 0 22px rgba(240,226,196,0.35)",
                   }}
                 >
                   <motion.span
