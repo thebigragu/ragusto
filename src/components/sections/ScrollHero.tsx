@@ -1379,7 +1379,7 @@ export function ScrollHero() {
             width={220}
             height={260}
             priority
-            className="relative h-12 w-auto opacity-95 transition duration-500 hover:brightness-125 sm:h-16 md:h-[5.25rem] lg:h-24"
+            className="relative h-14 w-auto opacity-95 transition duration-500 hover:brightness-125 sm:h-16 md:h-[5.25rem] lg:h-24"
           />
         </div>
       </div>
