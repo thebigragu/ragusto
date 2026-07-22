@@ -315,8 +315,8 @@ function BeatCard({
     : beat.side === "left"
       ? 22
       : -22;
-  // CSS +rotateX: positive tips top away (down); negative tips top toward viewer (up)
-  const restX = isMobile ? (mobileBand === "top" ? 16 : -16) : 0;
+  // Top → down, bottom → up (signs verified against live mobile tilt)
+  const restX = isMobile ? (mobileBand === "top" ? -16 : 16) : 0;
   const twistAmp = isMobile ? 0 : 34 * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
@@ -986,6 +986,10 @@ function ScrollCue({
 /** First 9s map to most of scrub; last second shares scroll with contact reveal. */
 const VIDEO_HANDOFF = 0.9;
 const SCRUB_HANDOFF_START = 0.78;
+/** Desktop wheel notch ≈ this many consecutive frames on mobile touch ticks too */
+const FRAMES_PER_WHEEL_NOTCH = 14;
+/** Finger px that equals one mouse-wheel increment for video scrub */
+const TOUCH_PX_PER_WHEEL_NOTCH = 42;
 
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
@@ -994,6 +998,9 @@ export function ScrollHero() {
   const rafRef = useRef(0);
   const fpsRef = useRef(24);
   const lastFrameIndex = useRef(-1);
+  const mobileNotchRef = useRef(0);
+  const touchScrollAccumPx = useRef(0);
+  const lastTouchScrollY = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
@@ -1147,10 +1154,71 @@ export function ScrollHero() {
   }, [heroMask]);
 
   useMotionValueEvent(videoProgress, "change", (p) => {
+    // Mobile video target is driven by wheel-notch ticks (see touch scroll effect)
+    if (isMobile) return;
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
     targetTime.current = Math.min(video.duration - 0.001, Math.max(0, p) * video.duration);
   });
+
+  // Mobile: each small finger scroll advances one desktop-wheel-notch of frames
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const syncNotchFromProgress = () => {
+      const video = videoRef.current;
+      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+      const fps = fpsRef.current;
+      const maxFrame = Math.max(0, Math.round(video.duration * fps) - 1);
+      const maxNotch = Math.max(0, Math.floor(maxFrame / FRAMES_PER_WHEEL_NOTCH));
+      const desiredFrame = Math.round(
+        Math.min(1, Math.max(0, videoProgressRaw.get())) * video.duration * fps,
+      );
+      mobileNotchRef.current = Math.min(
+        maxNotch,
+        Math.max(0, Math.round(desiredFrame / FRAMES_PER_WHEEL_NOTCH)),
+      );
+      targetTime.current = Math.min(
+        video.duration - 0.001,
+        (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
+      );
+    };
+
+    lastTouchScrollY.current = window.scrollY;
+    touchScrollAccumPx.current = 0;
+    syncNotchFromProgress();
+
+    const onScroll = () => {
+      const video = videoRef.current;
+      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+
+      const y = window.scrollY;
+      const dy = y - lastTouchScrollY.current;
+      lastTouchScrollY.current = y;
+      if (dy === 0) return;
+
+      touchScrollAccumPx.current += dy;
+      const fps = fpsRef.current;
+      const maxFrame = Math.max(0, Math.round(video.duration * fps) - 1);
+      const maxNotch = Math.max(0, Math.floor(maxFrame / FRAMES_PER_WHEEL_NOTCH));
+
+      while (Math.abs(touchScrollAccumPx.current) >= TOUCH_PX_PER_WHEEL_NOTCH) {
+        const dir = Math.sign(touchScrollAccumPx.current) as 1 | -1;
+        touchScrollAccumPx.current -= dir * TOUCH_PX_PER_WHEEL_NOTCH;
+        mobileNotchRef.current = Math.min(
+          maxNotch,
+          Math.max(0, mobileNotchRef.current + dir),
+        );
+        targetTime.current = Math.min(
+          video.duration - 0.001,
+          (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
+        );
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isMobile, videoProgressRaw, videoSrc]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -1218,12 +1286,29 @@ export function ScrollHero() {
     const onMeta = () => {
       detectFps();
       lastFrameIndex.current = -1;
-      const t = Math.min(
-        video.duration - 0.001,
-        Math.max(0, videoProgress.get()) * video.duration,
-      );
-      targetTime.current = t;
-      applyTime(t);
+      if (isMobile) {
+        const fps = fpsRef.current;
+        const maxFrame = Math.max(0, Math.round(video.duration * fps) - 1);
+        const maxNotch = Math.max(0, Math.floor(maxFrame / FRAMES_PER_WHEEL_NOTCH));
+        const desiredFrame = Math.round(
+          Math.min(1, Math.max(0, videoProgressRaw.get())) * video.duration * fps,
+        );
+        mobileNotchRef.current = Math.min(
+          maxNotch,
+          Math.max(0, Math.round(desiredFrame / FRAMES_PER_WHEEL_NOTCH)),
+        );
+        targetTime.current = Math.min(
+          video.duration - 0.001,
+          (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
+        );
+      } else {
+        const t = Math.min(
+          video.duration - 0.001,
+          Math.max(0, videoProgress.get()) * video.duration,
+        );
+        targetTime.current = t;
+      }
+      applyTime(targetTime.current);
     };
     if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
@@ -1240,7 +1325,7 @@ export function ScrollHero() {
       cancelAnimationFrame(rafRef.current);
       lastFrameIndex.current = -1;
     };
-  }, [videoProgress, videoSrc, isMobile]);
+  }, [videoProgress, videoProgressRaw, videoSrc, isMobile]);
 
   return (
     <>
