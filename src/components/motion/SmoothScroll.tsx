@@ -13,12 +13,12 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     if (coarse) return;
 
     const lenis = new Lenis({
-      // Controlled settle; wheel gain high enough that each notch covers
-      // several hero video frames (less 1-frame slideshow jitter).
-      duration: 1.45,
+      // Each notch advances more scrub progress (more video frames to walk
+      // through in succession). Display still plays them one-by-one.
+      duration: 1.25,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      wheelMultiplier: 0.78,
+      wheelMultiplier: 0.9,
       touchMultiplier: 1,
       autoResize: true,
     });

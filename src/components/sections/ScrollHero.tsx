@@ -1005,11 +1005,11 @@ export function ScrollHero() {
     const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
-  // Light follow — tracks scroll closely so multi-frame seeks stay in sync
+  // Target tracks scroll; display walks consecutive frames toward it (see applyTime)
   const videoProgress = useSpring(videoProgressRaw, {
-    stiffness: isMobile ? 320 : 300,
-    damping: isMobile ? 38 : 36,
-    mass: isMobile ? 0.08 : 0.09,
+    stiffness: isMobile ? 380 : 360,
+    damping: isMobile ? 40 : 38,
+    mass: isMobile ? 0.07 : 0.08,
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
@@ -1146,11 +1146,10 @@ export function ScrollHero() {
     }
 
     /**
-     * Both desktop + mobile assets are 24fps all-intra H.264 — every frame is a
-     * keyframe. Seeking one frame at a time reads as slideshow jitter on slow
-     * scroll; hold until a multi-frame chunk of progress, then step several
-     * frames so motion feels smoother. Cap the step on fast flicks so we still
-     * walk the scrub instead of hard-skipping.
+     * Both assets are 24fps all-intra H.264. Scroll moves the *target* ahead
+     * (more video per wheel notch via scrub length + Lenis). Each display
+     * refresh advances at most one frame toward that target so motion plays
+     * out in succession — never skip-jumps over frames.
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
@@ -1165,12 +1164,8 @@ export function ScrollHero() {
       if (prev >= 0) {
         const delta = targetFrame - prev;
         if (delta === 0) return;
-        // ~3–4 frames per update ≈ smoother than 1-frame tick on slow wheel
-        const minStep = 3;
-        const maxStep = isMobile ? 6 : 8;
-        if (Math.abs(delta) < minStep) return;
-        const step = Math.min(Math.abs(delta), maxStep);
-        frameIndex = prev + Math.sign(delta) * step;
+        // One video frame per display tick → consecutive playback, no skips
+        frameIndex = prev + Math.sign(delta);
       }
 
       if (frameIndex === lastFrameIndex.current) return;
@@ -1281,7 +1276,7 @@ export function ScrollHero() {
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[780vh] bg-transparent md:h-[860vh]">
+      <section ref={scrubRef} className="relative h-[680vh] bg-transparent md:h-[740vh]">
         <div className="sticky top-0 z-20 h-[100dvh] w-full overflow-hidden bg-transparent">
           <motion.div
             ref={heroFrameRef}
