@@ -219,11 +219,7 @@ function AsyncWord({
 
   const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? TYPE_FACE_SUB : TYPE_FACE_SILVER;
   const faceClass =
-    kind === "title"
-      ? emph
-        ? "font-serif italic"
-        : "font-serif"
-      : "font-display";
+    kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "font-sans";
 
   return (
     <motion.span
@@ -234,7 +230,7 @@ function AsyncWord({
         WebkitFontSmoothing: "antialiased",
         MozOsxFontSmoothing: "grayscale",
         textRendering: "geometricPrecision",
-        fontWeight: kind === "title" ? 700 : 600,
+        fontWeight: kind === "title" ? 700 : 650,
         letterSpacing: kind === "sub" ? undefined : "0.01em",
       }}
       className={`relative inline-block align-baseline whitespace-nowrap ${faceClass}`}
@@ -813,7 +809,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mt-3 w-full max-w-full whitespace-nowrap text-center font-display text-[clamp(0.66rem,0.48rem+0.55vw,0.94rem)] font-semibold leading-none tracking-[0.06em] text-white uppercase pl-[0.06em] sm:mt-4 sm:tracking-[0.08em] sm:pl-[0.08em] md:mt-5 md:tracking-[0.09em] md:pl-[0.09em]"
+                className="mt-3 w-full max-w-full whitespace-nowrap text-center font-sans text-[clamp(0.66rem,0.48rem+0.55vw,0.94rem)] font-semibold leading-none tracking-[0.06em] text-white uppercase pl-[0.06em] sm:mt-4 sm:tracking-[0.08em] sm:pl-[0.08em] md:mt-5 md:tracking-[0.09em] md:pl-[0.09em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
