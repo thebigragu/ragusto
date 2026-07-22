@@ -81,7 +81,9 @@ export function ContactForm() {
   if (status === "success") {
     return (
       <div className="rounded-[2rem] border border-border bg-bg-elevated p-10 text-center">
-        <h2 className="font-display text-3xl tracking-tight">Message sent</h2>
+        <h2 className="font-display text-3xl leading-[1.25] tracking-tight pb-[0.1em]">
+          Message sent
+        </h2>
         <p className="mt-3 text-fg-muted">
           Thanks — we&apos;ll review your note and reply soon, usually within one to two business
           days.
