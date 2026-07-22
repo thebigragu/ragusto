@@ -175,10 +175,11 @@ const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
 const TYPE_FACE_SILVER = "#ffffff";
-/** Brand accent gold — saturated enough to read against white body type */
+/** Brand accent gold — solid, not cream-washed */
 const TYPE_FACE_GOLD = "#c4a574";
-const TYPE_FACE_GOLD_GLOW = "0 0 14px rgba(196,165,116,0.55), 0 1px 0 rgba(0,0,0,0.35)";
-const TYPE_FACE_SUB = "#f7f4ee";
+const TYPE_FACE_SUB = "#ffffff";
+/** Hard 1px stem only — keeps glyphs sharp (no soft glow wash) */
+const TYPE_FACE_EDGE = "0 1px 0 rgba(0,0,0,0.78)";
 
 /** Deeper chrome extrusion for gold rim + pulse bar */
 function chromeExtrudeDepth(isMobile: boolean) {
@@ -225,9 +226,12 @@ function AsyncWord({
       style={{
         opacity,
         color: faceColor,
-        textShadow: emph ? TYPE_FACE_GOLD_GLOW : undefined,
+        textShadow: TYPE_FACE_EDGE,
         WebkitFontSmoothing: "antialiased",
+        MozOsxFontSmoothing: "grayscale",
         textRendering: "geometricPrecision",
+        fontWeight: kind === "title" ? 700 : 650,
+        letterSpacing: kind === "sub" ? undefined : "0.01em",
       }}
       className={`relative inline-block align-baseline whitespace-nowrap ${faceClass}`}
     >
@@ -759,15 +763,17 @@ function BeatCard({
           />
 
             <motion.div
-              className="relative px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-10"
+              className="relative z-10 px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-10"
               style={{
                 borderRadius: radius,
                 transform: contentTransform,
                 transformStyle: "preserve-3d",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
               }}
             >
               <p
-                className="mx-auto max-w-full text-balance text-center font-serif text-[calc(1.34rem+0.5pt)] font-[650] leading-snug tracking-normal text-white sm:text-[calc(1.92rem+0.5pt)] sm:leading-snug md:text-[calc(2.39rem+0.5pt)] md:leading-[1.25]"
+                className="mx-auto max-w-full text-balance text-center font-serif text-[calc(1.34rem+0.5pt)] font-bold leading-snug tracking-normal text-white sm:text-[calc(1.92rem+0.5pt)] sm:leading-snug md:text-[calc(2.39rem+0.5pt)] md:leading-[1.25]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
@@ -785,7 +791,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mx-auto mt-3 max-w-full text-pretty text-center text-[calc(0.69rem+0.5pt)] font-[650] leading-relaxed tracking-[0.08em] text-[#f7f4ee] uppercase sm:mt-5 sm:text-[calc(0.92rem+0.5pt)] sm:tracking-[0.1em] md:mt-6 md:text-[calc(0.94rem+0.5pt)] md:tracking-[0.12em]"
+                className="mx-auto mt-3 max-w-full text-pretty text-center text-[calc(0.69rem+0.5pt)] font-semibold leading-relaxed tracking-[0.08em] text-white uppercase sm:mt-5 sm:text-[calc(0.92rem+0.5pt)] sm:tracking-[0.1em] md:mt-6 md:text-[calc(0.94rem+0.5pt)] md:tracking-[0.12em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
