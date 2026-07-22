@@ -264,7 +264,7 @@ function BeatCard({
   const halfT = T / 2;
   const restTop = isMobile ? undefined : v.top;
   const mobileBand = v.topMobile;
-  const radius = isMobile ? "1.05rem" : "0.65rem";
+  const radius = isMobile ? "1.05rem" : v.radius;
 
   const enterY = useTransform(progress, (p) => {
     // Numeric px only — string units (vh) crash mobile WAAPI via Framer bindings
@@ -575,8 +575,8 @@ function BeatCard({
   const sideClass = isMobile
     ? "left-1/2 origin-center"
     : beat.side === "left"
-      ? "left-[max(1.5rem,min(14vw,20rem))] origin-center"
-      : "right-[max(1.5rem,min(14vw,20rem))] origin-center";
+      ? "left-5 origin-center md:left-8 lg:left-10 xl:left-12"
+      : "right-5 origin-center md:right-8 lg:right-10 xl:right-12";
 
   // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
   const sheenAngle = beat.side === "left" ? 118 : 62;
@@ -634,7 +634,7 @@ function BeatCard({
       className={`pointer-events-auto absolute z-20 will-change-transform ${
         isMobile
           ? "left-1/2 w-[min(88vw,clamp(16rem,72vw,22rem))] max-w-[min(88vw,clamp(16rem,72vw,22rem))]"
-          : `w-[min(80vw,clamp(24rem,22vw+8rem,40rem))] max-w-[min(80vw,clamp(24rem,22vw+8rem,40rem))] -translate-y-1/2 ${sideClass}`
+          : `w-[min(90vw,34rem)] max-w-[min(90vw,34rem)] -translate-y-1/2 ${sideClass}`
       }`}
       style={{
         ...mobilePosStyle,
@@ -775,7 +775,7 @@ function BeatCard({
           />
 
             <motion.div
-              className="relative z-10 px-5 py-4 text-center sm:px-8 sm:py-5 md:px-10 md:py-6 lg:px-12 lg:py-7"
+              className="relative z-10 px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-8"
               style={{
                 borderRadius: radius,
                 transform: contentTransform,
