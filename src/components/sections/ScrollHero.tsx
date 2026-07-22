@@ -580,21 +580,21 @@ function BeatCard({
       : "right-[clamp(1.25rem,1rem+3.8vw,9rem)] origin-center";
 
   // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
-  // Softened at rest so white title/subtitle stay readable over the highlight
+  // Corner highlight only is softened so type stays readable
   const sheenAngle = beat.side === "left" ? 118 : 62;
   const faceWashAngle = beat.side === "left" ? 155 : 205;
   const cornerSheen =
     beat.side === "left"
-      ? "radial-gradient(ellipse 58% 48% at 14% 10%, rgba(255,255,255,0.14) 0%, rgba(240,226,196,0.06) 38%, transparent 72%)"
-      : "radial-gradient(ellipse 58% 48% at 86% 10%, rgba(255,255,255,0.14) 0%, rgba(240,226,196,0.06) 38%, transparent 72%)";
+      ? "radial-gradient(ellipse 58% 48% at 14% 10%, rgba(255,255,255,0.1) 0%, rgba(240,226,196,0.04) 38%, transparent 72%)"
+      : "radial-gradient(ellipse 58% 48% at 86% 10%, rgba(255,255,255,0.1) 0%, rgba(240,226,196,0.04) 38%, transparent 72%)";
   const faceMetal = `
     ${cornerSheen},
     linear-gradient(${sheenAngle}deg,
       transparent 0%,
-      rgba(255,255,255,0.09) 12%,
+      rgba(255,255,255,0.18) 12%,
       transparent 22%,
       transparent 48%,
-      rgba(240,226,196,0.07) 61%,
+      rgba(240,226,196,0.14) 61%,
       transparent 74%),
     linear-gradient(${faceWashAngle}deg,
       rgba(210,205,198,1) 0%,
@@ -607,10 +607,10 @@ function BeatCard({
   const faceMetalSheen = `
     linear-gradient(${v.shimmerAngle}deg,
       transparent 0%,
-      rgba(255,255,255,0.04) 28%,
-      rgba(255,248,230,0.12) 46%,
-      rgba(196,165,116,0.08) 52%,
-      rgba(255,255,255,0.03) 58%,
+      rgba(255,255,255,0.06) 28%,
+      rgba(255,248,230,0.2) 46%,
+      rgba(196,165,116,0.14) 52%,
+      rgba(255,255,255,0.04) 58%,
       transparent 78%)
   `;
 
@@ -725,7 +725,7 @@ function BeatCard({
             style={{
               borderRadius: radius,
               background: faceMetalSheen,
-              opacity: 0.28,
+              opacity: 0.42,
             }}
           />
 
