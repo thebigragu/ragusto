@@ -1022,12 +1022,25 @@ export function ScrollHero() {
   });
   const videoProgress = isMobile ? videoProgressRaw : videoProgressSmooth;
 
-  // Hero lifts only ~halfway — remaining lower frame stays visible under contact
-  // Numeric px — percentage strings crash mobile Chromium WAAPI
+  // Desktop: hero lifts up as contact rises.
+  // Mobile: hero pushes down lower so contact owns the upper viewport at the bottom.
   const stickyLift = useTransform(driveProgress, (p) => {
     const vh = typeof window !== "undefined" ? window.innerHeight : 800;
     const a = SCRUB_HANDOFF_START;
     const b = SCRUB_HANDOFF_START + 0.12;
+
+    if (isMobile) {
+      if (p <= a) return 0;
+      if (p >= 1) return 0.4 * vh;
+      // Ease in through the handoff, then settle further down at the end
+      if (p <= b) {
+        const t = smoothstep((p - a) / (b - a));
+        return 0.16 * vh * t;
+      }
+      const t = smoothstep((p - b) / (1 - b));
+      return (0.16 + 0.24 * t) * vh;
+    }
+
     if (p <= a) return 0;
     if (p >= 1) return -0.5 * vh;
     if (p <= b) {
