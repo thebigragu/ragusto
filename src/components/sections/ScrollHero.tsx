@@ -109,7 +109,7 @@ const BEATS: Beat[] = [
       { t: "Apps," },
       { t: "engineered", emph: true },
     ],
-    sub: "Products built to ship — and endure",
+    sub: "Products built to ship",
     subEmph: ["ship"],
     side: "left",
     start: 0.585,
