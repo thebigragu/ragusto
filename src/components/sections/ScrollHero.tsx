@@ -1005,17 +1005,17 @@ export function ScrollHero() {
     offset: ["start start", "end end"],
   });
 
-  // Layout polish only — keep this off the video path so frames aren't lagged/bunched
+  // Soft spring on both platforms so fast flicks still play bubble /
+  // contact transitions through instead of teleporting.
   const sprungProgress = useSpring(scrollYProgress, {
-    stiffness: isMobile ? 280 : 200,
-    damping: isMobile ? 36 : 34,
-    mass: isMobile ? 0.1 : 0.14,
+    stiffness: isMobile ? 150 : 130,
+    damping: isMobile ? 30 : 28,
+    mass: isMobile ? 0.18 : 0.2,
     restDelta: 0.00005,
     restSpeed: 0.00005,
   });
-  const driveProgress = isMobile ? scrollYProgress : sprungProgress;
+  const driveProgress = sprungProgress;
 
-  // Video scrub tracks scroll directly on mobile (no soft spring lag)
   const videoProgressRaw = useTransform(driveProgress, (p) => {
     if (p <= SCRUB_HANDOFF_START) {
       return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
@@ -1023,14 +1023,14 @@ export function ScrollHero() {
     const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
-  const videoProgressSmooth = useSpring(videoProgressRaw, {
-    stiffness: 380,
-    damping: 42,
-    mass: 0.08,
+  // Light follow so video walks frames on fast scroll without heavy lag
+  const videoProgress = useSpring(videoProgressRaw, {
+    stiffness: isMobile ? 240 : 220,
+    damping: isMobile ? 36 : 34,
+    mass: isMobile ? 0.1 : 0.12,
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
-  const videoProgress = isMobile ? videoProgressRaw : videoProgressSmooth;
 
   // Hero lifts up as contact rises.
   // Mobile settles with the hero bottom at ~2/3 viewport (top of bottom third);
@@ -1165,8 +1165,8 @@ export function ScrollHero() {
 
     /**
      * Both desktop + mobile assets are 24fps all-intra H.264 — every frame is a
-     * keyframe. Mobile allows a few frames per tick so flicks stay responsive
-     * without hard-skipping the whole scrub.
+     * keyframe. Mobile caps frames per tick so fast flicks still walk the scrub
+     * sequentially instead of hard-skipping ahead.
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
@@ -1180,7 +1180,8 @@ export function ScrollHero() {
       const prev = lastFrameIndex.current;
       if (prev >= 0 && isMobile) {
         const delta = targetFrame - prev;
-        const maxStep = 3;
+        // Smaller step keeps flick scrub sequential instead of jumping ahead
+        const maxStep = 2;
         if (Math.abs(delta) > maxStep) {
           frameIndex = prev + Math.sign(delta) * maxStep;
         }
@@ -1294,7 +1295,7 @@ export function ScrollHero() {
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[620vh] bg-transparent md:h-[680vh]">
+      <section ref={scrubRef} className="relative h-[780vh] bg-transparent md:h-[860vh]">
         <div className="sticky top-0 z-20 h-[100dvh] w-full overflow-hidden bg-transparent">
           <motion.div
             ref={heroFrameRef}
