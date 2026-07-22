@@ -64,8 +64,8 @@ const BEATS: Beat[] = [
     sub: "Where craft meets computation",
     subEmph: ["craft"],
     side: "left",
-    start: 0.02,
-    end: 0.275,
+    start: 0.015,
+    end: 0.285,
     variant: {
       orbitR: 720,
       radius: "1.4rem",
@@ -88,8 +88,8 @@ const BEATS: Beat[] = [
     sub: "Interfaces that feel inevitable",
     subEmph: ["inevitable"],
     side: "right",
-    start: 0.29,
-    end: 0.545,
+    start: 0.3,
+    end: 0.57,
     variant: {
       orbitR: 720,
       radius: "1.15rem",
@@ -112,8 +112,8 @@ const BEATS: Beat[] = [
     sub: "Products built to ship — and endure",
     subEmph: ["ship"],
     side: "left",
-    start: 0.56,
-    end: 0.785,
+    start: 0.585,
+    end: 0.82,
     variant: {
       orbitR: 720,
       radius: "1.7rem",
@@ -136,8 +136,8 @@ const BEATS: Beat[] = [
     sub: "One atelier. End to end.",
     subEmph: ["atelier"],
     side: "right",
-    start: 0.8,
-    end: 0.98,
+    start: 0.835,
+    end: 0.995,
     variant: {
       orbitR: 720,
       radius: "1rem",
@@ -146,7 +146,7 @@ const BEATS: Beat[] = [
       edgeGlow: "rgba(240,226,196,0.55)",
       depthTint: "rgba(245,230,200,0.92)",
       shimmerAngle: 72,
-      top: "60%",
+      top: "54%",
       topMobile: "bottom",
       thickness: 124,
     },
@@ -169,9 +169,9 @@ function smoothstep(e: number) {
   return e * e * (3 - 2 * e);
 }
 
-/** Longer beat windows + later exit = slower motion, longer hold at rest */
-const ENTER_END = 0.36;
-const EXIT_START = 0.8;
+/** Wider windows + later exit = slower motion, longer hold at rest */
+const ENTER_END = 0.3;
+const EXIT_START = 0.86;
 const EXIT_LEN = 1 - EXIT_START;
 
 const TYPE_FACE_SILVER = "#ffffff";
@@ -391,8 +391,8 @@ function BeatCard({
     if (t < ENTER_END) {
       // Brief push toward camera during the depth-reveal twist
       const u = t / ENTER_END;
-      if (u > 0.55 && u < 1) {
-        const twistU = (u - 0.55) / 0.45;
+      if (u > 0.58 && u < 1) {
+        const twistU = (u - 0.58) / 0.42;
         const bump = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 14 : 22);
         return restZ + bump;
       }
@@ -410,16 +410,16 @@ function BeatCard({
       const u = t / ENTER_END;
       const startX = restX + 16 * tiltScale;
       // Longer settle into rest before the slow depth twist
-      if (u < 0.55) {
-        return startX + (restX - startX) * smoothstep(u / 0.55);
+      if (u < 0.58) {
+        return startX + (restX - startX) * smoothstep(u / 0.58);
       }
-      const twistU = (u - 0.55) / 0.45;
+      const twistU = (u - 0.58) / 0.42;
       const lift = Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 5 : 7);
-      if (u < 0.84) {
-        const e = smoothstep((u - 0.55) / 0.29);
+      if (u < 0.88) {
+        const e = smoothstep((u - 0.58) / 0.3);
         return restX + lift * e;
       }
-      const e = smoothstep((u - 0.84) / 0.16);
+      const e = smoothstep((u - 0.88) / 0.12);
       return restX + lift * (1 - e);
     }
     if (t <= EXIT_START) return restX;
@@ -440,15 +440,15 @@ function BeatCard({
       const startY = restY + exitDir * 22 * tiltScale;
       // Opposite-side peak: reveals the elongated prism edge, then soft-settles
       const peakY = restY + exitDir * twistAmp;
-      if (u < 0.55) {
-        return startY + (restY - startY) * smoothstep(u / 0.55);
+      if (u < 0.58) {
+        return startY + (restY - startY) * smoothstep(u / 0.58);
       }
-      if (u < 0.84) {
-        const e = smoothstep((u - 0.55) / 0.29);
+      if (u < 0.88) {
+        const e = smoothstep((u - 0.58) / 0.3);
         return restY + (peakY - restY) * e;
       }
       // Soft settle — no hard overshoot snap
-      const e = smoothstep((u - 0.84) / 0.16);
+      const e = smoothstep((u - 0.88) / 0.12);
       const soft = Math.sin(e * Math.PI) * exitDir * -1.2;
       return peakY + (restY - peakY) * e + soft * (1 - e);
     }
@@ -469,8 +469,8 @@ function BeatCard({
     if (t < ENTER_END) {
       const u = t / ENTER_END;
       const startZ = exitDir * -8 * tiltScale;
-      if (u < 0.55) return startZ * (1 - smoothstep(u / 0.55));
-      const twistU = (u - 0.55) / 0.45;
+      if (u < 0.58) return startZ * (1 - smoothstep(u / 0.58));
+      const twistU = (u - 0.58) / 0.42;
       return exitDir * Math.sin(Math.min(1, twistU) * Math.PI) * 6;
     }
     if (t <= EXIT_START) return 0;
