@@ -186,6 +186,7 @@ const TYPE_STEM_SILVER = [
   "#8e939f",
   "#a4a8b3",
   "#bbbfc7",
+  "#d0d3d9",
 ];
 const TYPE_STEM_GOLD = [
   "#2a2016",
@@ -199,9 +200,18 @@ const TYPE_STEM_GOLD = [
   "#b89868",
   "#c8a878",
   "#d4b888",
+  "#e0c898",
 ];
 const TYPE_FACE_SILVER = "#faf8f2";
 const TYPE_FACE_GOLD = "#f0e2c4";
+
+/** Shared extrusion depth — type, gold rim, and pulse bar all use this height */
+function extrudeParams(isMobile: boolean) {
+  return {
+    steps: isMobile ? 10 : 12,
+    stepPx: isMobile ? 1.6 : 2,
+  };
+}
 
 function AsyncWord({
   text,
@@ -284,10 +294,7 @@ function AsyncWord({
   const wordTransform = useMotionTemplate`translate3d(0px, ${wordY}px, ${wordZ}px) rotateX(${wordRx}deg) rotateY(${wordRy}deg)`;
   const wordOpacity = useTransform([opacity, exitFade], ([o, f]) => (o as number) * (f as number));
 
-  // Title gets a taller extrusion than the subtitle so the header reads raised
-  const stepPx = kind === "title" ? (isMobile ? 1.85 : 2.35) : isMobile ? 1.35 : 1.65;
-  const steps =
-    kind === "title" ? (isMobile ? 9 : 12) : isMobile ? 6 : 8;
+  const { steps, stepPx } = extrudeParams(isMobile);
   const stem = (emph ? TYPE_STEM_GOLD : TYPE_STEM_SILVER).slice(0, steps);
   const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? "#ebe6de" : TYPE_FACE_SILVER;
   const faceClass =
@@ -314,7 +321,6 @@ function AsyncWord({
           style={{
             transform: `translateZ(${i * stepPx}px)`,
             color,
-            // Keep stems fully opaque so the extrusion wall stays solid
             opacity: 1,
           }}
         >
@@ -326,7 +332,6 @@ function AsyncWord({
         style={{
           transform: `translateZ(${steps * stepPx}px)`,
           color: faceColor,
-          // Crisp face only — no soft glow that muddies glyphs
           textShadow: "none",
           WebkitTextStroke: kind === "title" ? "0.35px rgba(10,10,12,0.28)" : "0.2px rgba(10,10,12,0.22)",
           paintOrder: "stroke fill",
@@ -525,10 +530,7 @@ function BeatCard({
   const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const rimStepPx = isMobile ? 1.6 : 2.1;
-  const rimSteps = isMobile ? 9 : 13;
-  const barStepPx = isMobile ? 1.45 : 1.85;
-  const barSteps = isMobile ? 7 : 10;
+  const { steps: extrudeSteps, stepPx: extrudeStepPx } = extrudeParams(isMobile);
   const rimStem = [
     "#4a3a24",
     "#5c4a2e",
@@ -555,6 +557,8 @@ function BeatCard({
     "#d4b888",
     "#e0c898",
     "#e8d2a8",
+    "#f0e2c4",
+    "#f5ead0",
   ];
 
   const shimmerPos = useTransform(progress, (p) => {
@@ -778,15 +782,15 @@ function BeatCard({
             animate={{ opacity: [0.82, 1, 0.82] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           >
-            {/* Gold rim extrusion — solid border plates stacked through Z */}
-            {rimStem.slice(0, rimSteps).map((color, i) => (
+            {/* Gold rim extrusion — same depth as type + pulse bar */}
+            {rimStem.slice(0, extrudeSteps).map((color, i) => (
               <div
                 key={i}
                 className="absolute inset-0"
                 style={{
                   borderRadius: radius,
-                  transform: `translateZ(${i * rimStepPx}px)`,
-                  border: `${i === rimSteps - 1 ? 2.25 : 2}px solid ${color}`,
+                  transform: `translateZ(${i * extrudeStepPx}px)`,
+                  border: `${i === extrudeSteps - 1 ? 2.25 : 2}px solid ${color}`,
                   boxSizing: "border-box",
                   background: "transparent",
                 }}
@@ -797,14 +801,13 @@ function BeatCard({
               className="absolute inset-0"
               style={{
                 borderRadius: radius,
-                transform: `translateZ(${rimSteps * rimStepPx}px)`,
+                transform: `translateZ(${extrudeSteps * extrudeStepPx}px)`,
                 border: "2.25px solid #f5ead0",
                 boxSizing: "border-box",
                 boxShadow: "inset 0 1px 0 rgba(255,248,230,0.55)",
               }}
             />
-          </motion.div>
-          <motion.div
+          </motion.div>          <motion.div
             ref={shimmerLayerRef}
             aria-hidden
             className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -875,13 +878,13 @@ function BeatCard({
                 className="relative mx-auto mt-4 h-[3px] w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7"
                 style={{ transformStyle: "preserve-3d" }}
               >
-                {barStem.slice(0, barSteps).map((color, i) => (
+                {barStem.slice(0, extrudeSteps).map((color, i) => (
                   <div
                     key={i}
                     aria-hidden
                     className="absolute inset-0 rounded-full"
                     style={{
-                      transform: `translateZ(${i * barStepPx}px)`,
+                      transform: `translateZ(${i * extrudeStepPx}px)`,
                       background: color,
                     }}
                   />
@@ -889,7 +892,7 @@ function BeatCard({
                 <motion.div
                   className="absolute inset-0 rounded-full"
                   style={{
-                    transform: `translateZ(${barSteps * barStepPx}px)`,
+                    transform: `translateZ(${extrudeSteps * extrudeStepPx}px)`,
                     background: "#f0e2c4",
                     transformStyle: "preserve-3d",
                   }}
