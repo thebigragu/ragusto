@@ -263,8 +263,6 @@ function BeatCard({
   const halfT = T / 2;
   const restTop = isMobile ? undefined : v.top;
   const mobileBand = v.topMobile;
-  // Near edge (toward hero center) carries the thickness wall
-  const depthOnLeft = beat.side === "left";
   const radius = isMobile ? "1.05rem" : v.radius;
 
   const enterY = useTransform(progress, (p) => {
@@ -301,11 +299,13 @@ function BeatCard({
     return 1;
   });
 
-  // At rest: yaw reveals the full-depth side glow uniformly top→bottom.
-  // Pitch stays 0 — any rotateX + perspective thickens the volume lip at one end.
-  const restY = beat.side === "left" ? (isMobile ? 14 : 22) : isMobile ? -14 : -22;
+  // Mild yaw for depth presence — perimeter glow comes from a uniform
+  // oversize volume (not from heavy yaw that only lights one long side).
+  const restY = beat.side === "left" ? (isMobile ? 6 : 10) : isMobile ? -6 : -10;
   const restX = 0;
   const twistAmp = isMobile ? 0 : 34 * tiltScale;
+  /** Expand rear + volume equally on all sides so top/bottom long edges match sides */
+  const glowScale = isMobile ? 1.042 : 1.048;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -629,17 +629,17 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Prism: soft rear + dense mid-volume glow fill (1px Z steps, no edge
-          lines — reads as uniform light, not stacked panes).
+          Prism: rear + volume slightly oversized vs the front face so the
+          transparent gold glow peeks evenly on all four edges (incl. top).
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — same metal as front; no soft glow that blooms unevenly */}
+          {/* Rear face — same metal as front; scaled out for uniform perimeter */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
             style={{
               borderRadius: radius,
-              transform: `translateZ(${-halfT}px)`,
+              transform: `translateZ(${-halfT}px) scale(${glowScale})`,
               background: faceMetal,
               opacity: 1,
               backfaceVisibility: "hidden",
@@ -648,8 +648,8 @@ function BeatCard({
           />
 
           {/*
-            Dense volume fill — identical plate opacity + flat tint so the
-            side lip reads as one uniform wall (no top/bottom bias).
+            Dense volume fill — same oversize + flat tint on every plate so the
+            halo is cohesive around the whole bubble, not side-biased.
           */}
           {Array.from({ length: Math.max(10, Math.round(T)) }, (_, i) => {
             const count = Math.max(10, Math.round(T));
@@ -662,9 +662,9 @@ function BeatCard({
                 className="pointer-events-none absolute inset-0"
                 style={{
                   borderRadius: radius,
-                  transform: `translateZ(${z}px)`,
+                  transform: `translateZ(${z}px) scale(${glowScale})`,
                   background: v.depthTint,
-                  opacity: 0.1,
+                  opacity: 0.11,
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
                 }}
@@ -693,8 +693,8 @@ function BeatCard({
                 inset 18px 0 28px -18px rgba(255,248,230,0.08),
                 inset -18px 0 28px -18px rgba(0,0,0,0.35),
                 0 0 0 1px ${v.rim},
-                ${depthOnLeft ? "6px" : "-6px"} 10px 22px rgba(0,0,0,0.32),
-                0 18px 36px rgba(0,0,0,0.26)
+                0 14px 28px rgba(0,0,0,0.28),
+                0 0 32px ${v.edgeGlow}
               `,
             }}
           />
