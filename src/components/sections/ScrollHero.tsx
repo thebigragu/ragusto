@@ -865,15 +865,18 @@ function BeatCard({
 }
 
 function ScrollCue({
-  progress,
   scrollProgress,
   isMobile,
 }: {
-  progress: MotionValue<number>;
   scrollProgress: MotionValue<number>;
   isMobile: boolean;
 }) {
-  const opacity = useTransform(progress, [0, 0.82, 0.95, 1], [1, 1, 0.35, 0.1]);
+  // Fully gone by the bottom of the scrub (contact) — no residual ghost
+  const opacity = useTransform(
+    scrollProgress,
+    [0, 0.7, 0.82, 0.92, 1],
+    [1, 1, 0.4, 0, 0],
+  );
 
   // Desktop: mid-right → bottom-right.
   // Mobile: center → lower-right corner (clears the bottom-band bubble at rest).
@@ -1318,7 +1321,6 @@ export function ScrollHero() {
             ))}
 
             <ScrollCue
-              progress={videoProgress}
               scrollProgress={driveProgress}
               isMobile={isMobile}
             />
