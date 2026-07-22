@@ -572,11 +572,12 @@ function BeatCard({
     if (el) el.style.background = shimmerBackground.get();
   }, [shimmerBackground]);
 
+  // Inset grows with viewport so ultra-wide doesn't pin bubbles to the bezel
   const sideClass = isMobile
     ? "left-1/2 origin-center"
     : beat.side === "left"
-      ? "left-5 origin-center md:left-8 lg:left-10 xl:left-12"
-      : "right-5 origin-center md:right-8 lg:right-10 xl:right-12";
+      ? "left-[clamp(1.25rem,1rem+3.8vw,9rem)] origin-center"
+      : "right-[clamp(1.25rem,1rem+3.8vw,9rem)] origin-center";
 
   // Front face: solid brushed metal — corner sheen mirrors by side (TL ↔ TR)
   // Softened at rest so white title/subtitle stay readable over the highlight
