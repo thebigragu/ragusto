@@ -301,12 +301,10 @@ function BeatCard({
     return 1;
   });
 
-  // At rest: left panes aim right across the hero; right panes aim left —
-  // enough yaw that the full-depth side glow is visible.
-  // Mobile: square yaw; pitch reveals prism depth.
-  // Top band tips up toward viewer; bottom band tips down (inverted + stronger).
-  const restY = isMobile ? 0 : beat.side === "left" ? 22 : -22;
-  const restX = isMobile ? (mobileBand === "top" ? -16 : 16) : 5;
+  // At rest: yaw reveals the full-depth side glow uniformly top→bottom.
+  // Pitch stays 0 — any rotateX + perspective thickens the volume lip at one end.
+  const restY = beat.side === "left" ? (isMobile ? 14 : 22) : isMobile ? -14 : -22;
+  const restX = 0;
   const twistAmp = isMobile ? 0 : 34 * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
@@ -620,7 +618,7 @@ function BeatCard({
         opacity,
         y: enterY,
         scale,
-        perspective: isMobile ? 980 : 1500,
+        perspective: isMobile ? 1400 : 1600,
         transformStyle: "preserve-3d",
       }}
       onMouseMove={onCardPointerMove}
@@ -635,7 +633,7 @@ function BeatCard({
           lines — reads as uniform light, not stacked panes).
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — same metal face as front so rear matches front colour */}
+          {/* Rear face — same metal as front; no soft glow that blooms unevenly */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -643,23 +641,20 @@ function BeatCard({
               borderRadius: radius,
               transform: `translateZ(${-halfT}px)`,
               background: faceMetal,
-              boxShadow: `0 0 28px ${v.edgeGlow}`,
-              opacity: 0.9,
+              opacity: 1,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
           />
 
           {/*
-            Dense volume fill — flat color (uniform top→bottom), opacity only
-            fades toward the rear so the back pane peeks through evenly.
+            Dense volume fill — identical plate opacity + flat tint so the
+            side lip reads as one uniform wall (no top/bottom bias).
           */}
           {Array.from({ length: Math.max(10, Math.round(T)) }, (_, i) => {
             const count = Math.max(10, Math.round(T));
             const t = (i + 0.5) / count; // 0 = rear, 1 = front
             const z = -halfT + t * T;
-            // Slightly more open overall; linear Z fade only (no vertical bias)
-            const opacity = 0.035 + 0.07 * t;
             return (
               <div
                 key={`vol-${i}`}
@@ -669,7 +664,7 @@ function BeatCard({
                   borderRadius: radius,
                   transform: `translateZ(${z}px)`,
                   background: v.depthTint,
-                  opacity,
+                  opacity: 0.1,
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
                 }}
