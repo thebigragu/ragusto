@@ -645,17 +645,14 @@ function BeatCard({
           lines — reads as uniform light, not stacked panes).
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — even plate (no mid-weight radial bulge) */}
+          {/* Rear face — same metal face as front so rear matches front colour */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
             style={{
               borderRadius: radius,
               transform: `translateZ(${-halfT}px)`,
-              background: `
-                linear-gradient(180deg, ${v.depthTint} 0%, rgba(196,165,116,0.55) 100%),
-                linear-gradient(135deg, rgba(255,248,230,0.22) 0%, rgba(40,38,42,0.35) 100%)
-              `,
+              background: faceMetal,
               boxShadow: `0 0 28px ${v.edgeGlow}`,
               opacity: 0.9,
               backfaceVisibility: "hidden",
