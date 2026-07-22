@@ -987,9 +987,9 @@ function ScrollCue({
 const VIDEO_HANDOFF = 0.9;
 const SCRUB_HANDOFF_START = 0.78;
 /** Desktop wheel notch ≈ this many consecutive frames on mobile touch ticks too */
-const FRAMES_PER_WHEEL_NOTCH = 14;
+const FRAMES_PER_WHEEL_NOTCH = 12;
 /** Finger px that equals one mouse-wheel increment for video scrub */
-const TOUCH_PX_PER_WHEEL_NOTCH = 42;
+const TOUCH_PX_PER_WHEEL_NOTCH = 56;
 
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
@@ -1001,6 +1001,7 @@ export function ScrollHero() {
   const mobileNotchRef = useRef(0);
   const touchScrollAccumPx = useRef(0);
   const lastTouchScrollY = useRef(0);
+  const videoSeekingRef = useRef(false);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
@@ -1202,18 +1203,24 @@ export function ScrollHero() {
       const maxFrame = Math.max(0, Math.round(video.duration * fps) - 1);
       const maxNotch = Math.max(0, Math.floor(maxFrame / FRAMES_PER_WHEEL_NOTCH));
 
-      while (Math.abs(touchScrollAccumPx.current) >= TOUCH_PX_PER_WHEEL_NOTCH) {
-        const dir = Math.sign(touchScrollAccumPx.current) as 1 | -1;
-        touchScrollAccumPx.current -= dir * TOUCH_PX_PER_WHEEL_NOTCH;
-        mobileNotchRef.current = Math.min(
-          maxNotch,
-          Math.max(0, mobileNotchRef.current + dir),
-        );
-        targetTime.current = Math.min(
-          video.duration - 0.001,
-          (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
-        );
+      // One notch per scroll event — lets frames play out before the next jump
+      if (Math.abs(touchScrollAccumPx.current) < TOUCH_PX_PER_WHEEL_NOTCH) return;
+
+      const dir = Math.sign(touchScrollAccumPx.current) as 1 | -1;
+      touchScrollAccumPx.current -= dir * TOUCH_PX_PER_WHEEL_NOTCH;
+      // Keep leftover under one notch so flicks still feel continuous over time
+      if (Math.abs(touchScrollAccumPx.current) >= TOUCH_PX_PER_WHEEL_NOTCH * 2) {
+        touchScrollAccumPx.current = dir * (TOUCH_PX_PER_WHEEL_NOTCH * 0.5);
       }
+
+      mobileNotchRef.current = Math.min(
+        maxNotch,
+        Math.max(0, mobileNotchRef.current + dir),
+      );
+      targetTime.current = Math.min(
+        video.duration - 0.001,
+        (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
+      );
     };
 
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -1236,13 +1243,14 @@ export function ScrollHero() {
 
     /**
      * Both assets are 24fps all-intra H.264. Scroll moves the *target* ahead;
-     * each display refresh walks consecutive frames toward it. Cap per tick is
-     * high enough that a wheel notch's frame run finishes quickly (smoother
-     * motion) without hard-skipping large gaps.
+     * each display refresh walks consecutive frames toward it. Mobile steps
+     * one frame per paint (and waits for seeked) so motion plays smoothly
+     * instead of jumping.
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
       if (!v || !Number.isFinite(v.duration) || v.duration <= 0) return;
+      if (isMobile && videoSeekingRef.current) return;
 
       const fps = fpsRef.current;
       const maxFrame = Math.max(0, Math.round(v.duration * fps) - 1);
@@ -1253,8 +1261,8 @@ export function ScrollHero() {
       if (prev >= 0) {
         const delta = targetFrame - prev;
         if (delta === 0) return;
-        // Same catch-up rate on mobile + desktop — consecutive frames toward target
-        const maxPerTick = 10;
+        // Mobile: strictly 1 frame/tick for succession; desktop can catch up faster
+        const maxPerTick = isMobile ? 1 : 10;
         const step = Math.min(Math.abs(delta), maxPerTick);
         frameIndex = prev + Math.sign(delta) * step;
       }
@@ -1264,11 +1272,17 @@ export function ScrollHero() {
 
       const framed = Math.min(v.duration - 0.001, frameIndex / fps);
       try {
+        if (isMobile) videoSeekingRef.current = true;
         v.currentTime = framed;
       } catch {
-        /* ignore */
+        videoSeekingRef.current = false;
       }
     };
+
+    const onSeeked = () => {
+      videoSeekingRef.current = false;
+    };
+    video.addEventListener("seeked", onSeeked);
 
     const detectFps = () => {
       const d = video.duration;
@@ -1322,8 +1336,10 @@ export function ScrollHero() {
 
     return () => {
       video.removeEventListener("loadedmetadata", onMeta);
+      video.removeEventListener("seeked", onSeeked);
       cancelAnimationFrame(rafRef.current);
       lastFrameIndex.current = -1;
+      videoSeekingRef.current = false;
     };
   }, [videoProgress, videoProgressRaw, videoSrc, isMobile]);
 
