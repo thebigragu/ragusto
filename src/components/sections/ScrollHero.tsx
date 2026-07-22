@@ -1064,7 +1064,7 @@ export function ScrollHero() {
       1,
     ],
     isMobile
-      ? [0, 0.03, 0.0825, 0.18, 0.2175]
+      ? [0, 0.015, 0.04125, 0.09, 0.10875]
       : [0, 0.08, 0.22, 0.48, 0.58],
   );
   // Mask dissolves only the tip at first, then slowly opens — no hard step
@@ -1336,7 +1336,7 @@ export function ScrollHero() {
               style={{
                 opacity: featherOpacity,
                 background: isMobile
-                  ? "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.022) 24%, rgba(8,9,11,0.075) 42%, rgba(8,9,11,0.165) 58%, rgba(8,9,11,0.26) 76%, rgba(8,9,11,0.33) 90%, rgba(8,9,11,0.36) 100%)"
+                  ? "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.011) 24%, rgba(8,9,11,0.038) 42%, rgba(8,9,11,0.082) 58%, rgba(8,9,11,0.13) 76%, rgba(8,9,11,0.165) 90%, rgba(8,9,11,0.18) 100%)"
                   : "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.06) 24%, rgba(8,9,11,0.2) 42%, rgba(8,9,11,0.45) 58%, rgba(8,9,11,0.7) 76%, rgba(8,9,11,0.88) 90%, rgba(8,9,11,0.96) 100%)",
               }}
             />
