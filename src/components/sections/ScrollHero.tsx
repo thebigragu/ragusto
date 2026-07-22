@@ -870,7 +870,7 @@ function ScrollCue({
   // Desktop: mid-right → bottom-right.
   // Mobile: center → lower-right corner (clears the bottom-band bubble at rest).
   const left = useTransform(scrollProgress, [0, 0.16], isMobile ? [50, 96] : [91, 94]);
-  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [24, 97] : [48, 90]);
+  const top = useTransform(scrollProgress, [0, 0.16], isMobile ? [24, 98.5] : [48, 90]);
   const cueRef = useRef<HTMLDivElement>(null);
   const anchorX = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
   const anchorY = useTransform(scrollProgress, [0, 0.16], [-50, -100]);
