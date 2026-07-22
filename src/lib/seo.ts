@@ -7,7 +7,7 @@ export const SITE = {
   description:
     "Ragusto is an AI web design and app creation studio building cinematic sites, custom applications, and product experiences with atelier-level craft.",
   url: "https://ragusto.com",
-  email: "hello@ragusto.com",
+  email: "jacob@ragusto.com",
   twitter: "@ragusto",
 } as const;
 

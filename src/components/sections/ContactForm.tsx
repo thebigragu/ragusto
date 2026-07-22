@@ -19,6 +19,7 @@ type Status = "idle" | "submitting" | "success" | "error";
 export function ContactForm() {
   const [status, setStatus] = useState<Status>("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   function validate(form: FormData) {
     const next: Record<string, string> = {};
@@ -36,49 +37,54 @@ export function ContactForm() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
     const nextErrors = validate(form);
     setErrors(nextErrors);
+    setErrorMessage(null);
     if (Object.keys(nextErrors).length) return;
 
     setStatus("submitting");
 
-    // Client-side stub until Resend/SMTP is wired.
-    // Opens a prepared mailto as a reliable fallback.
-    const subject = encodeURIComponent(
-      `Ragusto project inquiry — ${String(form.get("name"))}`,
-    );
-    const body = encodeURIComponent(
-      [
-        `Name: ${form.get("name")}`,
-        `Email: ${form.get("email")}`,
-        `Company: ${form.get("company") || "—"}`,
-        `Project type: ${form.get("projectType")}`,
-        "",
-        String(form.get("message")),
-      ].join("\n"),
-    );
+    const payload = {
+      name: String(form.get("name") || "").trim(),
+      email: String(form.get("email") || "").trim(),
+      company: String(form.get("company") || "").trim(),
+      projectType: String(form.get("projectType") || "").trim(),
+      message: String(form.get("message") || "").trim(),
+      company_website: String(form.get("company_website") || ""),
+    };
 
     try {
-      await new Promise((r) => setTimeout(r, 600));
-      window.location.href = `mailto:${SITE.email}?subject=${subject}&body=${body}`;
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+
+      if (!res.ok) {
+        setStatus("error");
+        setErrorMessage(json.error || "Something went wrong. Please try again.");
+        return;
+      }
+
       setStatus("success");
-      e.currentTarget.reset();
+      formEl.reset();
     } catch {
       setStatus("error");
+      setErrorMessage("Network error. Please try again or email us directly.");
     }
   }
 
   if (status === "success") {
     return (
       <div className="rounded-[2rem] border border-border bg-bg-elevated p-10 text-center">
-        <h2 className="font-display text-3xl tracking-tight">Message ready</h2>
+        <h2 className="font-display text-3xl tracking-tight">Message sent</h2>
         <p className="mt-3 text-fg-muted">
-          Your email client should open with the details. If it doesn’t, write us at{" "}
-          <a className="text-fg underline" href={`mailto:${SITE.email}`}>
-            {SITE.email}
-          </a>
-          .
+          Thanks — we&apos;ll review your note and reply soon, usually within one to two business
+          days.
         </p>
         <div className="mt-8 flex justify-center">
           <Button type="button" variant="secondary" onClick={() => setStatus("idle")}>
@@ -102,7 +108,7 @@ export function ContactForm() {
 
       <div className="grid gap-5 md:grid-cols-2">
         <Field label="Name" error={errors.name}>
-          <input name="name" required className={inputClass} placeholder="Alex Rivera" />
+          <input name="name" required className={inputClass} placeholder="Alex Rivera" autoComplete="name" />
         </Field>
         <Field label="Email" error={errors.email}>
           <input
@@ -111,12 +117,14 @@ export function ContactForm() {
             required
             className={inputClass}
             placeholder="alex@company.com"
+            autoComplete="email"
+            inputMode="email"
           />
         </Field>
       </div>
 
       <Field label="Company">
-        <input name="company" className={inputClass} placeholder="Optional" />
+        <input name="company" className={inputClass} placeholder="Optional" autoComplete="organization" />
       </Field>
 
       <Field label="Project type">
@@ -140,18 +148,24 @@ export function ContactForm() {
       </Field>
 
       {status === "error" && (
-        <p className="text-sm text-red-400">Something went wrong. Please email us directly.</p>
+        <p className="text-sm text-red-400">
+          {errorMessage || "Something went wrong."} You can also email{" "}
+          <a className="underline" href={`mailto:${SITE.email}`}>
+            {SITE.email}
+          </a>
+          .
+        </p>
       )}
 
-      <Button type="submit" disabled={status === "submitting"}>
-        {status === "submitting" ? "Preparing…" : "Send inquiry"}
+      <Button type="submit" disabled={status === "submitting"} className="min-h-12 w-full sm:w-auto">
+        {status === "submitting" ? "Sending…" : "Send inquiry"}
       </Button>
     </form>
   );
 }
 
 const inputClass =
-  "w-full rounded-2xl border border-border bg-bg-elevated/60 px-4 py-3.5 text-sm outline-none transition focus:border-accent-blue/50";
+  "w-full rounded-2xl border border-border bg-bg-elevated/60 px-4 py-3.5 text-base text-fg outline-none transition focus:border-accent-blue/50 md:text-sm";
 
 function Field({
   label,
