@@ -39,7 +39,7 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(196,165,116,0.08),transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(26,91,104,0.12),transparent_55%)]" />
 
       <div className="relative flex w-full max-w-xs flex-col items-center gap-10 px-6">
         <motion.div
@@ -48,13 +48,45 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span
+          {/* Teal halo — match home hero logo pulse (#1a5b68) */}
+          <motion.span
             aria-hidden
-            className="absolute left-1/2 top-[42%] -z-10 h-[150%] w-[170%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+            className="absolute left-1/2 top-[42%] -z-10 h-[170%] w-[190%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
             style={{
               background:
-                "radial-gradient(ellipse 55% 50% at 50% 45%, rgba(196,165,116,0.4) 0%, rgba(196,165,116,0.14) 42%, transparent 70%)",
+                "radial-gradient(ellipse 58% 52% at 50% 45%, rgba(26,91,104,0.75) 0%, rgba(26,91,104,0.38) 32%, rgba(42,122,140,0.14) 52%, transparent 72%)",
             }}
+            animate={{
+              opacity: [0.55, 1, 0.55],
+              scale: [0.92, 1.12, 0.92],
+            }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.span
+            aria-hidden
+            className="absolute left-1/2 top-[40%] -z-10 h-[130%] w-[145%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-xl"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 42%, rgba(42,122,140,0.7) 0%, rgba(26,91,104,0.4) 38%, rgba(26,91,104,0.12) 62%, transparent 76%)",
+            }}
+            animate={{
+              opacity: [0.5, 0.95, 0.5],
+              scale: [0.96, 1.08, 0.96],
+            }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 0.15 }}
+          />
+          <motion.span
+            aria-hidden
+            className="absolute left-1/2 top-[38%] -z-10 h-[90%] w-[105%] -translate-x-1/2 -translate-y-1/2 rounded-full blur-lg"
+            style={{
+              background:
+                "radial-gradient(circle at 50% 40%, rgba(58,140,155,0.55) 0%, rgba(26,91,104,0.32) 45%, transparent 70%)",
+            }}
+            animate={{
+              opacity: [0.45, 0.9, 0.45],
+              scale: [1, 1.06, 1],
+            }}
+            transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
           />
           <Image
             src="/brand/ragusto-logo.png"
