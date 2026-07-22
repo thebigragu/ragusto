@@ -1137,10 +1137,10 @@ export function ScrollHero() {
     }
 
     /**
-     * Both assets are 24fps all-intra H.264. Scroll moves the *target* ahead
-     * (more video per wheel notch via scrub length + Lenis). Each display
-     * refresh advances at most one frame toward that target so motion plays
-     * out in succession — never skip-jumps over frames.
+     * Both assets are 24fps all-intra H.264. Scroll moves the *target* ahead;
+     * each display refresh walks consecutive frames toward it. Cap per tick is
+     * high enough that a wheel notch's frame run finishes quickly (smoother
+     * motion) without hard-skipping large gaps.
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
@@ -1155,8 +1155,10 @@ export function ScrollHero() {
       if (prev >= 0) {
         const delta = targetFrame - prev;
         if (delta === 0) return;
-        // One video frame per display tick → consecutive playback, no skips
-        frameIndex = prev + Math.sign(delta);
+        // Faster succession: several consecutive frames per display tick
+        const maxPerTick = isMobile ? 4 : 5;
+        const step = Math.min(Math.abs(delta), maxPerTick);
+        frameIndex = prev + Math.sign(delta) * step;
       }
 
       if (frameIndex === lastFrameIndex.current) return;
