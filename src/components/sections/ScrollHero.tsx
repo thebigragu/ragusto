@@ -178,11 +178,6 @@ const TYPE_FACE_SILVER = "#ffffff";
 const TYPE_FACE_GOLD = "#f8f0dc";
 const TYPE_FACE_SUB = "#f7f4ee";
 
-/** Deeper crisp extrusion — solid stem color (no mid-tone trail / blur) */
-function typeExtrudeDepth(isMobile: boolean) {
-  return isMobile ? 5 : 6;
-}
-
 /** Deeper chrome extrusion for gold rim + pulse bar */
 function chromeExtrudeDepth(isMobile: boolean) {
   return isMobile ? 11 : 14;
@@ -195,7 +190,6 @@ function AsyncWord({
   beat,
   index,
   kind,
-  isMobile,
 }: {
   text: string;
   emph?: boolean;
@@ -203,7 +197,6 @@ function AsyncWord({
   beat: Beat;
   index: number;
   kind: "title" | "sub";
-  isMobile: boolean;
 }) {
   const delay = useMemo(() => {
     const base = hashSeed(`${beat.id}-${kind}-${index}-${text}`);
@@ -221,25 +214,15 @@ function AsyncWord({
     return 1 - fade;
   });
 
-  const depth = typeExtrudeDepth(isMobile);
   const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? TYPE_FACE_SUB : TYPE_FACE_SILVER;
   const faceClass =
     kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "";
-
-  // Opaque single-hue stem — sharp raised wall without muddy/ghosted copies
-  const stem = emph ? "#7a6340" : "#3a3e48";
-  const textShadow = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`).join(
-    ", ",
-  );
 
   return (
     <motion.span
       style={{
         opacity,
-        transform: `translateZ(${depth}px)`,
-        transformStyle: "preserve-3d",
         color: faceColor,
-        textShadow,
         WebkitFontSmoothing: "antialiased",
         textRendering: "geometricPrecision",
       }}
@@ -794,7 +777,6 @@ function BeatCard({
                       beat={beat}
                       index={i}
                       kind="title"
-                      isMobile={isMobile}
                     />
                   </span>
                 ))}
@@ -818,7 +800,6 @@ function BeatCard({
                       beat={beat}
                       index={i + 10}
                       kind="sub"
-                      isMobile={isMobile}
                     />
                   );
                 })}
