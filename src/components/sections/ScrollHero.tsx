@@ -264,7 +264,7 @@ function BeatCard({
   const halfT = T / 2;
   const restTop = isMobile ? undefined : v.top;
   const mobileBand = v.topMobile;
-  const radius = isMobile ? "1.05rem" : v.radius;
+  const radius = isMobile ? "1.05rem" : "0.65rem";
 
   const enterY = useTransform(progress, (p) => {
     // Numeric px only — string units (vh) crash mobile WAAPI via Framer bindings
@@ -634,7 +634,7 @@ function BeatCard({
       className={`pointer-events-auto absolute z-20 will-change-transform ${
         isMobile
           ? "left-1/2 w-[min(88vw,clamp(16rem,72vw,22rem))] max-w-[min(88vw,clamp(16rem,72vw,22rem))]"
-          : `w-[min(72vw,clamp(18rem,12vw+8rem,32rem))] max-w-[min(72vw,clamp(18rem,12vw+8rem,32rem))] -translate-y-1/2 ${sideClass}`
+          : `w-[min(80vw,clamp(24rem,22vw+8rem,40rem))] max-w-[min(80vw,clamp(24rem,22vw+8rem,40rem))] -translate-y-1/2 ${sideClass}`
       }`}
       style={{
         ...mobilePosStyle,
@@ -775,7 +775,7 @@ function BeatCard({
           />
 
             <motion.div
-              className="relative z-10 px-5 py-5 text-center sm:px-8 sm:py-7 md:px-10 md:py-10"
+              className="relative z-10 px-5 py-4 text-center sm:px-8 sm:py-5 md:px-10 md:py-6 lg:px-12 lg:py-7"
               style={{
                 borderRadius: radius,
                 transform: contentTransform,
@@ -785,7 +785,7 @@ function BeatCard({
               }}
             >
               <p
-                className="mx-auto max-w-full text-balance text-center font-serif text-[clamp(1.2rem,0.85rem+1.35vw,2.55rem)] font-bold leading-snug tracking-normal text-white"
+                className="mx-auto max-w-full text-center font-serif text-[clamp(1.15rem,0.7rem+1.4vw,2.35rem)] font-bold leading-tight tracking-normal text-white"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
@@ -803,7 +803,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mx-auto mt-3 max-w-full text-pretty text-center text-[clamp(0.62rem,0.48rem+0.55vw,0.98rem)] font-semibold leading-relaxed tracking-[0.08em] text-white uppercase sm:mt-5 sm:tracking-[0.1em] md:mt-6 md:tracking-[0.12em]"
+                className="mx-auto mt-2 max-w-full whitespace-nowrap text-center text-[clamp(0.58rem,0.42rem+0.55vw,0.86rem)] font-semibold leading-none tracking-[0.06em] text-white uppercase sm:mt-3 sm:tracking-[0.08em] md:mt-3.5 md:tracking-[0.09em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
@@ -828,7 +828,7 @@ function BeatCard({
 
               {/* Gold underline — thicker extruded bead */}
               <div
-                className="relative mx-auto mt-4 h-[4px] w-[min(100%,12rem)] sm:mt-6 sm:h-[5px] sm:w-[min(100%,16rem)] md:mt-7"
+                className="relative mx-auto mt-3 h-[4px] w-[min(100%,14rem)] sm:mt-4 sm:h-[5px] sm:w-[min(100%,18rem)] md:mt-5"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {barStem.slice(0, chromeExtrude).map((color, i) => (
