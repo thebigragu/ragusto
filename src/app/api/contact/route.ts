@@ -25,8 +25,8 @@ function validate(body: ContactBody) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { error: "Enter a valid email.", status: 400 as const };
   }
-  if (message.length < 20) {
-    return { error: "Tell us a bit more (20+ characters).", status: 400 as const };
+  if (!message) {
+    return { error: "Please add a short note about your project.", status: 400 as const };
   }
 
   return {

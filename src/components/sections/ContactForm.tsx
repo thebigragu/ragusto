@@ -31,7 +31,7 @@ export function ContactForm() {
     if (honey) next.honeypot = "bot";
     if (name.length < 2) next.name = "Please enter your name.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = "Enter a valid email.";
-    if (message.length < 20) next.message = "Tell us a bit more (20+ characters).";
+    if (!message) next.message = "Please add a short note about your project.";
     return next;
   }
 
