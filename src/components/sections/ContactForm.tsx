@@ -180,9 +180,11 @@ function Field({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="text-xs tracking-[0.2em] text-fg-muted uppercase">{label}</span>
+      <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+        <span className="text-xs tracking-[0.2em] text-fg-muted uppercase">{label}</span>
+        {error ? <span className="text-xs text-red-400 normal-case tracking-normal">{error}</span> : null}
+      </span>
       {children}
-      {error && <span className="block text-xs text-red-400">{error}</span>}
     </label>
   );
 }
