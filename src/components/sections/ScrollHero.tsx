@@ -348,8 +348,9 @@ function BeatCard({
   // Near edge (toward hero center) carries the thickness wall
   const depthOnLeft = beat.side === "left";
   const radius = isMobile ? "1.05rem" : v.radius;
-  // Keep the side face off the rounded corners so it doesn't read as a square slab
-  const edgeInset = radius;
+  // Slight inset past the corner radius so the side wall stays round, not a square slab —
+  // keep it small so gold still reads end-to-end on the long edge
+  const edgeInset = isMobile ? "0.45rem" : "0.55rem";
 
   const enterY = useTransform(progress, (p) => {
     // Numeric px only — string units (vh) crash mobile WAAPI via Framer bindings
@@ -631,11 +632,11 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Prism: full-width rear glow (L→R) + near-side thickness + front face.
-          Rear carries the warm light across the whole card; side only bridges depth.
+          Prism: full-width rear gold plate + solid side thickness (front→rear)
+          + front face. Side gold runs the full inset height — no mid fade.
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — glow spans the full left→right width of the bubble */}
+          {/* Rear face — solid warm gold across the full card (L→R, T→B) */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -643,15 +644,15 @@ function BeatCard({
               borderRadius: radius,
               transform: `translateZ(${-halfT}px)`,
               background: `
-                radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255,248,230,0.35) 0%, ${v.depthTint} 32%, rgba(196,165,116,0.28) 58%, rgba(20,20,24,0.55) 100%),
-                linear-gradient(180deg, rgba(240,226,196,0.22) 0%, rgba(40,38,42,0.65) 100%)
+                linear-gradient(135deg, #f0e2c4 0%, #e0c898 28%, #c4a574 58%, #a68558 100%),
+                linear-gradient(180deg, #e8d2a8 0%, #b8956a 100%)
               `,
               boxShadow: `
-                inset 0 0 0 1px rgba(240,226,196,0.28),
+                inset 0 0 0 1px rgba(255,248,230,0.45),
                 0 0 28px ${v.edgeGlow},
-                0 0 48px rgba(196,165,116,0.22)
+                0 0 48px rgba(196,165,116,0.35)
               `,
-              opacity: 0.9,
+              opacity: 1,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
@@ -666,8 +667,8 @@ function BeatCard({
             }}
           >
           {/*
-            Side bridge — joins front to the full-width rear glow without
-            becoming a lone strip of light on one edge.
+            Side bridge — opaque gold wall spanning full depth front→rear
+            and full height of the inset (end-to-end, not a mid highlight).
           */}
           <div
             aria-hidden
@@ -681,21 +682,18 @@ function BeatCard({
                 : { right: 0, transformOrigin: "right center", transform: "rotateY(-90deg)" }),
               background: depthOnLeft
                 ? `linear-gradient(90deg,
-                    rgba(255,248,230,0.5) 0%,
-                    ${v.depthTint} 22%,
-                    rgba(196,165,116,0.45) 48%,
-                    rgba(140,128,108,0.4) 72%,
-                    rgba(60,56,50,0.55) 100%)`
+                    #f5ead0 0%,
+                    #e8d2a8 18%,
+                    #d4b888 42%,
+                    #c4a574 68%,
+                    #b8956a 100%)`
                 : `linear-gradient(270deg,
-                    rgba(255,248,230,0.5) 0%,
-                    ${v.depthTint} 22%,
-                    rgba(196,165,116,0.45) 48%,
-                    rgba(140,128,108,0.4) 72%,
-                    rgba(60,56,50,0.55) 100%)`,
-              WebkitMaskImage:
-                "linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%)",
-              maskImage:
-                "linear-gradient(to bottom, transparent 0%, #000 16%, #000 84%, transparent 100%)",
+                    #f5ead0 0%,
+                    #e8d2a8 18%,
+                    #d4b888 42%,
+                    #c4a574 68%,
+                    #b8956a 100%)`,
+              boxShadow: "inset 0 0 0 1px rgba(255,248,230,0.4)",
             }}
           />
 
