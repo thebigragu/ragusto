@@ -299,13 +299,11 @@ function BeatCard({
     return 1;
   });
 
-  // Mild yaw for depth presence — perimeter glow comes from a uniform
-  // oversize volume (not from heavy yaw that only lights one long side).
-  const restY = beat.side === "left" ? (isMobile ? 6 : 10) : isMobile ? -6 : -10;
+  // Yaw preserves prism tilt so the volume glow reads as thickness *between*
+  // the panes — never as an outer halo (no oversize / outer bloom).
+  const restY = beat.side === "left" ? (isMobile ? 14 : 22) : isMobile ? -14 : -22;
   const restX = 0;
   const twistAmp = isMobile ? 0 : 34 * tiltScale;
-  /** Expand rear + volume equally on all sides so top/bottom long edges match sides */
-  const glowScale = isMobile ? 1.042 : 1.048;
 
   const orbitX = useTransform(progress, (p) => {
     const t = beatT(p, beat);
@@ -629,17 +627,16 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Prism: rear + volume slightly oversized vs the front face so the
-          transparent gold glow peeks evenly on all four edges (incl. top).
+          Prism: rear + volume same footprint as the front face. Gold fill lives
+          only in the Z gap between panes so tilt shows thickness — no outer spill.
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — same metal as front; scaled out for uniform perimeter */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
             style={{
               borderRadius: radius,
-              transform: `translateZ(${-halfT}px) scale(${glowScale})`,
+              transform: `translateZ(${-halfT}px)`,
               background: faceMetal,
               opacity: 1,
               backfaceVisibility: "hidden",
@@ -647,10 +644,6 @@ function BeatCard({
             }}
           />
 
-          {/*
-            Dense volume fill — same oversize + flat tint on every plate so the
-            halo is cohesive around the whole bubble, not side-biased.
-          */}
           {Array.from({ length: Math.max(10, Math.round(T)) }, (_, i) => {
             const count = Math.max(10, Math.round(T));
             const t = (i + 0.5) / count; // 0 = rear, 1 = front
@@ -662,9 +655,9 @@ function BeatCard({
                 className="pointer-events-none absolute inset-0"
                 style={{
                   borderRadius: radius,
-                  transform: `translateZ(${z}px) scale(${glowScale})`,
+                  transform: `translateZ(${z}px)`,
                   background: v.depthTint,
-                  opacity: 0.11,
+                  opacity: 0.1,
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
                 }}
@@ -693,8 +686,7 @@ function BeatCard({
                 inset 18px 0 28px -18px rgba(255,248,230,0.08),
                 inset -18px 0 28px -18px rgba(0,0,0,0.35),
                 0 0 0 1px ${v.rim},
-                0 14px 28px rgba(0,0,0,0.28),
-                0 0 32px ${v.edgeGlow}
+                0 14px 28px rgba(0,0,0,0.28)
               `,
             }}
           />
@@ -739,8 +731,7 @@ function BeatCard({
                 transform: `translateZ(${chromeExtrude}px)`,
                 boxShadow: `
                   inset 0 1px 0 rgba(255,248,230,0.85),
-                  inset 0 0 0 4px #f8efd4,
-                  0 0 14px rgba(196,165,116,0.45)
+                  inset 0 0 0 4px #f8efd4
                 `,
               }}
             />
