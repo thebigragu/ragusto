@@ -775,7 +775,7 @@ function BeatCard({
           />
 
             <motion.div
-              className="relative z-10 flex flex-col items-center px-5 py-6 text-center sm:px-7 sm:py-8 md:px-9 md:py-10"
+              className="relative z-10 flex flex-col items-center px-5 pt-4 pb-6 text-center sm:px-7 sm:pt-5 sm:pb-8 md:px-9 md:pt-6 md:pb-10"
               style={{
                 borderRadius: radius,
                 transform: contentTransform,
@@ -785,7 +785,7 @@ function BeatCard({
               }}
             >
               <p
-                className="w-full max-w-full text-center font-serif text-[clamp(1.35rem,0.85rem+1.4vw,2.5rem)] font-bold leading-snug tracking-normal text-white"
+                className="w-full max-w-full text-center font-serif text-[clamp(1.85rem,1.35rem+1.4vw,3rem)] font-bold leading-snug tracking-normal text-white"
                 style={{
                   transformStyle: "preserve-3d",
                   // Match AsyncWord letterSpacing so trailing tracking doesn't bias left
@@ -807,7 +807,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mt-3 w-full max-w-full whitespace-nowrap text-center text-[clamp(0.66rem,0.48rem+0.55vw,0.94rem)] font-semibold leading-none tracking-[0.06em] text-white uppercase pl-[0.06em] sm:mt-4 sm:tracking-[0.08em] sm:pl-[0.08em] md:mt-5 md:tracking-[0.09em] md:pl-[0.09em]"
+                className="mt-3 w-full max-w-full whitespace-nowrap text-center text-[clamp(1.16rem,0.98rem+0.55vw,1.44rem)] font-semibold leading-none tracking-[0.06em] text-white uppercase pl-[0.06em] sm:mt-4 sm:tracking-[0.08em] sm:pl-[0.08em] md:mt-5 md:tracking-[0.09em] md:pl-[0.09em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
