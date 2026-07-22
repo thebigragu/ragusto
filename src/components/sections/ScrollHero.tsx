@@ -585,8 +585,8 @@ function BeatCard({
   const faceWashAngle = beat.side === "left" ? 155 : 205;
   const cornerSheen =
     beat.side === "left"
-      ? "radial-gradient(ellipse 58% 48% at 14% 10%, rgba(255,255,255,0.1) 0%, rgba(240,226,196,0.04) 38%, transparent 72%)"
-      : "radial-gradient(ellipse 58% 48% at 86% 10%, rgba(255,255,255,0.1) 0%, rgba(240,226,196,0.04) 38%, transparent 72%)";
+      ? "radial-gradient(ellipse 58% 48% at 14% 10%, rgba(255,255,255,0.07) 0%, rgba(240,226,196,0.03) 38%, transparent 72%)"
+      : "radial-gradient(ellipse 58% 48% at 86% 10%, rgba(255,255,255,0.07) 0%, rgba(240,226,196,0.03) 38%, transparent 72%)";
   const faceMetal = `
     ${cornerSheen},
     linear-gradient(${sheenAngle}deg,
