@@ -133,8 +133,8 @@ const BEATS: Beat[] = [
       { t: "From spark" },
       { t: "to shipped", emph: true },
     ],
-    sub: "One atelier. End to end.",
-    subEmph: ["atelier"],
+    sub: "One studio. End to end.",
+    subEmph: ["studio"],
     side: "right",
     start: 0.835,
     end: 0.995,
@@ -1459,7 +1459,7 @@ export function ScrollHero() {
               <p className="mx-auto mt-4 max-w-xl text-[0.9rem] leading-relaxed text-white/60 md:mt-5 md:text-lg">
                 {SITE.description.split(" ").map((word, i, arr) => {
                   const clean = word.replace(/[.,]/g, "");
-                  const emph = ["bespoke", "cinematic", "atelier-level", "craft"].includes(clean);
+                  const emph = ["bespoke", "cinematic", "meticulous", "craft"].includes(clean);
                   return (
                     <span key={`${word}-${i}`}>
                       {emph ? <span className="text-[#c4a574]">{word}</span> : word}

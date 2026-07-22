@@ -5,7 +5,7 @@ export const SITE = {
   tagline: "Bespoke web design and app creation.",
   heroLine: "Digital experiences, crafted with clarity and purpose.",
   description:
-    "Ragusto is a bespoke web design and app creation studio building cinematic sites, custom applications, and product experiences with atelier-level craft.",
+    "Ragusto is a bespoke web design and app creation studio building cinematic sites, custom applications, and product experiences with meticulous craft.",
   url: "https://ragusto.com",
   email: "jacob@ragusto.com",
   twitter: "@ragusto",
