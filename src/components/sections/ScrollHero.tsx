@@ -314,10 +314,10 @@ function BeatCard({
 
   // At rest: left panes aim right across the hero; right panes aim left —
   // enough yaw that the full-depth side glow is visible.
-  // Mobile: square yaw, but slight pitch so top/bottom bands reveal prism depth.
-  // Top band tips down (look into the top edge); bottom band tips up.
+  // Mobile: square yaw; pitch reveals prism depth.
+  // Top band tips up toward viewer; bottom band tips down (inverted + stronger).
   const restY = isMobile ? 0 : beat.side === "left" ? 22 : -22;
-  const restX = isMobile ? (mobileBand === "top" ? 9 : -9) : 5;
+  const restX = isMobile ? (mobileBand === "top" ? -16 : 16) : 5;
   const twistAmp = isMobile ? 0 : 34 * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
@@ -609,11 +609,12 @@ function BeatCard({
     WebkitBackfaceVisibility: "hidden",
   };
 
+  // Equal inset from hero top/bottom; large enough to clear the fixed logo
+  const mobileEdgeInset = "max(6.75rem, 12dvh)";
   const mobilePosStyle: CSSProperties = isMobile
     ? mobileBand === "top"
-      ? // Clear fixed logo (top-8 + h-12 ≈ 5rem) + same inset as bottom bubbles (10dvh)
-        { top: "calc(6rem + max(0.75rem, 10dvh))", bottom: "auto" }
-      : { top: "auto", bottom: "max(0.75rem, 10dvh)" }
+      ? { top: mobileEdgeInset, bottom: "auto" }
+      : { top: "auto", bottom: mobileEdgeInset }
     : { top: restTop };
 
   return (
