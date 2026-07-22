@@ -162,7 +162,7 @@ export function ContactForm() {
             name="message"
             required
             rows={3}
-            className={`${inputClass} min-h-[4.5rem] max-h-[min(28vh,12rem)] resize-y sm:min-h-[5.5rem] sm:max-h-[min(32vh,14rem)]`}
+            className={`${inputClass} min-h-[5.5rem] max-h-[min(34vh,16rem)] resize-y sm:min-h-[7rem] sm:max-h-[min(38vh,18rem)]`}
             placeholder="What are you building? Timeline, goals, and anything critical."
           />
         </Field>
@@ -178,7 +178,7 @@ export function ContactForm() {
         )}
       </div>
 
-      <div className="shrink-0 border-t border-white/10 bg-[#12141a]/95 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:pt-4 sm:pb-5">
+      <div className="shrink-0 bg-[#12141a]/95 pt-3 pb-[max(0.85rem,env(safe-area-inset-bottom))] sm:pt-4 sm:pb-6">
         <Button
           type="submit"
           disabled={status === "submitting"}
