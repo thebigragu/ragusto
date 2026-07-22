@@ -338,7 +338,7 @@ function BeatCard({
     return -v.orbitR * orbitScale * (1 - Math.cos(theta)) - e * (isMobile ? 160 : 340);
   });
 
-  // Mouse magnetism at rest only (desktop)
+  // Mouse magnetism while the bubble is on screen (enter, rest, and exit)
   const magX = useMotionValue(0);
   const magY = useMotionValue(0);
   const springMagX = useSpring(magX, { stiffness: 220, damping: 22 });
@@ -348,8 +348,8 @@ function BeatCard({
   const onCardPointerMove = useCallback(
     (e: MouseEvent) => {
       if (isMobile) return;
-      const t = beatT(progress.get(), beat);
-      if (t < ENTER_END || t > EXIT_START) {
+      const p = progress.get();
+      if (p < beat.start || p >= beat.end) {
         magX.set(0);
         magY.set(0);
         return;
@@ -362,7 +362,7 @@ function BeatCard({
       magX.set(dx * 0.14);
       magY.set(dy * 0.14);
     },
-    [beat, isMobile, magX, magY, progress],
+    [beat.end, beat.start, isMobile, magX, magY, progress],
   );
 
   const onCardPointerLeave = useCallback(() => {
@@ -371,8 +371,7 @@ function BeatCard({
   }, [magX, magY]);
 
   useMotionValueEvent(progress, "change", (p) => {
-    const t = beatT(p, beat);
-    if (t < ENTER_END || t > EXIT_START) {
+    if (p < beat.start || p >= beat.end) {
       magX.set(0);
       magY.set(0);
     }
