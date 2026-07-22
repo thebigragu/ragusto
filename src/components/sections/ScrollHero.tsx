@@ -175,7 +175,9 @@ const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
 const TYPE_FACE_SILVER = "#ffffff";
-const TYPE_FACE_GOLD = "#f8f0dc";
+/** Brand accent gold — saturated enough to read against white body type */
+const TYPE_FACE_GOLD = "#c4a574";
+const TYPE_FACE_GOLD_GLOW = "0 0 14px rgba(196,165,116,0.55), 0 1px 0 rgba(0,0,0,0.35)";
 const TYPE_FACE_SUB = "#f7f4ee";
 
 /** Deeper chrome extrusion for gold rim + pulse bar */
@@ -223,6 +225,7 @@ function AsyncWord({
       style={{
         opacity,
         color: faceColor,
+        textShadow: emph ? TYPE_FACE_GOLD_GLOW : undefined,
         WebkitFontSmoothing: "antialiased",
         textRendering: "geometricPrecision",
       }}
