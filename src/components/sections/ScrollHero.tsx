@@ -175,12 +175,12 @@ const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
 const TYPE_FACE_SILVER = "#ffffff";
-const TYPE_FACE_GOLD = "#f5ead0";
-const TYPE_FACE_SUB = "#f2efe8";
+const TYPE_FACE_GOLD = "#f6edd8";
+const TYPE_FACE_SUB = "#f4f1ea";
 
-/** Readable bevel — one light rim + short mid-tone stem (no heavy under-shadow) */
+/** Deeper crisp extrusion — solid stem color (no mid-tone trail / blur) */
 function typeExtrudeDepth(isMobile: boolean) {
-  return isMobile ? 2 : 2;
+  return isMobile ? 4 : 5;
 }
 
 /** Deeper chrome extrusion for gold rim + pulse bar */
@@ -226,18 +226,12 @@ function AsyncWord({
   const faceClass =
     kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "";
 
-  // Clean raised bevel: bright face, thin highlight, short warm/cool stem
-  const textShadow = emph
-    ? [
-        "0 -1px 0 rgba(255,248,230,0.65)",
-        "0 1px 0 #9a8058",
-        "0 2px 0 #7a6340",
-      ].join(", ")
-    : [
-        "0 -1px 0 rgba(255,255,255,0.55)",
-        "0 1px 0 #5a5e68",
-        "0 2px 0 #3e424c",
-      ].join(", ");
+  // One opaque stem hue for every step — reads as a solid wall, not ghosted copies
+  const stem = emph ? "#6e5a38" : "#30343c";
+  const textShadow = [
+    emph ? "0 -1px 0 rgba(255,248,230,0.5)" : "0 -1px 0 rgba(255,255,255,0.4)",
+    ...Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`),
+  ].join(", ");
 
   return (
     <motion.span
@@ -247,6 +241,8 @@ function AsyncWord({
         transformStyle: "preserve-3d",
         color: faceColor,
         textShadow,
+        WebkitFontSmoothing: "antialiased",
+        textRendering: "geometricPrecision",
       }}
       className={`relative inline-block align-baseline whitespace-nowrap ${faceClass}`}
     >
@@ -671,10 +667,13 @@ function BeatCard({
             }}
           />
 
-          {/* Dense volume fill — identical soft plates every 1px, no borders */}
+          {/* Dense volume fill — fades slightly toward the rear so the back pane peeks through */}
           {Array.from({ length: Math.max(10, Math.round(T)) }, (_, i) => {
             const count = Math.max(10, Math.round(T));
-            const z = -halfT + ((i + 0.5) / count) * T;
+            const t = (i + 0.5) / count; // 0 = rear, 1 = front
+            const z = -halfT + t * T;
+            // Ever-so-slight rear transparency; front stays denser
+            const opacity = 0.055 + 0.1 * smoothstep(Math.min(1, t / 0.55));
             return (
               <div
                 key={`vol-${i}`}
@@ -684,7 +683,7 @@ function BeatCard({
                   borderRadius: radius,
                   transform: `translateZ(${z}px)`,
                   background: `radial-gradient(ellipse 92% 82% at 50% 48%, rgba(255,248,230,0.16) 0%, ${v.depthTint} 48%, rgba(196,165,116,0.14) 100%)`,
-                  opacity: 0.14,
+                  opacity,
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
                 }}
