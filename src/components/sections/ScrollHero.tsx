@@ -231,43 +231,60 @@ function AsyncWord({
   // Avoid binding filter/textShadow MotionValues — WAAPI rejects them on mobile
   const exitFade = useTransform(blur, (b) => (b < 0.05 ? 1 : Math.max(0.15, 1 - b / 10)));
 
-  // Keep glyphs coplanar enough that they stay inside the rounded face
+  // Shared Z for every word in the line — per-glyph depth offsets
+  // misalign baselines when the card is tilted in perspective.
   const wordZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     let boost = 1;
-    if (t < ENTER_END) boost = 0.45 + 0.55 * smoothstep(t / ENTER_END);
+    if (t < ENTER_END) boost = 0.55 + 0.45 * smoothstep(t / ENTER_END);
     else if (t > EXIT_START) {
-      boost = 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 1.2;
+      boost = 1 + smoothstep((t - EXIT_START) / EXIT_LEN) * 0.85;
     }
-    // Slight braille-like lift toward camera
-    const base = kind === "title" ? 14 + depth * 4 : 10 + depth * 2.5;
+    const base = kind === "title" ? 22 : 18;
     return base * boost;
   });
 
+  // No per-word tilt at rest — keeps the line cohesive
   const wordRx = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return (1 - smoothstep(t / ENTER_END)) * 8;
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return -e * 28;
+    return -e * 22;
   });
 
   const wordRy = useTransform(progress, (p) => {
     const t = beatT(p, beat);
-    if (t < ENTER_END) return exitDir * (1 - smoothstep(t / ENTER_END)) * 10;
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * e * 36;
+    return exitDir * e * 28;
   });
 
   const wordTransform = useMotionTemplate`translate3d(0px, ${wordY}px, ${wordZ}px) rotateX(${wordRx}deg) rotateY(${wordRy}deg)`;
 
   const wordOpacity = useTransform([opacity, exitFade], ([o, f]) => (o as number) * (f as number));
 
-  // Raised “braille” emboss — light catch on top, soft depth below
+  // Solid opaque emboss steps (braille / letterpress extrusion)
   const restShadow = emph
-    ? "0 -1px 0 rgba(255,248,230,0.45), 0 1px 0 rgba(0,0,0,0.55), 0 2px 2px rgba(0,0,0,0.4), 0 5px 12px rgba(0,0,0,0.45), 0 10px 22px rgba(196,165,116,0.18)"
-    : "0 -1px 0 rgba(255,255,255,0.28), 0 1px 0 rgba(0,0,0,0.5), 0 2px 2px rgba(0,0,0,0.35), 0 4px 10px rgba(0,0,0,0.4), 0 8px 18px rgba(0,0,0,0.28)";
+    ? [
+        "0 -1px 0 rgba(255,248,230,0.7)",
+        "0 1px 0 #2a2418",
+        "0 2px 0 #221e16",
+        "0 3px 0 #1a1712",
+        "0 4px 0 #12100e",
+        "0 5px 0 #0c0b0a",
+        "0 7px 10px rgba(0,0,0,0.55)",
+        "0 12px 22px rgba(0,0,0,0.4)",
+      ].join(", ")
+    : [
+        "0 -1px 0 rgba(255,255,255,0.55)",
+        "0 1px 0 #1c1d22",
+        "0 2px 0 #16171b",
+        "0 3px 0 #101114",
+        "0 4px 0 #0c0d10",
+        "0 5px 0 #08090b",
+        "0 7px 10px rgba(0,0,0,0.55)",
+        "0 12px 20px rgba(0,0,0,0.38)",
+      ].join(", ");
 
   if (kind === "sub") {
     return (
@@ -278,9 +295,9 @@ function AsyncWord({
           textShadow: restShadow,
           transformStyle: "preserve-3d",
         }}
-        className="inline-block py-0.5"
+        className="inline align-baseline"
       >
-        {emph ? <span className="text-[#c4a574]">{text}</span> : text}
+        {emph ? <span className="text-[#d4b888]">{text}</span> : text}
       </motion.span>
     );
   }
@@ -291,23 +308,16 @@ function AsyncWord({
         opacity: wordOpacity,
         transform: wordTransform,
         textShadow: restShadow,
+        color: emph ? undefined : "#f4f1ea",
         transformStyle: "preserve-3d",
       }}
-      className={`inline-block ${
-        emph
-          ? "px-[0.04em] pe-[0.18em] pt-[0.04em] pb-[0.08em]"
-          : "pe-[0.04em] pb-[0.04em]"
-      }`}
+      className="inline align-baseline"
     >
-      <span
-        className={
-          emph
-            ? "inline-block bg-gradient-to-br from-[#f0e2c4] via-[#c4a574] to-[#8a7350] bg-clip-text font-serif italic text-transparent"
-            : undefined
-        }
-      >
-        {text}
-      </span>
+      {emph ? (
+        <span className="font-serif italic text-[#d4b888]">{text}</span>
+      ) : (
+        text
+      )}
     </motion.span>
   );
 }
@@ -494,13 +504,13 @@ function BeatCard({
   const shimmerLayerTransform = useMotionTemplate`translateZ(${shimmerZ}px)`;
   const shimmerLayerRef = useRef<HTMLDivElement>(null);
 
-  const contentZ = useTransform(layerBoost, (b) => (isMobile ? 12 : 20) * b);
+  const contentZ = useTransform(layerBoost, (b) => (isMobile ? 14 : 24) * b);
   // Keep copy coplanar with the face so type stays centered inside the pane
   const contentRx = useTransform(rotateX, () => 0);
   const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const lineZ = useTransform(layerBoost, (b) => (isMobile ? 10 : 22) * b);
+  const lineZ = useTransform(layerBoost, (b) => (isMobile ? 16 : 28) * b);
   const lineRx = useTransform(rotateX, () => 0);
   const lineRy = useTransform(rotateY, () => 0);
   const lineTransform = useMotionTemplate`translateZ(${lineZ}px) rotateX(${lineRx}deg) rotateY(${lineRy}deg)`;
@@ -722,20 +732,21 @@ function BeatCard({
             className="pointer-events-none absolute inset-0"
             style={{
               borderRadius: radius,
-              transform: `translateZ(${isMobile ? 5 : 8}px)`,
+              transform: `translateZ(${isMobile ? 8 : 12}px)`,
               transformStyle: "preserve-3d",
               boxShadow: `
-                inset 0 1px 0 rgba(255,248,230,0.55),
-                inset 0 -1px 0 rgba(0,0,0,0.35),
-                inset 0 0 0 1px rgba(240,226,196,0.6),
-                inset 0 0 14px 2px rgba(196,165,116,0.2),
-                0 1px 0 rgba(255,248,230,0.35),
-                0 3px 6px rgba(0,0,0,0.35),
-                0 0 14px 2px rgba(196,165,116,0.32),
-                0 0 28px 6px rgba(196,165,116,0.18)
+                inset 0 1px 0 rgba(255,248,230,0.75),
+                inset 0 -1px 0 rgba(0,0,0,0.55),
+                inset 0 0 0 1.5px rgba(212,184,136,0.95),
+                0 1px 0 #3a3224,
+                0 2px 0 #2a2418,
+                0 3px 0 #1c1812,
+                0 4px 0 #12100c,
+                0 6px 10px rgba(0,0,0,0.45),
+                0 0 18px rgba(196,165,116,0.4)
               `,
             }}
-            animate={{ opacity: [0.45, 0.85, 0.45] }}
+            animate={{ opacity: [0.72, 1, 0.72] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           />
 
@@ -760,15 +771,11 @@ function BeatCard({
               }}
             >
               <p
-                className="mx-auto max-w-full text-balance text-center font-serif text-[1.34rem] font-[450] leading-snug tracking-normal text-white sm:text-[1.92rem] sm:leading-snug md:text-[2.39rem] md:leading-[1.25]"
+                className="mx-auto max-w-full text-balance text-center font-serif text-[1.34rem] font-[450] leading-snug tracking-normal text-[#f4f1ea] sm:text-[1.92rem] sm:leading-snug md:text-[2.39rem] md:leading-[1.25]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
-                  <span
-                    key={`${w.t}-${i}`}
-                    className="inline"
-                    style={{ transformStyle: "preserve-3d" }}
-                  >
+                  <span key={`${w.t}-${i}`} className="inline">
                     {i > 0 ? " " : null}
                     <AsyncWord
                       text={w.t}
@@ -778,13 +785,13 @@ function BeatCard({
                       index={i}
                       kind="title"
                       exitDir={exitDir}
-                      depth={i}
+                      depth={0}
                     />
                   </span>
                 ))}
               </p>
               <p
-                className="mx-auto mt-3 max-w-full text-pretty text-center text-[0.69rem] font-[450] leading-relaxed tracking-[0.08em] text-white/60 uppercase sm:mt-5 sm:text-[0.92rem] sm:tracking-[0.1em] md:mt-6 md:text-[0.94rem] md:tracking-[0.12em]"
+                className="mx-auto mt-3 max-w-full text-pretty text-center text-[0.69rem] font-[450] leading-relaxed tracking-[0.08em] text-[#d8d4cc] uppercase sm:mt-5 sm:text-[0.92rem] sm:tracking-[0.1em] md:mt-6 md:text-[0.94rem] md:tracking-[0.12em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
@@ -803,37 +810,37 @@ function BeatCard({
                       index={i + 10}
                       kind="sub"
                       exitDir={exitDir}
-                      depth={i % 4}
+                      depth={0}
                     />
                   );
                 })}
               </p>
 
-              {/* Gold underline — raised bead with emboss + breath */}
+              {/* Gold underline — solid raised bead */}
               <div className="relative mx-auto mt-4 w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7">
                 <motion.div
-                  className="relative h-[3px] w-full rounded-full"
+                  className="relative h-[3px] w-full rounded-full bg-[#c4a574]"
                   style={
                     isMobile
                       ? {
-                          transform: "translateZ(8px)",
+                          transform: "translateZ(14px)",
                           transformStyle: "preserve-3d",
                           boxShadow:
-                            "0 -1px 0 rgba(255,248,230,0.55), 0 2px 4px rgba(0,0,0,0.45), 0 0 12px rgba(196,165,116,0.55), 0 6px 14px rgba(196,165,116,0.28)",
+                            "0 -1px 0 rgba(255,248,230,0.75), 0 1px 0 #3a3224, 0 2px 0 #2a2418, 0 3px 0 #1c1812, 0 4px 0 #12100c, 0 6px 10px rgba(0,0,0,0.5), 0 0 14px rgba(196,165,116,0.55)",
                         }
                       : {
                           transform: lineTransform,
                           transformStyle: "preserve-3d",
                           boxShadow:
-                            "0 -1px 0 rgba(255,248,230,0.55), 0 2px 4px rgba(0,0,0,0.45), 0 0 14px rgba(196,165,116,0.6), 0 8px 18px rgba(196,165,116,0.3)",
+                            "0 -1px 0 rgba(255,248,230,0.75), 0 1px 0 #3a3224, 0 2px 0 #2a2418, 0 3px 0 #1c1812, 0 4px 0 #12100c, 0 6px 10px rgba(0,0,0,0.5), 0 0 16px rgba(196,165,116,0.6)",
                         }
                   }
                 >
                   <motion.span
-                    className="absolute inset-0 block origin-center rounded-full bg-gradient-to-r from-transparent via-[#c4a574] to-[#f0e2c4]"
+                    className="absolute inset-0 block origin-center rounded-full bg-gradient-to-r from-[#8a7350] via-[#f0e2c4] to-[#c4a574]"
                     animate={{
-                      scaleX: [0.12, 1, 0.12],
-                      opacity: [0.55, 1, 0.55],
+                      scaleX: [0.18, 1, 0.18],
+                      opacity: [0.75, 1, 0.75],
                     }}
                     transition={{
                       duration: 2.6,
