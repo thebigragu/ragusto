@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 
 export const SITE = {
   name: "Ragusto",
-  tagline: "AI web design and app creation.",
+  tagline: "Bespoke web design and app creation.",
   heroLine: "Digital experiences, crafted with clarity and purpose.",
   description:
-    "Ragusto is an AI web design and app creation studio building cinematic sites, custom applications, and product experiences with atelier-level craft.",
+    "Ragusto is a bespoke web design and app creation studio building cinematic sites, custom applications, and product experiences with atelier-level craft.",
   url: "https://ragusto.com",
   email: "jacob@ragusto.com",
   twitter: "@ragusto",
@@ -20,8 +20,8 @@ export const defaultMetadata: Metadata = {
   description: SITE.description,
   applicationName: SITE.name,
   keywords: [
-    "AI web design",
-    "AI application development",
+    "bespoke web design",
+    "custom application development",
     "custom software",
     "web design",
     "full stack development",
@@ -62,8 +62,8 @@ export function organizationSchema() {
     slogan: SITE.tagline,
     areaServed: "Worldwide",
     serviceType: [
-      "AI Web Design",
-      "AI Application Development",
+      "Bespoke Web Design",
+      "Custom Application Development",
       "Custom Software",
       "Web Design",
       "Full Stack Development",

@@ -82,7 +82,7 @@ const BEATS: Beat[] = [
   {
     id: "design",
     words: [
-      { t: "AI", emph: true },
+      { t: "Bespoke", emph: true },
       { t: "web design" },
     ],
     sub: "Interfaces that feel inevitable",
@@ -1459,7 +1459,7 @@ export function ScrollHero() {
               <p className="mx-auto mt-4 max-w-xl text-[0.9rem] leading-relaxed text-white/60 md:mt-5 md:text-lg">
                 {SITE.description.split(" ").map((word, i, arr) => {
                   const clean = word.replace(/[.,]/g, "");
-                  const emph = ["cinematic", "atelier-level", "craft"].includes(clean);
+                  const emph = ["bespoke", "cinematic", "atelier-level", "craft"].includes(clean);
                   return (
                     <span key={`${word}-${i}`}>
                       {emph ? <span className="text-[#c4a574]">{word}</span> : word}

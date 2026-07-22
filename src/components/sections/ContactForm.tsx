@@ -5,7 +5,7 @@ import { SITE } from "@/lib/seo";
 import { FormEvent, useState } from "react";
 
 const projectTypes = [
-  "AI application",
+  "Bespoke application",
   "Custom software",
   "Website / brand site",
   "SaaS product",
