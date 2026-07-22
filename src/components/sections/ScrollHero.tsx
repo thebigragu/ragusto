@@ -175,12 +175,12 @@ const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
 const TYPE_FACE_SILVER = "#ffffff";
-const TYPE_FACE_GOLD = "#f6edd8";
-const TYPE_FACE_SUB = "#f4f1ea";
+const TYPE_FACE_GOLD = "#f8f0dc";
+const TYPE_FACE_SUB = "#f7f4ee";
 
 /** Deeper crisp extrusion — solid stem color (no mid-tone trail / blur) */
 function typeExtrudeDepth(isMobile: boolean) {
-  return isMobile ? 4 : 5;
+  return isMobile ? 5 : 6;
 }
 
 /** Deeper chrome extrusion for gold rim + pulse bar */
@@ -226,12 +226,11 @@ function AsyncWord({
   const faceClass =
     kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "";
 
-  // One opaque stem hue for every step — reads as a solid wall, not ghosted copies
-  const stem = emph ? "#6e5a38" : "#30343c";
-  const textShadow = [
-    emph ? "0 -1px 0 rgba(255,248,230,0.5)" : "0 -1px 0 rgba(255,255,255,0.4)",
-    ...Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`),
-  ].join(", ");
+  // Opaque single-hue stem — sharp raised wall without muddy/ghosted copies
+  const stem = emph ? "#7a6340" : "#3a3e48";
+  const textShadow = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`).join(
+    ", ",
+  );
 
   return (
     <motion.span
@@ -646,7 +645,7 @@ function BeatCard({
           lines — reads as uniform light, not stacked panes).
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — soft continuous glow plate */}
+          {/* Rear face — even plate (no mid-weight radial bulge) */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -654,26 +653,26 @@ function BeatCard({
               borderRadius: radius,
               transform: `translateZ(${-halfT}px)`,
               background: `
-                radial-gradient(ellipse 78% 68% at 50% 48%, rgba(255,248,230,0.3) 0%, ${v.depthTint} 42%, rgba(196,165,116,0.2) 72%, rgba(24,22,20,0.45) 100%),
-                linear-gradient(180deg, rgba(240,226,196,0.18) 0%, rgba(40,38,42,0.5) 100%)
+                linear-gradient(180deg, ${v.depthTint} 0%, rgba(196,165,116,0.55) 100%),
+                linear-gradient(135deg, rgba(255,248,230,0.22) 0%, rgba(40,38,42,0.35) 100%)
               `,
-              boxShadow: `
-                0 0 36px ${v.edgeGlow},
-                0 0 64px rgba(196,165,116,0.18)
-              `,
-              opacity: 0.85,
+              boxShadow: `0 0 28px ${v.edgeGlow}`,
+              opacity: 0.9,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
           />
 
-          {/* Dense volume fill — fades slightly toward the rear so the back pane peeks through */}
+          {/*
+            Dense volume fill — flat color (uniform top→bottom), opacity only
+            fades toward the rear so the back pane peeks through evenly.
+          */}
           {Array.from({ length: Math.max(10, Math.round(T)) }, (_, i) => {
             const count = Math.max(10, Math.round(T));
             const t = (i + 0.5) / count; // 0 = rear, 1 = front
             const z = -halfT + t * T;
-            // Ever-so-slight rear transparency; front stays denser
-            const opacity = 0.055 + 0.1 * smoothstep(Math.min(1, t / 0.55));
+            // Slightly more open overall; linear Z fade only (no vertical bias)
+            const opacity = 0.035 + 0.07 * t;
             return (
               <div
                 key={`vol-${i}`}
@@ -682,7 +681,7 @@ function BeatCard({
                 style={{
                   borderRadius: radius,
                   transform: `translateZ(${z}px)`,
-                  background: `radial-gradient(ellipse 92% 82% at 50% 48%, rgba(255,248,230,0.16) 0%, ${v.depthTint} 48%, rgba(196,165,116,0.14) 100%)`,
+                  background: v.depthTint,
                   opacity,
                   backfaceVisibility: "hidden",
                   WebkitBackfaceVisibility: "hidden",
@@ -785,7 +784,7 @@ function BeatCard({
               }}
             >
               <p
-                className="mx-auto max-w-full text-balance text-center font-serif text-[calc(1.34rem+0.5pt)] font-[600] leading-snug tracking-normal text-white sm:text-[calc(1.92rem+0.5pt)] sm:leading-snug md:text-[calc(2.39rem+0.5pt)] md:leading-[1.25]"
+                className="mx-auto max-w-full text-balance text-center font-serif text-[calc(1.34rem+0.5pt)] font-[650] leading-snug tracking-normal text-white sm:text-[calc(1.92rem+0.5pt)] sm:leading-snug md:text-[calc(2.39rem+0.5pt)] md:leading-[1.25]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
@@ -804,7 +803,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mx-auto mt-3 max-w-full text-pretty text-center text-[calc(0.69rem+0.5pt)] font-[600] leading-relaxed tracking-[0.08em] text-[#f2efe8] uppercase sm:mt-5 sm:text-[calc(0.92rem+0.5pt)] sm:tracking-[0.1em] md:mt-6 md:text-[calc(0.94rem+0.5pt)] md:tracking-[0.12em]"
+                className="mx-auto mt-3 max-w-full text-pretty text-center text-[calc(0.69rem+0.5pt)] font-[650] leading-relaxed tracking-[0.08em] text-[#f7f4ee] uppercase sm:mt-5 sm:text-[calc(0.92rem+0.5pt)] sm:tracking-[0.1em] md:mt-6 md:text-[calc(0.94rem+0.5pt)] md:tracking-[0.12em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
