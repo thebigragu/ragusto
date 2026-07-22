@@ -18,6 +18,43 @@ export function useIsMobile(breakpoint = 768) {
 }
 
 /**
+ * Scales hero bubbles with viewport — smaller on compact laptops, larger on
+ * ultrawide — so cards keep a balanced share of the frame.
+ */
+export function useResponsiveBubbleScale(isMobile: boolean) {
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const update = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      if (isMobile) {
+        // Phone / small tablet: track a ~390×844 reference
+        const byW = w / 390;
+        const byH = h / 844;
+        setScale(Math.min(1.08, Math.max(0.86, Math.min(byW, byH))));
+        return;
+      }
+
+      // Desktop: 1100 → ~0.82, 1440 → 1, 1920 → ~1.1, 2560+ → ~1.2
+      const t = Math.min(1, Math.max(0, (w - 1100) / (2560 - 1100)));
+      const eased = t * t * (3 - 2 * t);
+      let next = 0.82 + eased * (1.2 - 0.82);
+      // Short laptop screens: pull down a touch so bubbles don't dominate height
+      if (h < 800) next *= 0.92 + (h / 800) * 0.08;
+      setScale(Math.min(1.22, Math.max(0.78, next)));
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [isMobile]);
+
+  return scale;
+}
+
+/**
  * Which hero video to load. Defaults to the portrait mobile asset so phones
  * never flash the landscape desktop cut. Desktop landscape only when the
  * viewport is wide and landscape.

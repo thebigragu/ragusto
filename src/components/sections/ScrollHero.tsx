@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/Button";
 import { ContactModal } from "@/components/ui/ContactModal";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { useHeroMobileVideo, useIsMobile } from "@/hooks/useIsMobile";
+import { useHeroMobileVideo, useIsMobile, useResponsiveBubbleScale } from "@/hooks/useIsMobile";
 import { SITE } from "@/lib/seo";
 import {
   motion,
@@ -255,6 +255,7 @@ function BeatCard({
   const subTokens = useMemo(() => beat.sub.split(/(\s+)/), [beat.sub]);
   const orbitScale = isMobile ? 0.55 : 1;
   const tiltScale = isMobile ? 0.55 : 1;
+  const layoutScale = useResponsiveBubbleScale(isMobile);
   // Elongated prism depth — visible at rest via opposite-side tilt
   const T = Math.max(
     isMobile ? 22 : 32,
@@ -288,7 +289,7 @@ function BeatCard({
   });
 
   // No CSS filter blur on the card — it paints a rectangular ghost behind rounded corners
-  const scale = useTransform(progress, (p) => {
+  const scrollScale = useTransform(progress, (p) => {
     if (p < beat.start || p >= beat.end) return 0.96;
     const t = beatT(p, beat);
     if (t < ENTER_END) return 0.96 + 0.04 * smoothstep(t / ENTER_END);
@@ -298,6 +299,14 @@ function BeatCard({
     }
     return 1;
   });
+  const layoutScaleMv = useMotionValue(layoutScale);
+  useEffect(() => {
+    layoutScaleMv.set(layoutScale);
+  }, [layoutScale, layoutScaleMv]);
+  const scale = useTransform(
+    [scrollScale, layoutScaleMv],
+    ([s, l]) => (s as number) * (l as number),
+  );
 
   // Mobile: pitch only (no left/right yaw). Top band tips down, bottom tips up.
   // Desktop: yaw toward hero center so prism thickness reads between panes.
@@ -624,8 +633,8 @@ function BeatCard({
       ref={cardShellRef}
       className={`pointer-events-auto absolute z-20 will-change-transform ${
         isMobile
-          ? "left-1/2 w-[min(88vw,20rem)] max-w-[min(88vw,20rem)]"
-          : `max-w-[min(94vw,36rem)] -translate-y-1/2 ${sideClass}`
+          ? "left-1/2 w-[min(88vw,clamp(16rem,72vw,22rem))] max-w-[min(88vw,clamp(16rem,72vw,22rem))]"
+          : `w-[min(94vw,clamp(20rem,18vw+10rem,44rem))] max-w-[min(94vw,clamp(20rem,18vw+10rem,44rem))] -translate-y-1/2 ${sideClass}`
       }`}
       style={{
         ...mobilePosStyle,
@@ -776,7 +785,7 @@ function BeatCard({
               }}
             >
               <p
-                className="mx-auto max-w-full text-balance text-center font-serif text-[calc(1.34rem+0.5pt)] font-bold leading-snug tracking-normal text-white sm:text-[calc(1.92rem+0.5pt)] sm:leading-snug md:text-[calc(2.39rem+0.5pt)] md:leading-[1.25]"
+                className="mx-auto max-w-full text-balance text-center font-serif text-[clamp(1.2rem,0.85rem+1.35vw,2.55rem)] font-bold leading-snug tracking-normal text-white"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {beat.words.map((w, i) => (
@@ -794,7 +803,7 @@ function BeatCard({
                 ))}
               </p>
               <p
-                className="mx-auto mt-3 max-w-full text-pretty text-center text-[calc(0.69rem+0.5pt)] font-semibold leading-relaxed tracking-[0.08em] text-white uppercase sm:mt-5 sm:text-[calc(0.92rem+0.5pt)] sm:tracking-[0.1em] md:mt-6 md:text-[calc(0.94rem+0.5pt)] md:tracking-[0.12em]"
+                className="mx-auto mt-3 max-w-full text-pretty text-center text-[clamp(0.62rem,0.48rem+0.55vw,0.98rem)] font-semibold leading-relaxed tracking-[0.08em] text-white uppercase sm:mt-5 sm:tracking-[0.1em] md:mt-6 md:tracking-[0.12em]"
                 style={{ transformStyle: "preserve-3d" }}
               >
                 {subTokens.map((part, i) => {
