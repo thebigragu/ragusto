@@ -13,12 +13,12 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     if (coarse) return;
 
     const lenis = new Lenis({
-      // Slightly longer settle + lower wheel gain so fast flicks
-      // still walk through hero transitions instead of skipping them.
-      duration: 1.5,
+      // Controlled settle; wheel gain high enough that each notch covers
+      // several hero video frames (less 1-frame slideshow jitter).
+      duration: 1.45,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      wheelMultiplier: 0.58,
+      wheelMultiplier: 0.78,
       touchMultiplier: 1,
       autoResize: true,
     });

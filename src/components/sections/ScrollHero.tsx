@@ -1005,11 +1005,11 @@ export function ScrollHero() {
     const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
-  // Light follow so video walks frames on fast scroll without heavy lag
+  // Light follow — tracks scroll closely so multi-frame seeks stay in sync
   const videoProgress = useSpring(videoProgressRaw, {
-    stiffness: isMobile ? 240 : 220,
-    damping: isMobile ? 36 : 34,
-    mass: isMobile ? 0.1 : 0.12,
+    stiffness: isMobile ? 320 : 300,
+    damping: isMobile ? 38 : 36,
+    mass: isMobile ? 0.08 : 0.09,
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
@@ -1147,8 +1147,10 @@ export function ScrollHero() {
 
     /**
      * Both desktop + mobile assets are 24fps all-intra H.264 — every frame is a
-     * keyframe. Mobile caps frames per tick so fast flicks still walk the scrub
-     * sequentially instead of hard-skipping ahead.
+     * keyframe. Seeking one frame at a time reads as slideshow jitter on slow
+     * scroll; hold until a multi-frame chunk of progress, then step several
+     * frames so motion feels smoother. Cap the step on fast flicks so we still
+     * walk the scrub instead of hard-skipping.
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
@@ -1160,13 +1162,15 @@ export function ScrollHero() {
 
       let frameIndex = targetFrame;
       const prev = lastFrameIndex.current;
-      if (prev >= 0 && isMobile) {
+      if (prev >= 0) {
         const delta = targetFrame - prev;
-        // Smaller step keeps flick scrub sequential instead of jumping ahead
-        const maxStep = 2;
-        if (Math.abs(delta) > maxStep) {
-          frameIndex = prev + Math.sign(delta) * maxStep;
-        }
+        if (delta === 0) return;
+        // ~3–4 frames per update ≈ smoother than 1-frame tick on slow wheel
+        const minStep = 3;
+        const maxStep = isMobile ? 6 : 8;
+        if (Math.abs(delta) < minStep) return;
+        const step = Math.min(Math.abs(delta), maxStep);
+        frameIndex = prev + Math.sign(delta) * step;
       }
 
       if (frameIndex === lastFrameIndex.current) return;
