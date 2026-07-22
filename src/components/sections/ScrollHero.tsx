@@ -299,10 +299,15 @@ function BeatCard({
     return 1;
   });
 
-  // Yaw preserves prism tilt so the volume glow reads as thickness *between*
-  // the panes — never as an outer halo (no oversize / outer bloom).
-  const restY = beat.side === "left" ? (isMobile ? 14 : 22) : isMobile ? -14 : -22;
-  const restX = 0;
+  // Mobile: pitch only (no left/right yaw). Top band tips down, bottom tips up.
+  // Desktop: yaw toward hero center so prism thickness reads between panes.
+  const restY = isMobile
+    ? 0
+    : beat.side === "left"
+      ? 22
+      : -22;
+  // CSS +rotateX: positive tips top away (down); negative tips top toward viewer (up)
+  const restX = isMobile ? (mobileBand === "top" ? 16 : -16) : 0;
   const twistAmp = isMobile ? 0 : 34 * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
@@ -415,6 +420,12 @@ function BeatCard({
 
   const rotateY = useTransform(progress, (p) => {
     const t = beatT(p, beat);
+    // Mobile stays square on yaw — pitch (rotateX) carries the up/down tip only
+    if (isMobile) {
+      if (t <= EXIT_START) return 0;
+      const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+      return exitDir * e * 72 * tiltScale;
+    }
     if (t < ENTER_END) {
       const u = t / ENTER_END;
       const startY = restY + exitDir * 22 * tiltScale;
@@ -440,12 +451,18 @@ function BeatCard({
 
   const rotateZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
+    // No roll on mobile — keeps faces square left↔right
+    if (isMobile) {
+      if (t <= EXIT_START) return 0;
+      const e = smoothstep((t - EXIT_START) / EXIT_LEN);
+      return exitDir * e * 28 * tiltScale;
+    }
     if (t < ENTER_END) {
       const u = t / ENTER_END;
       const startZ = exitDir * -8 * tiltScale;
       if (u < 0.48) return startZ * (1 - smoothstep(u / 0.48));
       const twistU = (u - 0.48) / 0.52;
-      return exitDir * Math.sin(Math.min(1, twistU) * Math.PI) * (isMobile ? 4 : 6);
+      return exitDir * Math.sin(Math.min(1, twistU) * Math.PI) * 6;
     }
     if (t <= EXIT_START) return 0;
     const e = smoothstep((t - EXIT_START) / EXIT_LEN);
