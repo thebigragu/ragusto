@@ -178,19 +178,24 @@ const TYPE_FACE_SILVER = "#faf8f2";
 const TYPE_FACE_GOLD = "#f0e2c4";
 const TYPE_FACE_SUB = "#ebe6de";
 
-/** Shared extrusion depth (px) for type, gold rim, and pulse bar */
-function extrudeDepth(isMobile: boolean) {
-  return isMobile ? 5 : 6;
+/** Shallow type extrusion — keeps glyphs sharp (no mirror trail) */
+function typeExtrudeDepth(isMobile: boolean) {
+  return isMobile ? 3 : 4;
 }
 
-/** Opaque 1px stem shadows — continuous solid extrusion, not stacked clones */
-function extrudeTextShadow(colors: string[], depth: number) {
-  return Array.from({ length: depth }, (_, i) => {
-    const n = i + 1;
-    const c = colors[Math.min(i, colors.length - 1)];
-    // Straight down keeps the baseline locked (no diagonal “fall away”)
-    return `0 ${n}px 0 ${c}`;
-  }).join(", ");
+/** Deeper chrome extrusion for gold rim + pulse bar */
+function chromeExtrudeDepth(isMobile: boolean) {
+  return isMobile ? 8 : 10;
+}
+
+/**
+ * Solid block extrusion: one stem color repeated so sides read as a wall,
+ * not a stack of ghosted letter copies.
+ */
+function extrudeTextShadow(stem: string, depth: number, base: string) {
+  const steps = Array.from({ length: depth }, (_, i) => `0 ${i + 1}px 0 ${stem}`);
+  steps.push(`0 ${depth + 1}px 0 ${base}`);
+  return steps.join(", ");
 }
 
 function AsyncWord({
@@ -226,13 +231,9 @@ function AsyncWord({
     return 1 - fade;
   });
 
-  // Opacity-only exit — no per-word Y/Z/tilt so the line never misaligns
-  const depth = extrudeDepth(isMobile);
-  const stemColors = emph
-    ? ["#2a2016", "#3a2c1c", "#4a3824", "#5c462c", "#6e5636", "#826840"]
-    : kind === "sub"
-      ? ["#14151a", "#1c1e24", "#262830", "#32353f", "#404450", "#505562"]
-      : ["#101114", "#181a20", "#22252c", "#2e323a", "#3c414c", "#505562"];
+  const depth = typeExtrudeDepth(isMobile);
+  const stem = emph ? "#5c4a2e" : "#1a1c22";
+  const stemBase = emph ? "#2a2016" : "#0c0d10";
   const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? TYPE_FACE_SUB : TYPE_FACE_SILVER;
   const faceClass =
     kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "";
@@ -241,14 +242,14 @@ function AsyncWord({
     <motion.span
       style={{
         opacity,
-        // Single raised face — extrusion body is continuous text-shadow (no ribbed clones)
         transform: `translateZ(${depth}px)`,
         transformStyle: "preserve-3d",
         color: faceColor,
-        textShadow: extrudeTextShadow(stemColors, depth),
-        WebkitTextStroke:
-          kind === "title" ? "0.3px rgba(10,10,12,0.25)" : "0.15px rgba(10,10,12,0.2)",
-        paintOrder: "stroke fill",
+        textShadow: [
+          // Crisp top highlight — single step, not a glow
+          emph ? "0 -1px 0 rgba(255,248,230,0.45)" : "0 -1px 0 rgba(255,255,255,0.35)",
+          extrudeTextShadow(stem, depth, stemBase),
+        ].join(", "),
       }}
       className={`relative inline-block align-baseline whitespace-nowrap ${faceClass}`}
     >
@@ -283,7 +284,6 @@ function BeatCard({
   // Near edge (toward hero center) carries the thickness wall
   const depthOnLeft = beat.side === "left";
   const radius = isMobile ? "1.05rem" : v.radius;
-  const volSteps = isMobile ? 5 : 8;
 
   const enterY = useTransform(progress, (p) => {
     // Numeric px only — string units (vh) crash mobile WAAPI via Framer bindings
@@ -493,24 +493,30 @@ function BeatCard({
   const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const extrude = extrudeDepth(isMobile);
+  const chromeExtrude = chromeExtrudeDepth(isMobile);
   const rimStem = [
+    "#3a2e1c",
     "#4a3a24",
     "#5c4a2e",
     "#6e5a38",
     "#8a7350",
+    "#9a8058",
     "#a68558",
+    "#b8956a",
     "#c4a574",
-    "#e0c898",
+    "#d4b888",
   ];
   const barStem = [
+    "#3a2e1c",
     "#4a3a24",
     "#5c4a2e",
     "#7a6340",
     "#8a7350",
+    "#9a8058",
     "#a68558",
+    "#b8956a",
     "#c4a574",
-    "#e8d2a8",
+    "#e0c898",
   ];
 
   const shimmerPos = useTransform(progress, (p) => {
@@ -632,11 +638,10 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Prism: soft rear plate + rectangular volume glow filling the slab
-          between rear and front (not a 2D side wall).
+          Prism: soft rear plate + one cohesive mid glow (no stacked mid slices).
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — restored soft glow plate */}
+          {/* Rear face — soft continuous glow plate */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -644,51 +649,38 @@ function BeatCard({
               borderRadius: radius,
               transform: `translateZ(${-halfT}px)`,
               background: `
-                radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255,248,230,0.35) 0%, ${v.depthTint} 32%, rgba(196,165,116,0.28) 58%, rgba(20,20,24,0.55) 100%),
-                linear-gradient(180deg, rgba(240,226,196,0.22) 0%, rgba(40,38,42,0.65) 100%)
+                radial-gradient(ellipse 78% 68% at 50% 48%, rgba(255,248,230,0.32) 0%, ${v.depthTint} 42%, rgba(196,165,116,0.22) 72%, rgba(24,22,20,0.5) 100%),
+                linear-gradient(180deg, rgba(240,226,196,0.2) 0%, rgba(40,38,42,0.55) 100%)
               `,
               boxShadow: `
-                inset 0 0 0 1px rgba(240,226,196,0.28),
-                0 0 28px ${v.edgeGlow},
-                0 0 48px rgba(196,165,116,0.22)
+                0 0 36px ${v.edgeGlow},
+                0 0 64px rgba(196,165,116,0.2)
               `,
-              opacity: 0.9,
+              opacity: 0.88,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
           />
 
           {/*
-            Volume aura — full-card rectangles stacked through Z so the glow
-            fills the entire prism volume between rear and front panes.
+            Single mid-volume aura — one slab between panes so the depth
+            reads as a uniform glow, not sandwiched slices.
           */}
-          {Array.from({ length: volSteps }, (_, i) => {
-            const t = (i + 1) / (volSteps + 1);
-            const z = -halfT + t * T;
-            // Slightly brighter toward the middle of the slab
-            const mid = 1 - Math.abs(t - 0.5) * 1.4;
-            return (
-              <div
-                key={`vol-${i}`}
-                aria-hidden
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  borderRadius: radius,
-                  transform: `translateZ(${z}px)`,
-                  background: `
-                    radial-gradient(ellipse 85% 75% at 50% 48%, rgba(255,248,230,${0.2 + mid * 0.16}) 0%, ${v.depthTint} 38%, rgba(196,165,116,${0.22 + mid * 0.18}) 68%, rgba(196,165,116,0.06) 100%)
-                  `,
-                  boxShadow: `
-                    inset 0 0 0 1px rgba(240,226,196,${0.12 + mid * 0.12}),
-                    0 0 ${18 + mid * 16}px ${v.edgeGlow}
-                  `,
-                  opacity: 0.42 + mid * 0.28,
-                  backfaceVisibility: "hidden",
-                  WebkitBackfaceVisibility: "hidden",
-                }}
-              />
-            );
-          })}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              borderRadius: radius,
+              transform: "translateZ(0px)",
+              background: `
+                radial-gradient(ellipse 90% 80% at 50% 48%, rgba(255,248,230,0.28) 0%, ${v.depthTint} 45%, rgba(196,165,116,0.2) 78%, transparent 100%)
+              `,
+              boxShadow: `0 0 42px ${v.edgeGlow}`,
+              opacity: 0.62,
+              backfaceVisibility: "hidden",
+              WebkitBackfaceVisibility: "hidden",
+            }}
+          />
 
           <div
             className="relative"
@@ -737,8 +729,8 @@ function BeatCard({
             animate={{ opacity: [0.82, 1, 0.82] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           >
-            {/* Gold rim extrusion — same depth as type + bar, solid 1px plates */}
-            {rimStem.slice(0, extrude).map((color, i) => (
+            {/* Gold rim — deeper extrusion, continuous stem (no thin slice rings) */}
+            {rimStem.slice(0, chromeExtrude).map((color, i) => (
               <div
                 key={i}
                 className="absolute inset-0"
@@ -754,15 +746,14 @@ function BeatCard({
               className="absolute inset-0"
               style={{
                 borderRadius: radius,
-                transform: `translateZ(${extrude}px)`,
+                transform: `translateZ(${chromeExtrude}px)`,
                 boxShadow: `
-                  inset 0 1px 0 rgba(255,248,230,0.55),
-                  inset 0 0 0 3px #f0e2c4
+                  inset 0 1px 0 rgba(255,248,230,0.6),
+                  inset 0 0 0 3px #f5ead0
                 `,
               }}
             />
           </motion.div>
-
           <motion.div
             ref={shimmerLayerRef}
             aria-hidden
@@ -832,7 +823,7 @@ function BeatCard({
                 className="relative mx-auto mt-4 h-[3px] w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7"
                 style={{ transformStyle: "preserve-3d" }}
               >
-                {barStem.slice(0, extrude).map((color, i) => (
+                {barStem.slice(0, chromeExtrude).map((color, i) => (
                   <div
                     key={i}
                     aria-hidden
@@ -846,7 +837,7 @@ function BeatCard({
                 <motion.div
                   className="absolute inset-0 rounded-full"
                   style={{
-                    transform: `translateZ(${extrude}px)`,
+                    transform: `translateZ(${chromeExtrude}px)`,
                     background: "#f0e2c4",
                     transformStyle: "preserve-3d",
                   }}
