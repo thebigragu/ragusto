@@ -1053,6 +1053,7 @@ export function ScrollHero() {
   });
   // Dark join wash — taller + denser so contact copy sits on a dark field
   // Input offsets MUST be strictly increasing (mobile WAAPI crashes otherwise)
+  // Mobile intensity is half of desktop
   const featherOpacity = useTransform(
     driveProgress,
     [
@@ -1062,7 +1063,9 @@ export function ScrollHero() {
       0.96,
       1,
     ],
-    [0, 0.08, 0.22, 0.48, 0.58],
+    isMobile
+      ? [0, 0.04, 0.11, 0.24, 0.29]
+      : [0, 0.08, 0.22, 0.48, 0.58],
   );
   // Mask dissolves only the tip at first, then slowly opens — no hard step
   const heroMask = useTransform(
@@ -1332,8 +1335,9 @@ export function ScrollHero() {
               className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[49%] md:h-[74%]"
               style={{
                 opacity: featherOpacity,
-                background:
-                  "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.06) 24%, rgba(8,9,11,0.2) 42%, rgba(8,9,11,0.45) 58%, rgba(8,9,11,0.7) 76%, rgba(8,9,11,0.88) 90%, rgba(8,9,11,0.96) 100%)",
+                background: isMobile
+                  ? "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.03) 24%, rgba(8,9,11,0.1) 42%, rgba(8,9,11,0.22) 58%, rgba(8,9,11,0.35) 76%, rgba(8,9,11,0.44) 90%, rgba(8,9,11,0.48) 100%)"
+                  : "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.06) 24%, rgba(8,9,11,0.2) 42%, rgba(8,9,11,0.45) 58%, rgba(8,9,11,0.7) 76%, rgba(8,9,11,0.88) 90%, rgba(8,9,11,0.96) 100%)",
               }}
             />
           </motion.div>
