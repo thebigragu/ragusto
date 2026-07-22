@@ -991,10 +991,12 @@ function ScrollCue({
 /** First 9s map to most of scrub; last second shares scroll with contact reveal. */
 const VIDEO_HANDOFF = 0.9;
 const SCRUB_HANDOFF_START = 0.78;
-/** Desktop wheel notch ≈ this many consecutive frames on mobile touch ticks too */
-const FRAMES_PER_WHEEL_NOTCH = 12;
-/** Finger px that equals one mouse-wheel increment for video scrub */
-const TOUCH_PX_PER_WHEEL_NOTCH = 56;
+/** Clear stuck seeks if `seeked` never fires (common on iOS under load). */
+const SEEK_WATCHDOG_MS = 40;
+/** Mobile: consecutive frames per paint when mildly behind. */
+const MOBILE_MAX_STEP = 3;
+/** Mobile: if farther than this, leap toward target so scrub never piles up. */
+const MOBILE_SNAP_DELTA = 16;
 
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
@@ -1003,10 +1005,8 @@ export function ScrollHero() {
   const rafRef = useRef(0);
   const fpsRef = useRef(24);
   const lastFrameIndex = useRef(-1);
-  const mobileNotchRef = useRef(0);
-  const touchScrollAccumPx = useRef(0);
-  const lastTouchScrollY = useRef(0);
   const videoSeekingRef = useRef(false);
+  const seekWatchdogRef = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
@@ -1023,9 +1023,9 @@ export function ScrollHero() {
   // Soft spring on both platforms so fast flicks still play bubble /
   // contact transitions through instead of teleporting.
   const sprungProgress = useSpring(scrollYProgress, {
-    stiffness: isMobile ? 150 : 130,
-    damping: isMobile ? 30 : 28,
-    mass: isMobile ? 0.18 : 0.2,
+    stiffness: isMobile ? 170 : 130,
+    damping: isMobile ? 32 : 28,
+    mass: isMobile ? 0.14 : 0.2,
     restDelta: 0.00005,
     restSpeed: 0.00005,
   });
@@ -1038,11 +1038,12 @@ export function ScrollHero() {
     const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
     return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
   });
-  // Target tracks scroll; display walks consecutive frames toward it (see applyTime)
+  // Mobile: snappier follow so video stays locked to finger scroll.
+  // Desktop: slightly softer so wheel notches walk through cleanly.
   const videoProgress = useSpring(videoProgressRaw, {
-    stiffness: isMobile ? 380 : 360,
-    damping: isMobile ? 40 : 38,
-    mass: isMobile ? 0.07 : 0.08,
+    stiffness: isMobile ? 520 : 360,
+    damping: isMobile ? 42 : 38,
+    mass: isMobile ? 0.05 : 0.08,
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
@@ -1160,77 +1161,13 @@ export function ScrollHero() {
   }, [heroMask]);
 
   useMotionValueEvent(videoProgress, "change", (p) => {
-    // Mobile video target is driven by wheel-notch ticks (see touch scroll effect)
-    if (isMobile) return;
     const video = videoRef.current;
     if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
-    targetTime.current = Math.min(video.duration - 0.001, Math.max(0, p) * video.duration);
+    targetTime.current = Math.min(
+      video.duration - 0.001,
+      Math.max(0, p) * video.duration,
+    );
   });
-
-  // Mobile: each small finger scroll advances one desktop-wheel-notch of frames
-  useEffect(() => {
-    if (!isMobile) return;
-
-    const syncNotchFromProgress = () => {
-      const video = videoRef.current;
-      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
-      const fps = fpsRef.current;
-      const maxFrame = Math.max(0, Math.round(video.duration * fps) - 1);
-      const maxNotch = Math.max(0, Math.floor(maxFrame / FRAMES_PER_WHEEL_NOTCH));
-      const desiredFrame = Math.round(
-        Math.min(1, Math.max(0, videoProgressRaw.get())) * video.duration * fps,
-      );
-      mobileNotchRef.current = Math.min(
-        maxNotch,
-        Math.max(0, Math.round(desiredFrame / FRAMES_PER_WHEEL_NOTCH)),
-      );
-      targetTime.current = Math.min(
-        video.duration - 0.001,
-        (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
-      );
-    };
-
-    lastTouchScrollY.current = window.scrollY;
-    touchScrollAccumPx.current = 0;
-    syncNotchFromProgress();
-
-    const onScroll = () => {
-      const video = videoRef.current;
-      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
-
-      const y = window.scrollY;
-      const dy = y - lastTouchScrollY.current;
-      lastTouchScrollY.current = y;
-      if (dy === 0) return;
-
-      touchScrollAccumPx.current += dy;
-      const fps = fpsRef.current;
-      const maxFrame = Math.max(0, Math.round(video.duration * fps) - 1);
-      const maxNotch = Math.max(0, Math.floor(maxFrame / FRAMES_PER_WHEEL_NOTCH));
-
-      // One notch per scroll event — lets frames play out before the next jump
-      if (Math.abs(touchScrollAccumPx.current) < TOUCH_PX_PER_WHEEL_NOTCH) return;
-
-      const dir = Math.sign(touchScrollAccumPx.current) as 1 | -1;
-      touchScrollAccumPx.current -= dir * TOUCH_PX_PER_WHEEL_NOTCH;
-      // Keep leftover under one notch so flicks still feel continuous over time
-      if (Math.abs(touchScrollAccumPx.current) >= TOUCH_PX_PER_WHEEL_NOTCH * 2) {
-        touchScrollAccumPx.current = dir * (TOUCH_PX_PER_WHEEL_NOTCH * 0.5);
-      }
-
-      mobileNotchRef.current = Math.min(
-        maxNotch,
-        Math.max(0, mobileNotchRef.current + dir),
-      );
-      targetTime.current = Math.min(
-        video.duration - 0.001,
-        (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
-      );
-    };
-
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [isMobile, videoProgressRaw, videoSrc]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -1246,11 +1183,20 @@ export function ScrollHero() {
       /* ignore */
     }
 
+    const clearSeekLock = () => {
+      videoSeekingRef.current = false;
+      if (seekWatchdogRef.current) {
+        window.clearTimeout(seekWatchdogRef.current);
+        seekWatchdogRef.current = 0;
+      }
+    };
+
     /**
-     * Both assets are 24fps all-intra H.264. Scroll moves the *target* ahead;
-     * each display refresh walks consecutive frames toward it. Mobile steps
-     * one frame per paint (and waits for seeked) so motion plays smoothly
-     * instead of jumping.
+     * Both assets are 24fps all-intra H.264. Scroll moves the *target*;
+     * each display refresh walks consecutive frames toward it.
+     * Mobile allows a few frames/tick and leaps when far behind so scrub
+     * never freezes or piles into endless catch-up. A seek watchdog clears
+     * stuck `seeked` waits (iOS often drops the event under load).
      */
     const applyTime = (t: number) => {
       const v = videoRef.current;
@@ -1263,29 +1209,56 @@ export function ScrollHero() {
 
       let frameIndex = targetFrame;
       const prev = lastFrameIndex.current;
+      let absDelta = 0;
       if (prev >= 0) {
         const delta = targetFrame - prev;
         if (delta === 0) return;
-        // Mobile: strictly 1 frame/tick for succession; desktop can catch up faster
-        const maxPerTick = isMobile ? 1 : 10;
-        const step = Math.min(Math.abs(delta), maxPerTick);
-        frameIndex = prev + Math.sign(delta) * step;
+        absDelta = Math.abs(delta);
+        if (isMobile) {
+          if (absDelta > MOBILE_SNAP_DELTA) {
+            // Leap near the target, then fine-walk — keeps scrub alive on flicks
+            frameIndex = targetFrame - Math.sign(delta) * Math.min(2, absDelta - 1);
+          } else {
+            const step = Math.min(absDelta, MOBILE_MAX_STEP);
+            frameIndex = prev + Math.sign(delta) * step;
+          }
+        } else {
+          const step = Math.min(absDelta, 10);
+          frameIndex = prev + Math.sign(delta) * step;
+        }
       }
 
       if (frameIndex === lastFrameIndex.current) return;
       lastFrameIndex.current = frameIndex;
 
       const framed = Math.min(v.duration - 0.001, frameIndex / fps);
+      const leap = isMobile && absDelta > MOBILE_MAX_STEP;
+
       try {
-        if (isMobile) videoSeekingRef.current = true;
-        v.currentTime = framed;
+        if (isMobile) {
+          videoSeekingRef.current = true;
+          if (seekWatchdogRef.current) window.clearTimeout(seekWatchdogRef.current);
+          seekWatchdogRef.current = window.setTimeout(
+            clearSeekLock,
+            SEEK_WATCHDOG_MS,
+          );
+          const fastSeek = (v as HTMLVideoElement & { fastSeek?: (time: number) => void })
+            .fastSeek;
+          if (leap && typeof fastSeek === "function") {
+            fastSeek.call(v, framed);
+          } else {
+            v.currentTime = framed;
+          }
+        } else {
+          v.currentTime = framed;
+        }
       } catch {
-        videoSeekingRef.current = false;
+        clearSeekLock();
       }
     };
 
     const onSeeked = () => {
-      videoSeekingRef.current = false;
+      clearSeekLock();
     };
     video.addEventListener("seeked", onSeeked);
 
@@ -1305,34 +1278,19 @@ export function ScrollHero() {
     const onMeta = () => {
       detectFps();
       lastFrameIndex.current = -1;
-      if (isMobile) {
-        const fps = fpsRef.current;
-        const maxFrame = Math.max(0, Math.round(video.duration * fps) - 1);
-        const maxNotch = Math.max(0, Math.floor(maxFrame / FRAMES_PER_WHEEL_NOTCH));
-        const desiredFrame = Math.round(
-          Math.min(1, Math.max(0, videoProgressRaw.get())) * video.duration * fps,
-        );
-        mobileNotchRef.current = Math.min(
-          maxNotch,
-          Math.max(0, Math.round(desiredFrame / FRAMES_PER_WHEEL_NOTCH)),
-        );
-        targetTime.current = Math.min(
-          video.duration - 0.001,
-          (mobileNotchRef.current * FRAMES_PER_WHEEL_NOTCH) / fps,
-        );
-      } else {
-        const t = Math.min(
-          video.duration - 0.001,
-          Math.max(0, videoProgress.get()) * video.duration,
-        );
-        targetTime.current = t;
-      }
+      const t = Math.min(
+        video.duration - 0.001,
+        Math.max(0, videoProgress.get()) * video.duration,
+      );
+      targetTime.current = t;
       applyTime(targetTime.current);
     };
     if (video.readyState >= 1) onMeta();
     video.addEventListener("loadedmetadata", onMeta);
 
-    // Commit at display refresh — one seek per changed frame index
+    const onCanPlay = () => applyTime(targetTime.current);
+    video.addEventListener("canplay", onCanPlay);
+
     const tick = () => {
       applyTime(targetTime.current);
       rafRef.current = requestAnimationFrame(tick);
@@ -1342,11 +1300,12 @@ export function ScrollHero() {
     return () => {
       video.removeEventListener("loadedmetadata", onMeta);
       video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("canplay", onCanPlay);
       cancelAnimationFrame(rafRef.current);
+      clearSeekLock();
       lastFrameIndex.current = -1;
-      videoSeekingRef.current = false;
     };
-  }, [videoProgress, videoProgressRaw, videoSrc, isMobile]);
+  }, [videoProgress, videoSrc, isMobile]);
 
   return (
     <>
@@ -1422,7 +1381,7 @@ export function ScrollHero() {
               src={videoSrc}
               muted
               playsInline
-              preload={isMobile ? "metadata" : "auto"}
+              preload="auto"
               aria-hidden
               style={{ opacity: videoFade }}
             />
