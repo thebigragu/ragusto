@@ -337,9 +337,7 @@ function BeatCard({
   // Near edge (toward hero center) carries the thickness wall
   const depthOnLeft = beat.side === "left";
   const radius = isMobile ? "1.05rem" : v.radius;
-  // Slight inset past the corner radius so the side wall stays round, not a square slab —
-  // keep it small so gold still reads end-to-end on the long edge
-  const edgeInset = isMobile ? "0.45rem" : "0.55rem";
+  const volSteps = isMobile ? 5 : 8;
 
   const enterY = useTransform(progress, (p) => {
     // Numeric px only — string units (vh) crash mobile WAAPI via Framer bindings
@@ -621,11 +619,11 @@ function BeatCard({
         style={{ transform: orbitTransform, transformStyle: "preserve-3d" }}
       >
         {/*
-          Prism: full-width rear gold plate + solid side thickness (front→rear)
-          + front face. Side gold runs the full inset height — no mid fade.
+          Prism: soft rear plate + rectangular volume glow filling the slab
+          between rear and front (not a 2D side wall).
         */}
         <div className="relative" style={{ transformStyle: "preserve-3d" }}>
-          {/* Rear face — solid warm gold across the full card (L→R, T→B) */}
+          {/* Rear face — restored soft glow plate */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0"
@@ -633,19 +631,51 @@ function BeatCard({
               borderRadius: radius,
               transform: `translateZ(${-halfT}px)`,
               background: `
-                linear-gradient(135deg, #f0e2c4 0%, #e0c898 28%, #c4a574 58%, #a68558 100%),
-                linear-gradient(180deg, #e8d2a8 0%, #b8956a 100%)
+                radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255,248,230,0.35) 0%, ${v.depthTint} 32%, rgba(196,165,116,0.28) 58%, rgba(20,20,24,0.55) 100%),
+                linear-gradient(180deg, rgba(240,226,196,0.22) 0%, rgba(40,38,42,0.65) 100%)
               `,
               boxShadow: `
-                inset 0 0 0 1px rgba(255,248,230,0.45),
+                inset 0 0 0 1px rgba(240,226,196,0.28),
                 0 0 28px ${v.edgeGlow},
-                0 0 48px rgba(196,165,116,0.35)
+                0 0 48px rgba(196,165,116,0.22)
               `,
-              opacity: 1,
+              opacity: 0.9,
               backfaceVisibility: "hidden",
               WebkitBackfaceVisibility: "hidden",
             }}
           />
+
+          {/*
+            Volume aura — full-card rectangles stacked through Z so the glow
+            fills the entire prism volume between rear and front panes.
+          */}
+          {Array.from({ length: volSteps }, (_, i) => {
+            const t = (i + 1) / (volSteps + 1);
+            const z = -halfT + t * T;
+            // Slightly brighter toward the middle of the slab
+            const mid = 1 - Math.abs(t - 0.5) * 1.4;
+            return (
+              <div
+                key={`vol-${i}`}
+                aria-hidden
+                className="pointer-events-none absolute inset-0"
+                style={{
+                  borderRadius: radius,
+                  transform: `translateZ(${z}px)`,
+                  background: `
+                    radial-gradient(ellipse 85% 75% at 50% 48%, rgba(255,248,230,${0.2 + mid * 0.16}) 0%, ${v.depthTint} 38%, rgba(196,165,116,${0.22 + mid * 0.18}) 68%, rgba(196,165,116,0.06) 100%)
+                  `,
+                  boxShadow: `
+                    inset 0 0 0 1px rgba(240,226,196,${0.12 + mid * 0.12}),
+                    0 0 ${18 + mid * 16}px ${v.edgeGlow}
+                  `,
+                  opacity: 0.42 + mid * 0.28,
+                  backfaceVisibility: "hidden",
+                  WebkitBackfaceVisibility: "hidden",
+                }}
+              />
+            );
+          })}
 
           <div
             className="relative"
@@ -655,36 +685,6 @@ function BeatCard({
               transformStyle: "preserve-3d",
             }}
           >
-          {/*
-            Side bridge — opaque gold wall spanning full depth front→rear
-            and full height of the inset (end-to-end, not a mid highlight).
-          */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute"
-            style={{
-              top: edgeInset,
-              bottom: edgeInset,
-              width: T,
-              ...(depthOnLeft
-                ? { left: 0, transformOrigin: "left center", transform: "rotateY(90deg)" }
-                : { right: 0, transformOrigin: "right center", transform: "rotateY(-90deg)" }),
-              background: depthOnLeft
-                ? `linear-gradient(90deg,
-                    #f5ead0 0%,
-                    #e8d2a8 18%,
-                    #d4b888 42%,
-                    #c4a574 68%,
-                    #b8956a 100%)`
-                : `linear-gradient(270deg,
-                    #f5ead0 0%,
-                    #e8d2a8 18%,
-                    #d4b888 42%,
-                    #c4a574 68%,
-                    #b8956a 100%)`,
-              boxShadow: "inset 0 0 0 1px rgba(255,248,230,0.4)",
-            }}
-          />
 
           <div
             aria-hidden
