@@ -318,9 +318,10 @@ function BeatCard({
 
   // At rest: left panes aim right across the hero; right panes aim left —
   // enough yaw that the full-depth side glow is visible.
-  // Mobile: rest square-on to the viewer (no yaw/pitch). Desktop keeps opposite-side tilt.
+  // Mobile: square yaw, but slight pitch so top/bottom bands reveal prism depth.
+  // Top band tips down (look into the top edge); bottom band tips up.
   const restY = isMobile ? 0 : beat.side === "left" ? 22 : -22;
-  const restX = isMobile ? 0 : 5;
+  const restX = isMobile ? (mobileBand === "top" ? 9 : -9) : 5;
   const twistAmp = isMobile ? 0 : 34 * tiltScale;
 
   const orbitX = useTransform(progress, (p) => {
