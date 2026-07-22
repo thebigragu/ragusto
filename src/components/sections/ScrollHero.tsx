@@ -615,7 +615,8 @@ function BeatCard({
 
   const mobilePosStyle: CSSProperties = isMobile
     ? mobileBand === "top"
-      ? { top: "max(0.75rem, 8dvh)", bottom: "auto" }
+      ? // Clear fixed logo (top-8 + h-12 ≈ 5rem) + same inset as bottom bubbles (10dvh)
+        { top: "calc(6rem + max(0.75rem, 10dvh))", bottom: "auto" }
       : { top: "auto", bottom: "max(0.75rem, 10dvh)" }
     : { top: restTop };
 
