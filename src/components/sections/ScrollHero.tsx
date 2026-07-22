@@ -8,6 +8,7 @@ import { SITE } from "@/lib/seo";
 import {
   motion,
   useMotionTemplate,
+  useMotionValue,
   useMotionValueEvent,
   useScroll,
   useSpring,
@@ -15,7 +16,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from "react";
 
 type BeatVariant = {
   /** Orbit arc radius in px during exit */
@@ -173,44 +174,23 @@ const ENTER_END = 0.4;
 const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
-/** Opaque stem colors for extruded type — base sits on the face, tip is the letter face */
-const TYPE_STEM_SILVER = [
-  "#14151a",
-  "#1c1e24",
-  "#262830",
-  "#32353f",
-  "#404450",
-  "#505562",
-  "#636875",
-  "#787d8a",
-  "#8e939f",
-  "#a4a8b3",
-  "#bbbfc7",
-  "#d0d3d9",
-];
-const TYPE_STEM_GOLD = [
-  "#2a2016",
-  "#3a2c1c",
-  "#4a3824",
-  "#5c462c",
-  "#6e5636",
-  "#826840",
-  "#96784c",
-  "#a88858",
-  "#b89868",
-  "#c8a878",
-  "#d4b888",
-  "#e0c898",
-];
 const TYPE_FACE_SILVER = "#faf8f2";
 const TYPE_FACE_GOLD = "#f0e2c4";
+const TYPE_FACE_SUB = "#ebe6de";
 
-/** Shared extrusion depth — type, gold rim, and pulse bar all use this height */
-function extrudeParams(isMobile: boolean) {
-  return {
-    steps: isMobile ? 10 : 12,
-    stepPx: isMobile ? 1.6 : 2,
-  };
+/** Shared extrusion depth (px) for type, gold rim, and pulse bar */
+function extrudeDepth(isMobile: boolean) {
+  return isMobile ? 5 : 6;
+}
+
+/** Opaque 1px stem shadows — continuous solid extrusion, not stacked clones */
+function extrudeTextShadow(colors: string[], depth: number) {
+  return Array.from({ length: depth }, (_, i) => {
+    const n = i + 1;
+    const c = colors[Math.min(i, colors.length - 1)];
+    // Straight down keeps the baseline locked (no diagonal “fall away”)
+    return `0 ${n}px 0 ${c}`;
+  }).join(", ");
 }
 
 function AsyncWord({
@@ -220,7 +200,6 @@ function AsyncWord({
   beat,
   index,
   kind,
-  exitDir,
   isMobile,
 }: {
   text: string;
@@ -229,7 +208,6 @@ function AsyncWord({
   beat: Beat;
   index: number;
   kind: "title" | "sub";
-  exitDir: number;
   isMobile: boolean;
 }) {
   const delay = useMemo(() => {
@@ -248,97 +226,33 @@ function AsyncWord({
     return 1 - fade;
   });
 
-  const wordY = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t < EXIT_START) return 0;
-    const local = (t - EXIT_START) / EXIT_LEN;
-    const start = delay;
-    const e = Math.min(1, Math.max(0, (local - start) / 0.32));
-    const drift = (hashSeed(`${beat.id}-y-${index}`) - 0.5) * 28;
-    return -e * (18 + drift);
-  });
-
-  const blur = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t < EXIT_START) return 0;
-    const local = (t - EXIT_START) / EXIT_LEN;
-    if (local < 0.4) return 0;
-    const start = delay;
-    const e = Math.min(1, Math.max(0, (local - 0.4 - start * 0.5) / 0.35));
-    return e * 8;
-  });
-  // Avoid binding filter MotionValues — WAAPI rejects them on mobile
-  const exitFade = useTransform(blur, (b) => (b < 0.05 ? 1 : Math.max(0.15, 1 - b / 10)));
-
-  // Exit-only lift of the whole extruded unit (rest stays planted on the face)
-  const wordZ = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
-    return smoothstep((t - EXIT_START) / EXIT_LEN) * (isMobile ? 10 : 16);
-  });
-
-  const wordRx = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
-    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return -e * 22;
-  });
-
-  const wordRy = useTransform(progress, (p) => {
-    const t = beatT(p, beat);
-    if (t <= EXIT_START) return 0;
-    const e = smoothstep((t - EXIT_START) / EXIT_LEN);
-    return exitDir * e * 28;
-  });
-
-  const wordTransform = useMotionTemplate`translate3d(0px, ${wordY}px, ${wordZ}px) rotateX(${wordRx}deg) rotateY(${wordRy}deg)`;
-  const wordOpacity = useTransform([opacity, exitFade], ([o, f]) => (o as number) * (f as number));
-
-  const { steps, stepPx } = extrudeParams(isMobile);
-  const stem = (emph ? TYPE_STEM_GOLD : TYPE_STEM_SILVER).slice(0, steps);
-  const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? "#ebe6de" : TYPE_FACE_SILVER;
+  // Opacity-only exit — no per-word Y/Z/tilt so the line never misaligns
+  const depth = extrudeDepth(isMobile);
+  const stemColors = emph
+    ? ["#2a2016", "#3a2c1c", "#4a3824", "#5c462c", "#6e5636", "#826840"]
+    : kind === "sub"
+      ? ["#14151a", "#1c1e24", "#262830", "#32353f", "#404450", "#505562"]
+      : ["#101114", "#181a20", "#22252c", "#2e323a", "#3c414c", "#505562"];
+  const faceColor = emph ? TYPE_FACE_GOLD : kind === "sub" ? TYPE_FACE_SUB : TYPE_FACE_SILVER;
   const faceClass =
-    kind === "title"
-      ? emph
-        ? "font-serif italic"
-        : "font-serif"
-      : "";
+    kind === "title" ? (emph ? "font-serif italic" : "font-serif") : "";
 
   return (
     <motion.span
       style={{
-        opacity: wordOpacity,
-        transform: wordTransform,
+        opacity,
+        // Single raised face — extrusion body is continuous text-shadow (no ribbed clones)
+        transform: `translateZ(${depth}px)`,
         transformStyle: "preserve-3d",
+        color: faceColor,
+        textShadow: extrudeTextShadow(stemColors, depth),
+        WebkitTextStroke:
+          kind === "title" ? "0.3px rgba(10,10,12,0.25)" : "0.15px rgba(10,10,12,0.2)",
+        paintOrder: "stroke fill",
       }}
-      className="relative inline-block align-baseline"
+      className={`relative inline-block align-baseline whitespace-nowrap ${faceClass}`}
     >
-      {stem.map((color, i) => (
-        <span
-          key={i}
-          aria-hidden
-          className={`pointer-events-none absolute top-0 left-0 whitespace-nowrap ${faceClass}`}
-          style={{
-            transform: `translateZ(${i * stepPx}px)`,
-            color,
-            opacity: 1,
-          }}
-        >
-          {text}
-        </span>
-      ))}
-      <span
-        className={`relative inline-block whitespace-nowrap ${faceClass}`}
-        style={{
-          transform: `translateZ(${steps * stepPx}px)`,
-          color: faceColor,
-          textShadow: "none",
-          WebkitTextStroke: kind === "title" ? "0.35px rgba(10,10,12,0.28)" : "0.2px rgba(10,10,12,0.22)",
-          paintOrder: "stroke fill",
-        }}
-      >
-        {text}
-      </span>
+      {text}
     </motion.span>
   );
 }
@@ -430,6 +344,55 @@ function BeatCard({
     return -v.orbitR * orbitScale * (1 - Math.cos(theta)) - e * (isMobile ? 160 : 340);
   });
 
+  // Mouse magnetism at rest only (desktop)
+  const magX = useMotionValue(0);
+  const magY = useMotionValue(0);
+  const springMagX = useSpring(magX, { stiffness: 220, damping: 22 });
+  const springMagY = useSpring(magY, { stiffness: 220, damping: 22 });
+  const cardShellRef = useRef<HTMLDivElement>(null);
+
+  const onCardPointerMove = useCallback(
+    (e: MouseEvent) => {
+      if (isMobile) return;
+      const t = beatT(progress.get(), beat);
+      if (t < ENTER_END || t > EXIT_START) {
+        magX.set(0);
+        magY.set(0);
+        return;
+      }
+      const el = cardShellRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const dx = e.clientX - (rect.left + rect.width / 2);
+      const dy = e.clientY - (rect.top + rect.height / 2);
+      magX.set(dx * 0.14);
+      magY.set(dy * 0.14);
+    },
+    [beat, isMobile, magX, magY, progress],
+  );
+
+  const onCardPointerLeave = useCallback(() => {
+    magX.set(0);
+    magY.set(0);
+  }, [magX, magY]);
+
+  useMotionValueEvent(progress, "change", (p) => {
+    const t = beatT(p, beat);
+    if (t < ENTER_END || t > EXIT_START) {
+      magX.set(0);
+      magY.set(0);
+    }
+  });
+
+  const combinedOrbitX = useTransform(
+    [orbitX, springMagX],
+    ([o, m]) => (o as number) + (m as number),
+  );
+  const combinedOrbitY = useTransform(
+    [orbitY, springMagY],
+    ([o, m]) => (o as number) + (m as number),
+  );
+
   const orbitZ = useTransform(progress, (p) => {
     const t = beatT(p, beat);
     const restZ = isMobile ? 52 : 108;
@@ -510,7 +473,7 @@ function BeatCard({
     return exitDir * e * 42 * tiltScale;
   });
 
-  const orbitTransform = useMotionTemplate`translate3d(${orbitX}px, ${orbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
+  const orbitTransform = useMotionTemplate`translate3d(${combinedOrbitX}px, ${combinedOrbitY}px, ${orbitZ}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg)`;
 
   // Keep content planted on the face — extrusion stacks provide the raise
   const layerBoost = useTransform(progress, (p) => {
@@ -530,21 +493,15 @@ function BeatCard({
   const contentRy = useTransform(rotateY, () => 0);
   const contentTransform = useMotionTemplate`translateZ(${contentZ}px) rotateX(${contentRx}deg) rotateY(${contentRy}deg)`;
 
-  const { steps: extrudeSteps, stepPx: extrudeStepPx } = extrudeParams(isMobile);
+  const extrude = extrudeDepth(isMobile);
   const rimStem = [
     "#4a3a24",
     "#5c4a2e",
     "#6e5a38",
     "#8a7350",
-    "#9a8058",
     "#a68558",
-    "#b8956a",
     "#c4a574",
-    "#d0b484",
-    "#d4b888",
     "#e0c898",
-    "#e8d2a8",
-    "#f0e2c4",
   ];
   const barStem = [
     "#4a3a24",
@@ -552,13 +509,8 @@ function BeatCard({
     "#7a6340",
     "#8a7350",
     "#a68558",
-    "#b8956a",
     "#c4a574",
-    "#d4b888",
-    "#e0c898",
     "#e8d2a8",
-    "#f0e2c4",
-    "#f5ead0",
   ];
 
   const shimmerPos = useTransform(progress, (p) => {
@@ -657,6 +609,7 @@ function BeatCard({
 
   return (
     <motion.div
+      ref={cardShellRef}
       className={`pointer-events-auto absolute z-20 will-change-transform ${
         isMobile
           ? "left-1/2 w-[min(88vw,20rem)] max-w-[min(88vw,20rem)]"
@@ -671,6 +624,8 @@ function BeatCard({
         perspective: isMobile ? 980 : 1500,
         transformStyle: "preserve-3d",
       }}
+      onMouseMove={onCardPointerMove}
+      onMouseLeave={onCardPointerLeave}
     >
       <motion.div
         className="relative"
@@ -782,17 +737,15 @@ function BeatCard({
             animate={{ opacity: [0.82, 1, 0.82] }}
             transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
           >
-            {/* Gold rim extrusion — same depth as type + pulse bar */}
-            {rimStem.slice(0, extrudeSteps).map((color, i) => (
+            {/* Gold rim extrusion — same depth as type + bar, solid 1px plates */}
+            {rimStem.slice(0, extrude).map((color, i) => (
               <div
                 key={i}
                 className="absolute inset-0"
                 style={{
                   borderRadius: radius,
-                  transform: `translateZ(${i * extrudeStepPx}px)`,
-                  border: `${i === extrudeSteps - 1 ? 2.25 : 2}px solid ${color}`,
-                  boxSizing: "border-box",
-                  background: "transparent",
+                  transform: `translateZ(${i}px)`,
+                  boxShadow: `inset 0 0 0 3px ${color}`,
                 }}
               />
             ))}
@@ -801,13 +754,16 @@ function BeatCard({
               className="absolute inset-0"
               style={{
                 borderRadius: radius,
-                transform: `translateZ(${extrudeSteps * extrudeStepPx}px)`,
-                border: "2.25px solid #f5ead0",
-                boxSizing: "border-box",
-                boxShadow: "inset 0 1px 0 rgba(255,248,230,0.55)",
+                transform: `translateZ(${extrude}px)`,
+                boxShadow: `
+                  inset 0 1px 0 rgba(255,248,230,0.55),
+                  inset 0 0 0 3px #f0e2c4
+                `,
               }}
             />
-          </motion.div>          <motion.div
+          </motion.div>
+
+          <motion.div
             ref={shimmerLayerRef}
             aria-hidden
             className="pointer-events-none absolute inset-0 overflow-hidden"
@@ -841,7 +797,6 @@ function BeatCard({
                       beat={beat}
                       index={i}
                       kind="title"
-                      exitDir={exitDir}
                       isMobile={isMobile}
                     />
                   </span>
@@ -866,7 +821,6 @@ function BeatCard({
                       beat={beat}
                       index={i + 10}
                       kind="sub"
-                      exitDir={exitDir}
                       isMobile={isMobile}
                     />
                   );
@@ -878,13 +832,13 @@ function BeatCard({
                 className="relative mx-auto mt-4 h-[3px] w-[min(100%,12rem)] sm:mt-6 sm:w-[min(100%,16rem)] md:mt-7"
                 style={{ transformStyle: "preserve-3d" }}
               >
-                {barStem.slice(0, extrudeSteps).map((color, i) => (
+                {barStem.slice(0, extrude).map((color, i) => (
                   <div
                     key={i}
                     aria-hidden
                     className="absolute inset-0 rounded-full"
                     style={{
-                      transform: `translateZ(${i * extrudeStepPx}px)`,
+                      transform: `translateZ(${i}px)`,
                       background: color,
                     }}
                   />
@@ -892,7 +846,7 @@ function BeatCard({
                 <motion.div
                   className="absolute inset-0 rounded-full"
                   style={{
-                    transform: `translateZ(${extrudeSteps * extrudeStepPx}px)`,
+                    transform: `translateZ(${extrude}px)`,
                     background: "#f0e2c4",
                     transformStyle: "preserve-3d",
                   }}
