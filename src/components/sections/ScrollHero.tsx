@@ -1155,8 +1155,8 @@ export function ScrollHero() {
       if (prev >= 0) {
         const delta = targetFrame - prev;
         if (delta === 0) return;
-        // Faster succession: several consecutive frames per display tick
-        const maxPerTick = isMobile ? 4 : 5;
+        // Twice as many frames per wheel move → play them through at 2× catch-up
+        const maxPerTick = isMobile ? 8 : 10;
         const step = Math.min(Math.abs(delta), maxPerTick);
         frameIndex = prev + Math.sign(delta) * step;
       }

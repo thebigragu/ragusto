@@ -13,12 +13,11 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     if (coarse) return;
 
     const lenis = new Lenis({
-      // Each notch advances more scrub progress (more video frames to walk
-      // through in succession). Display still plays them one-by-one.
+      // 2× wheel gain → each notch advances ~2× video frames to walk through
       duration: 1.25,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      wheelMultiplier: 0.9,
+      wheelMultiplier: 1.8,
       touchMultiplier: 1,
       autoResize: true,
     });
