@@ -1155,8 +1155,8 @@ export function ScrollHero() {
       if (prev >= 0) {
         const delta = targetFrame - prev;
         if (delta === 0) return;
-        // Twice as many frames per wheel move → play them through at 2× catch-up
-        const maxPerTick = isMobile ? 8 : 10;
+        // Same catch-up rate on mobile + desktop — consecutive frames toward target
+        const maxPerTick = 10;
         const step = Math.min(Math.abs(delta), maxPerTick);
         frameIndex = prev + Math.sign(delta) * step;
       }
@@ -1269,7 +1269,8 @@ export function ScrollHero() {
         </div>
       </div>
 
-      <section ref={scrubRef} className="relative h-[680vh] bg-transparent md:h-[740vh]">
+      {/* Mobile track ~½ height → same 2× frames-per-scroll as desktop wheel gain */}
+      <section ref={scrubRef} className="relative h-[340vh] bg-transparent md:h-[740vh]">
         <div className="sticky top-0 z-20 h-[100dvh] w-full overflow-hidden bg-transparent">
           <motion.div
             ref={heroFrameRef}
