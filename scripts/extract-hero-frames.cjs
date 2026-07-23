@@ -18,13 +18,13 @@ const VARIANTS = [
     id: "desktop",
     source: path.join(VIDEOS, "hero-kling.mp4"),
     outDir: path.join(OUT, "desktop"),
-    maxWidth: 1920,
+    maxWidth: 3840,
   },
   {
     id: "mobile",
     source: path.join(VIDEOS, "hero-kling-mobile.mp4"),
     outDir: path.join(OUT, "mobile"),
-    maxWidth: 1080,
+    maxWidth: 3840,
   },
 ];
 
@@ -204,11 +204,24 @@ function extractVariant(v) {
 }
 
 function main() {
+  const filter = process.argv
+    .slice(2)
+    .map((a) => a.replace(/^--/, ""))
+    .filter((a) => a === "desktop" || a === "mobile");
+  const variants =
+    filter.length > 0
+      ? VARIANTS.filter((v) => filter.includes(v.id))
+      : VARIANTS;
+
+  if (variants.length === 0) {
+    throw new Error("No matching variants. Use --desktop and/or --mobile.");
+  }
+
   console.log(`ffmpeg: ${FFMPEG}`);
   console.log(`ffprobe: ${FFPROBE}`);
   fs.mkdirSync(OUT, { recursive: true });
 
-  for (const v of VARIANTS) {
+  for (const v of variants) {
     extractVariant(v);
   }
 
