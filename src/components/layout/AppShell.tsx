@@ -15,12 +15,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   const progress = preload ? Math.round(preload.progress * 100) : 100;
   const ready = preload ? preload.ready : true;
+  const failed = Boolean(preload?.error);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready && !failed) return;
     const t = window.setTimeout(complete, 320);
     return () => window.clearTimeout(t);
-  }, [ready, complete]);
+  }, [ready, failed, complete]);
 
   // Hard failsafe — never leave the site invisible
   useEffect(() => {
