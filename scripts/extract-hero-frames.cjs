@@ -18,13 +18,14 @@ const VARIANTS = [
     id: "desktop",
     source: path.join(VIDEOS, "hero-kling.mp4"),
     outDir: path.join(OUT, "desktop"),
-    maxWidth: 3840,
+    // 1920 keeps scrub decode/fetch fluid; sources may be 4K+.
+    maxWidth: 1920,
   },
   {
     id: "mobile",
     source: path.join(VIDEOS, "hero-kling-mobile.mp4"),
     outDir: path.join(OUT, "mobile"),
-    maxWidth: 3840,
+    maxWidth: 1920,
   },
 ];
 

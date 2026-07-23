@@ -44,7 +44,7 @@ function coverRect(
   return { sx, sy, sw, sh, dx: 0, dy: 0, dw: destW, dh: destH };
 }
 
-/** Prefer exact target; else nearest warm frame (keeps scrub moving). */
+/** Prefer exact target; else nearest warm frame within a local search. */
 function resolveDrawIndex(
   images: (ScrubFrame | undefined)[],
   target: number,
@@ -52,23 +52,23 @@ function resolveDrawIndex(
 ): number | null {
   if (isScrubFrameReady(images[target])) return target;
 
-  let best: number | null = null;
-  let bestDist = Infinity;
-  const travel = Math.sign(target - (lastDrawn < 0 ? target : lastDrawn));
+  const n = images.length;
+  if (n === 0) return null;
 
-  for (let i = 0; i < images.length; i++) {
-    if (!isScrubFrameReady(images[i])) continue;
-    const dist = Math.abs(i - target);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = i;
-    } else if (dist === bestDist && best !== null && travel !== 0) {
-      if (Math.sign(i - (lastDrawn < 0 ? target : lastDrawn)) === travel) {
-        best = i;
-      }
+  // Search outward from target — O(gap) instead of scanning all frames.
+  for (let d = 1; d < n; d++) {
+    const hi = target + d;
+    const lo = target - d;
+    const travel = Math.sign(target - (lastDrawn < 0 ? target : lastDrawn));
+    if (travel >= 0) {
+      if (hi < n && isScrubFrameReady(images[hi])) return hi;
+      if (lo >= 0 && isScrubFrameReady(images[lo])) return lo;
+    } else {
+      if (lo >= 0 && isScrubFrameReady(images[lo])) return lo;
+      if (hi < n && isScrubFrameReady(images[hi])) return hi;
     }
   }
-  return best;
+  return null;
 }
 
 type UseCanvasScrubOptions = {

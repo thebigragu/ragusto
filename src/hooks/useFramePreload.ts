@@ -33,12 +33,13 @@ function decodeSize(manifest: HeroSequenceManifest) {
   const srcW = Math.max(1, manifest.width);
   const srcH = Math.max(1, manifest.height);
   if (srcW <= DECODE_MAX_WIDTH) {
-    return { w: srcW, h: srcH };
+    return { w: srcW, h: srcH, resize: false as const };
   }
   const scale = DECODE_MAX_WIDTH / srcW;
   return {
     w: DECODE_MAX_WIDTH,
     h: Math.max(1, Math.round(srcH * scale)),
+    resize: true as const,
   };
 }
 
@@ -127,6 +128,26 @@ export function useFramePreload(
       bumpInitial(index);
     };
 
+    const loadViaImage = (url: string) =>
+      new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`img ${url}`));
+        img.src = url;
+      });
+
+    const loadViaBitmap = async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`frame ${res.status}`);
+      const blob = await res.blob();
+      return createImageBitmap(blob, {
+        resizeWidth: targetSize.w,
+        resizeHeight: targetSize.h,
+        resizeQuality: "high",
+      });
+    };
+
     const loadOne = (index: number) => {
       if (aborted || index < 0 || index >= count) return;
       if (isScrubFrameReady(images[index])) return;
@@ -137,33 +158,9 @@ export function useFramePreload(
       const promise = (async () => {
         activeLoads += 1;
         try {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`frame ${res.status}`);
-          const blob = await res.blob();
-          if (aborted) return;
-
-          let frame: ScrubFrame;
-          if (typeof createImageBitmap === "function") {
-            frame = await createImageBitmap(blob, {
-              resizeWidth: targetSize.w,
-              resizeHeight: targetSize.h,
-              resizeQuality: "high",
-            });
-          } else {
-            const objectUrl = URL.createObjectURL(blob);
-            try {
-              frame = await new Promise<HTMLImageElement>((resolve, reject) => {
-                const img = new Image();
-                img.decoding = "async";
-                img.onload = () => resolve(img);
-                img.onerror = () => reject(new Error(`img ${url}`));
-                img.src = objectUrl;
-              });
-            } finally {
-              URL.revokeObjectURL(objectUrl);
-            }
-          }
-
+          const frame: ScrubFrame = targetSize.resize
+            ? await loadViaBitmap(url)
+            : await loadViaImage(url);
           if (aborted) {
             releaseScrubFrame(frame);
             return;
@@ -204,10 +201,13 @@ export function useFramePreload(
 
     const ensureWindow = (center: number) => {
       const c = Math.min(count - 1, Math.max(0, center | 0));
-      if (c !== lastCenter) {
-        if (lastCenter >= 0) lastScrollDir = c >= lastCenter ? 1 : -1;
-        lastCenter = c;
+      // Only rebuild the window when the playhead moves — avoids queue thrash.
+      if (c === lastCenter) {
+        pump();
+        return;
       }
+      if (lastCenter >= 0) lastScrollDir = c >= lastCenter ? 1 : -1;
+      lastCenter = c;
 
       const lo = Math.max(0, c - PRELOAD_WINDOW);
       const hi = Math.min(count - 1, c + PRELOAD_WINDOW);
@@ -241,30 +241,9 @@ export function useFramePreload(
       const url = frameUrl(manifest, 0);
       void (async () => {
         try {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`frame ${res.status}`);
-          const blob = await res.blob();
-          if (aborted) return;
-          let frame: ScrubFrame;
-          if (typeof createImageBitmap === "function") {
-            frame = await createImageBitmap(blob, {
-              resizeWidth: targetSize.w,
-              resizeHeight: targetSize.h,
-              resizeQuality: "high",
-            });
-          } else {
-            const objectUrl = URL.createObjectURL(blob);
-            try {
-              frame = await new Promise<HTMLImageElement>((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = () => reject(new Error(`img ${url}`));
-                img.src = objectUrl;
-              });
-            } finally {
-              URL.revokeObjectURL(objectUrl);
-            }
-          }
+          const frame: ScrubFrame = targetSize.resize
+            ? await loadViaBitmap(url)
+            : await loadViaImage(url);
           if (aborted) {
             releaseScrubFrame(frame);
             return;

@@ -176,9 +176,9 @@ function smoothstep(e: number) {
   return e * e * (3 - 2 * e);
 }
 
-/** Wider windows + later exit = slower motion, longer hold at rest */
-const ENTER_END = 0.3;
-const EXIT_START = 0.86;
+/** Wider enter/exit windows = slower travel in and out of frame */
+const ENTER_END = 0.48;
+const EXIT_START = 0.7;
 const EXIT_LEN = 1 - EXIT_START;
 
 const TYPE_FACE_SILVER = "#ffffff";
@@ -291,7 +291,9 @@ function BeatCard({
     if (p < beat.start || p >= beat.end) return 0;
     const t = beatT(p, beat);
     if (t < ENTER_END * 0.45) return t / (ENTER_END * 0.45);
-    if (t > 0.92) return Math.max(0, (1 - t) / 0.08);
+    if (t > EXIT_START) {
+      return Math.max(0, 1 - smoothstep((t - EXIT_START) / EXIT_LEN));
+    }
     return 1;
   });
 
