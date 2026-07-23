@@ -176,9 +176,9 @@ function smoothstep(e: number) {
   return e * e * (3 - 2 * e);
 }
 
-/** Wider enter/exit windows = slower travel in and out of frame */
-const ENTER_END = 0.48;
-const EXIT_START = 0.7;
+/** Wider enter/exit windows = slower, more fluid travel in and out of frame */
+const ENTER_END = 0.55;
+const EXIT_START = 0.62;
 const EXIT_LEN = 1 - EXIT_START;
 
 const TYPE_FACE_SILVER = "#ffffff";
