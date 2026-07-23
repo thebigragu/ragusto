@@ -3,7 +3,10 @@
 import { useFramePreload } from "@/hooks/useFramePreload";
 import { useHeroMobileVideo } from "@/hooks/useIsMobile";
 import { HERO_SEQUENCE_PATHS } from "@/lib/hero-sequence/config";
-import type { HeroSequenceManifest } from "@/lib/hero-sequence/types";
+import type {
+  HeroSequenceManifest,
+  ScrubFrame,
+} from "@/lib/hero-sequence/types";
 import { usePathname } from "next/navigation";
 import {
   createContext,
@@ -20,7 +23,7 @@ type HeroPreloadContextValue = {
   progress: number;
   ready: boolean;
   error: string | null;
-  images: (HTMLImageElement | undefined)[];
+  images: (ScrubFrame | undefined)[];
   manifest: HeroSequenceManifest | null;
   variant: "desktop" | "mobile" | null;
   heroRequired: boolean;

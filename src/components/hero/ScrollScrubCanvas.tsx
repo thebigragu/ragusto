@@ -5,11 +5,12 @@ import {
   CANVAS_ROTATE_MAX,
   CANVAS_SCALE_DEPTH,
 } from "@/lib/hero-sequence/config";
+import type { ScrubFrame } from "@/lib/hero-sequence/types";
 import { motion, useTransform, type MotionValue } from "framer-motion";
 import { useRef } from "react";
 
 type ScrollScrubCanvasProps = {
-  images: (HTMLImageElement | undefined)[];
+  images: (ScrubFrame | undefined)[];
   targetFrameIndex: React.RefObject<number>;
   opacity: MotionValue<number>;
   scrollProgress: MotionValue<number>;

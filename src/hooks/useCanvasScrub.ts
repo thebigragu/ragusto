@@ -1,6 +1,11 @@
 "use client";
 
 import { CANVAS_MAX_DPR } from "@/lib/hero-sequence/config";
+import {
+  isScrubFrameReady,
+  scrubFrameSize,
+  type ScrubFrame,
+} from "@/lib/hero-sequence/types";
 import { useEffect, useRef } from "react";
 
 type CoverRect = {
@@ -39,8 +44,35 @@ function coverRect(
   return { sx, sy, sw, sh, dx: 0, dy: 0, dw: destW, dh: destH };
 }
 
+/** Prefer exact target; else nearest warm frame (keeps scrub moving). */
+function resolveDrawIndex(
+  images: (ScrubFrame | undefined)[],
+  target: number,
+  lastDrawn: number,
+): number | null {
+  if (isScrubFrameReady(images[target])) return target;
+
+  let best: number | null = null;
+  let bestDist = Infinity;
+  const travel = Math.sign(target - (lastDrawn < 0 ? target : lastDrawn));
+
+  for (let i = 0; i < images.length; i++) {
+    if (!isScrubFrameReady(images[i])) continue;
+    const dist = Math.abs(i - target);
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = i;
+    } else if (dist === bestDist && best !== null && travel !== 0) {
+      if (Math.sign(i - (lastDrawn < 0 ? target : lastDrawn)) === travel) {
+        best = i;
+      }
+    }
+  }
+  return best;
+}
+
 type UseCanvasScrubOptions = {
-  images: (HTMLImageElement | undefined)[];
+  images: (ScrubFrame | undefined)[];
   targetFrameIndex: React.RefObject<number>;
   enabled?: boolean;
 };
@@ -77,23 +109,24 @@ export function useCanvasScrub(
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       lastDrawn.current = -1;
     };
-
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas.parentElement ?? canvas);
 
     let raf = 0;
     const tick = () => {
-      const idx = targetFrameIndex.current;
-      if (idx !== lastDrawn.current) {
-        const img = images[idx];
-        if (img?.complete && img.naturalWidth > 0) {
+      const target = targetFrameIndex.current;
+      const idx = resolveDrawIndex(images, target, lastDrawn.current);
+      if (idx !== null && idx !== lastDrawn.current) {
+        const frame = images[idx];
+        if (isScrubFrameReady(frame)) {
+          const { w, h } = scrubFrameSize(frame);
           const { cssW, cssH } = layoutRef.current;
-          const rect = coverRect(img.naturalWidth, img.naturalHeight, cssW, cssH);
+          const rect = coverRect(w, h, cssW, cssH);
           ctx.fillStyle = "#08090b";
           ctx.fillRect(0, 0, cssW, cssH);
           ctx.drawImage(
-            img,
+            frame,
             rect.sx,
             rect.sy,
             rect.sw,

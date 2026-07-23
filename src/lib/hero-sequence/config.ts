@@ -13,6 +13,12 @@ export const SCRUB_HANDOFF_START = 0.78;
  */
 export const PRELOAD_WINDOW = 32;
 
+/**
+ * Runtime decode long-edge cap. Extract may keep 4K on disk; decoded
+ * bitmaps are resized to this so the sliding window stays RAM-safe.
+ */
+export const DECODE_MAX_WIDTH = 1920;
+
 /** Parallel in-flight frame fetches (same local + production path). */
 export const PRELOAD_MAX_CONCURRENT = 8;
 

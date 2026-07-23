@@ -1044,9 +1044,18 @@ export function ScrollHero() {
     restSpeed: 0.00001,
   });
 
-  // Frame-perfect canvas scrub — direct map from scroll (no spring)
+  // Frame scrub must track raw scroll — springed progress outruns the
+  // sliding-window cache and freezes/jumps when target frames aren't warm.
+  const frameProgress = useTransform(scrollYProgress, (p) => {
+    if (p <= SCRUB_HANDOFF_START) {
+      return (p / SCRUB_HANDOFF_START) * VIDEO_HANDOFF;
+    }
+    const handoff = (p - SCRUB_HANDOFF_START) / (1 - SCRUB_HANDOFF_START);
+    return VIDEO_HANDOFF + handoff * (1 - VIDEO_HANDOFF);
+  });
+
   const targetFrameIndex = useScrollFrameIndex(
-    videoProgressRaw,
+    frameProgress,
     manifest?.frameCount ?? 1,
     playheadRef,
   );

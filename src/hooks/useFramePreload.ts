@@ -1,17 +1,21 @@
 "use client";
 
 import {
+  DECODE_MAX_WIDTH,
   PRELOAD_MAX_CONCURRENT,
   PRELOAD_WINDOW,
 } from "@/lib/hero-sequence/config";
 import {
   frameUrl,
+  isScrubFrameReady,
+  releaseScrubFrame,
   type HeroSequenceManifest,
+  type ScrubFrame,
 } from "@/lib/hero-sequence/types";
 import { useEffect, useRef, useState, type RefObject } from "react";
 
 type PreloadState = {
-  images: (HTMLImageElement | undefined)[];
+  images: (ScrubFrame | undefined)[];
   progress: number;
   /** First window around frame 0 is warm — safe to dismiss loader. */
   ready: boolean;
@@ -25,11 +29,17 @@ const EMPTY: PreloadState = {
   error: null,
 };
 
-function releaseImage(img: HTMLImageElement | undefined) {
-  if (!img) return;
-  img.onload = null;
-  img.onerror = null;
-  img.src = "";
+function decodeSize(manifest: HeroSequenceManifest) {
+  const srcW = Math.max(1, manifest.width);
+  const srcH = Math.max(1, manifest.height);
+  if (srcW <= DECODE_MAX_WIDTH) {
+    return { w: srcW, h: srcH };
+  }
+  const scale = DECODE_MAX_WIDTH / srcW;
+  return {
+    w: DECODE_MAX_WIDTH,
+    h: Math.max(1, Math.round(srcH * scale)),
+  };
 }
 
 /**
@@ -59,8 +69,9 @@ export function useFramePreload(
     }
 
     const count = manifest.frameCount;
-    const images: (HTMLImageElement | undefined)[] = new Array(count);
+    const images: (ScrubFrame | undefined)[] = new Array(count);
     const inFlight = new Map<string, Promise<void>>();
+    const targetSize = decodeSize(manifest);
     let aborted = false;
     let readyPublished = false;
     let lastCenter = -1;
@@ -87,7 +98,7 @@ export function useFramePreload(
     };
 
     const release = (index: number) => {
-      releaseImage(images[index]);
+      releaseScrubFrame(images[index]);
       images[index] = undefined;
     };
 
@@ -103,59 +114,80 @@ export function useFramePreload(
       }
     };
 
+    const storeFrame = (index: number, frame: ScrubFrame) => {
+      const c = playheadRef.current ?? 0;
+      const lo = Math.max(0, c - PRELOAD_WINDOW);
+      const hi = Math.min(count - 1, c + PRELOAD_WINDOW);
+      if (index < lo || index > hi) {
+        releaseScrubFrame(frame);
+        return;
+      }
+      releaseScrubFrame(images[index]);
+      images[index] = frame;
+      bumpInitial(index);
+    };
+
     const loadOne = (index: number) => {
       if (aborted || index < 0 || index >= count) return;
-      if (images[index]?.complete && images[index]!.naturalWidth > 0) return;
+      if (isScrubFrameReady(images[index])) return;
 
       const url = frameUrl(manifest, index);
       if (inFlight.has(url)) return;
 
-      const promise = new Promise<void>((resolve) => {
-        const img = new Image();
-        img.decoding = "async";
-        img.onload = () => {
-          inFlight.delete(url);
-          activeLoads = Math.max(0, activeLoads - 1);
+      const promise = (async () => {
+        activeLoads += 1;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`frame ${res.status}`);
+          const blob = await res.blob();
+          if (aborted) return;
+
+          let frame: ScrubFrame;
+          if (typeof createImageBitmap === "function") {
+            frame = await createImageBitmap(blob, {
+              resizeWidth: targetSize.w,
+              resizeHeight: targetSize.h,
+              resizeQuality: "high",
+            });
+          } else {
+            const objectUrl = URL.createObjectURL(blob);
+            try {
+              frame = await new Promise<HTMLImageElement>((resolve, reject) => {
+                const img = new Image();
+                img.decoding = "async";
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error(`img ${url}`));
+                img.src = objectUrl;
+              });
+            } finally {
+              URL.revokeObjectURL(objectUrl);
+            }
+          }
+
           if (aborted) {
-            releaseImage(img);
-            pump();
-            resolve();
+            releaseScrubFrame(frame);
             return;
           }
-          const c = playheadRef.current ?? 0;
-          const lo = Math.max(0, c - PRELOAD_WINDOW);
-          const hi = Math.min(count - 1, c + PRELOAD_WINDOW);
-          if (index < lo || index > hi) {
-            releaseImage(img);
-          } else {
-            images[index] = img;
-            bumpInitial(index);
-          }
-          pump();
-          resolve();
-        };
-        img.onerror = () => {
-          inFlight.delete(url);
-          activeLoads = Math.max(0, activeLoads - 1);
+          storeFrame(index, frame);
+        } catch {
           if (!aborted && !readyPublished) {
-            // Fail-open: don't block the site on a single bad frame.
             readyPublished = true;
             publish(true, `Failed to load ${url}`);
           }
+        } finally {
+          inFlight.delete(url);
+          activeLoads = Math.max(0, activeLoads - 1);
           pump();
-          resolve();
-        };
-        img.src = url;
-      });
+        }
+      })();
 
       inFlight.set(url, promise);
-      activeLoads += 1;
     };
 
     const pump = () => {
       while (activeLoads < maxConcurrent && queue.length > 0) {
         const next = queue.shift()!;
-        if (images[next]?.complete && images[next]!.naturalWidth > 0) continue;
+        if (isScrubFrameReady(images[next])) continue;
         if (inFlight.has(frameUrl(manifest, next))) continue;
         loadOne(next);
       }
@@ -163,7 +195,7 @@ export function useFramePreload(
 
     const enqueue = (indices: number[]) => {
       for (const i of indices) {
-        if (images[i]?.complete && images[i]!.naturalWidth > 0) continue;
+        if (isScrubFrameReady(images[i])) continue;
         if (inFlight.has(frameUrl(manifest, i))) continue;
         if (!queue.includes(i)) queue.push(i);
       }
@@ -184,7 +216,6 @@ export function useFramePreload(
         if (i < lo || i > hi) release(i);
       }
 
-      // Prefer loading in scroll direction, then opposite.
       const forward: number[] = [];
       const backward: number[] = [];
       for (let i = lo; i <= hi; i++) {
@@ -207,27 +238,49 @@ export function useFramePreload(
     publish(false);
 
     if (reducedRef.current) {
-      const img = new Image();
-      img.decoding = "async";
-      img.onload = () => {
-        if (aborted) {
-          releaseImage(img);
-          return;
-        }
-        images[0] = img;
-        readyPublished = true;
-        publish(true);
-      };
-      img.onerror = () => {
-        if (!aborted) {
+      const url = frameUrl(manifest, 0);
+      void (async () => {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`frame ${res.status}`);
+          const blob = await res.blob();
+          if (aborted) return;
+          let frame: ScrubFrame;
+          if (typeof createImageBitmap === "function") {
+            frame = await createImageBitmap(blob, {
+              resizeWidth: targetSize.w,
+              resizeHeight: targetSize.h,
+              resizeQuality: "high",
+            });
+          } else {
+            const objectUrl = URL.createObjectURL(blob);
+            try {
+              frame = await new Promise<HTMLImageElement>((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error(`img ${url}`));
+                img.src = objectUrl;
+              });
+            } finally {
+              URL.revokeObjectURL(objectUrl);
+            }
+          }
+          if (aborted) {
+            releaseScrubFrame(frame);
+            return;
+          }
+          images[0] = frame;
           readyPublished = true;
-          publish(true, `Failed to load ${frameUrl(manifest, 0)}`);
+          publish(true);
+        } catch {
+          if (!aborted) {
+            readyPublished = true;
+            publish(true, `Failed to load ${url}`);
+          }
         }
-      };
-      img.src = frameUrl(manifest, 0);
+      })();
       return () => {
         aborted = true;
-        releaseImage(img);
         for (let i = 0; i < count; i++) release(i);
         setState(EMPTY);
       };
