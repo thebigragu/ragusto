@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Extract scroll-scrub WebP frame sequences from hero MP4s.
+ * Extract scroll-scrub WebP frame sequences from hero MP4s (native fps, max 900).
  * Run: npm run hero:frames
  */
 const { spawnSync } = require("child_process");
@@ -10,25 +10,21 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const VIDEOS = path.join(ROOT, "public", "videos");
 const OUT = path.join(ROOT, "public", "hero-sequences");
+const MAX_FRAMES = 900;
+const WEBP_QUALITY = 90;
 
 const VARIANTS = [
   {
     id: "desktop",
     source: path.join(VIDEOS, "hero-kling.mp4"),
     outDir: path.join(OUT, "desktop"),
-    scale: "1920:-2",
-    frameCount: 240,
-    fps: 24,
-    quality: 82,
+    maxWidth: 1920,
   },
   {
     id: "mobile",
     source: path.join(VIDEOS, "hero-kling-mobile.mp4"),
     outDir: path.join(OUT, "mobile"),
-    scale: "1080:-2",
-    frameCount: 240,
-    fps: 24,
-    quality: 82,
+    maxWidth: 1080,
   },
 ];
 
@@ -52,6 +48,13 @@ function run(args, label) {
   if (r.status !== 0) throw new Error(`${label} failed (exit ${r.status})`);
 }
 
+function parseFps(avgFrameRate) {
+  if (!avgFrameRate || avgFrameRate === "0/0") return 0;
+  const [num, den] = String(avgFrameRate).split("/").map(Number);
+  if (!den) return Number(avgFrameRate) || 0;
+  return num / den;
+}
+
 function probe(file) {
   const r = spawnSync(
     FFPROBE,
@@ -61,7 +64,9 @@ function probe(file) {
       "-select_streams",
       "v:0",
       "-show_entries",
-      "stream=width,height,duration,nb_frames",
+      "stream=avg_frame_rate,nb_frames,width,height,duration",
+      "-show_entries",
+      "format=duration",
       "-of",
       "json",
       file,
@@ -71,11 +76,14 @@ function probe(file) {
   if (r.status !== 0) throw new Error(`ffprobe failed for ${file}`);
   const json = JSON.parse(r.stdout);
   const s = json.streams?.[0] || {};
+  const duration =
+    Number(s.duration) || Number(json.format?.duration) || 0;
   return {
     width: Number(s.width) || 0,
     height: Number(s.height) || 0,
-    duration: Number(s.duration) || 0,
+    duration,
     nbFrames: Number(s.nb_frames) || 0,
+    fps: parseFps(s.avg_frame_rate),
   };
 }
 
@@ -83,13 +91,31 @@ function dirSizeBytes(dir) {
   let total = 0;
   for (const f of fs.readdirSync(dir)) {
     const p = path.join(dir, f);
-    if (fs.statSync(p).isFile()) total += fs.statSync(p).size;
+    const st = fs.statSync(p);
+    if (st.isDirectory()) total += dirSizeBytes(p);
+    else total += st.size;
   }
   return total;
 }
 
 function formatMb(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function computeExtractPlan(meta) {
+  const fps = meta.fps > 0 ? meta.fps : 24;
+  const fromNb =
+    meta.nbFrames > 0 && meta.nbFrames < meta.duration * fps * 2
+      ? meta.nbFrames
+      : 0;
+  const nativeCount =
+    fromNb || Math.max(1, Math.round(meta.duration * fps));
+
+  if (nativeCount > MAX_FRAMES) {
+    const extractFps = MAX_FRAMES / meta.duration;
+    return { extractFps, frameCount: MAX_FRAMES, fps, capped: true };
+  }
+  return { extractFps: fps, frameCount: nativeCount, fps, capped: false };
 }
 
 function extractVariant(v) {
@@ -99,7 +125,6 @@ function extractVariant(v) {
 
   fs.mkdirSync(v.outDir, { recursive: true });
 
-  // Clear old frames
   for (const f of fs.readdirSync(v.outDir)) {
     if (f.startsWith("frame-") && f.endsWith(".webp")) {
       fs.unlinkSync(path.join(v.outDir, f));
@@ -107,10 +132,17 @@ function extractVariant(v) {
   }
 
   const meta = probe(v.source);
+  const plan = computeExtractPlan(meta);
+  const scaleW = Math.min(meta.width || v.maxWidth, v.maxWidth);
   const outPattern = path.join(v.outDir, "frame-%05d.webp");
 
   console.log(`\n=== ${v.id} ===`);
-  console.log(`Source: ${v.source} (${meta.width}x${meta.height}, ${meta.duration.toFixed(2)}s)`);
+  console.log(
+    `Source: ${v.source} (${meta.width}x${meta.height}, ${meta.duration.toFixed(2)}s, ${meta.fps.toFixed(3)} fps, nb_frames=${meta.nbFrames || "n/a"})`,
+  );
+  console.log(
+    `Plan: extractFps=${plan.extractFps.toFixed(4)}, targetFrames=${plan.frameCount}${plan.capped ? " (capped)" : " (native)"}, scale=${scaleW}:-2`,
+  );
 
   run(
     [
@@ -118,15 +150,15 @@ function extractVariant(v) {
       "-i",
       v.source,
       "-vf",
-      `fps=${v.fps},scale=${v.scale}:flags=lanczos`,
+      `fps=${plan.extractFps},scale=${scaleW}:-2:flags=lanczos`,
       "-frames:v",
-      String(v.frameCount),
+      String(plan.frameCount),
       "-c:v",
       "libwebp",
       "-quality",
-      String(v.quality),
+      String(WEBP_QUALITY),
       "-compression_level",
-      "6",
+      "5",
       "-preset",
       "picture",
       outPattern,
@@ -141,7 +173,12 @@ function extractVariant(v) {
 
   if (frames.length === 0) throw new Error(`No frames written to ${v.outDir}`);
 
-  // Probe first frame dimensions
+  if (frames[0] !== "frame-00001.webp") {
+    console.warn(
+      `Warning: first frame is ${frames[0]} (expected frame-00001.webp)`,
+    );
+  }
+
   const firstFrame = path.join(v.outDir, frames[0]);
   const frameMeta = probe(firstFrame);
 
@@ -151,11 +188,14 @@ function extractVariant(v) {
     frameCount: frames.length,
     width: frameMeta.width,
     height: frameMeta.height,
-    fps: v.fps,
+    fps: plan.fps,
     pattern: `/hero-sequences/${v.id}/frame-%05d.webp`,
   };
 
-  fs.writeFileSync(path.join(v.outDir, "manifest.json"), JSON.stringify(manifest, null, 2));
+  fs.writeFileSync(
+    path.join(v.outDir, "manifest.json"),
+    JSON.stringify(manifest, null, 2),
+  );
 
   const size = dirSizeBytes(v.outDir);
   console.log(`Wrote ${frames.length} frames → ${v.outDir}`);

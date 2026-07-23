@@ -56,12 +56,12 @@ export function useResponsiveBubbleScale(isMobile: boolean) {
 }
 
 /**
- * Which hero video to load. Defaults to the portrait mobile asset so phones
- * never flash the landscape desktop cut. Desktop landscape only when the
- * viewport is wide and landscape.
+ * Which hero sequence to load. Returns `null` until the viewport is measured
+ * so preload never starts on mobile then switches to desktop (double decode).
+ * Desktop landscape only when the viewport is wide and landscape.
  */
-export function useHeroMobileVideo() {
-  const [mobileVideo, setMobileVideo] = useState(true);
+export function useHeroMobileVideo(): boolean | null {
+  const [mobileVideo, setMobileVideo] = useState<boolean | null>(null);
 
   useEffect(() => {
     const narrow = window.matchMedia("(max-width: 1023px)");

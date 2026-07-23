@@ -1004,7 +1004,12 @@ export function ScrollHero() {
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
-  const { images, ready: framesReady, manifest } = useHeroPreload();
+  const {
+    images,
+    ready: framesReady,
+    manifest,
+    playheadRef,
+  } = useHeroPreload();
 
   const { scrollYProgress } = useScroll({
     target: scrubRef,
@@ -1042,7 +1047,8 @@ export function ScrollHero() {
   // Frame-perfect canvas scrub — direct map from scroll (no spring)
   const targetFrameIndex = useScrollFrameIndex(
     videoProgressRaw,
-    manifest?.frameCount ?? 240,
+    manifest?.frameCount ?? 1,
+    playheadRef,
   );
 
   // Hero lifts up as contact rises.

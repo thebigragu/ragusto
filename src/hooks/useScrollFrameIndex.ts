@@ -1,17 +1,18 @@
 "use client";
 
 import { useMotionValueEvent, type MotionValue } from "framer-motion";
-import { useRef } from "react";
+import type { MutableRefObject } from "react";
 
 /**
  * Map scroll-driven progress (0–1) to an integer frame index.
  * No spring — frame index tracks scroll directly for frame-perfect scrub.
+ * Writes into a shared playhead ref (sliding-window preload + canvas RAF).
  */
 export function useScrollFrameIndex(
   progress: MotionValue<number>,
   frameCount: number,
+  targetFrameIndex: MutableRefObject<number>,
 ) {
-  const targetFrameIndex = useRef(0);
   const maxIndex = Math.max(0, frameCount - 1);
 
   useMotionValueEvent(progress, "change", (p) => {

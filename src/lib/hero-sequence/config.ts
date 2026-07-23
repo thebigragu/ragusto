@@ -1,7 +1,5 @@
 /** Tunable hero scroll-scrub settings */
 
-export const HERO_FRAME_COUNT = 240;
-
 export const SCROLL_HEIGHT_MOBILE = "340vh";
 export const SCROLL_HEIGHT_DESKTOP = "740vh";
 
@@ -9,13 +7,16 @@ export const SCROLL_HEIGHT_DESKTOP = "740vh";
 export const VIDEO_HANDOFF = 0.9;
 export const SCRUB_HANDOFF_START = 0.78;
 
-/** Max parallel frame fetches (HTTP/2 multiplexes on one origin). */
-export const PRELOAD_MAX_CONCURRENT = 28;
+/**
+ * Half-width of the decoded sliding window around the playhead.
+ * Peak decoded ≈ 2 * PRELOAD_WINDOW + 1 (~65).
+ */
+export const PRELOAD_WINDOW = 32;
 
-/** Dismiss loader once this many frames are decoded — rest load in background. */
-export const PRELOAD_READY_FRAMES = 40;
+/** Parallel in-flight frame fetches (same local + production path). */
+export const PRELOAD_MAX_CONCURRENT = 8;
 
-/** Cap retina backing store to avoid 4× fill cost on mobile */
+/** Cap retina backing store */
 export const CANVAS_MAX_DPR = 2;
 
 /** Subtle scroll-linked canvas tilt (degrees) */

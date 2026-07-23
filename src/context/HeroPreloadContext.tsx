@@ -10,8 +10,10 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
+  type MutableRefObject,
 } from "react";
 
 type HeroPreloadContextValue = {
@@ -22,6 +24,8 @@ type HeroPreloadContextValue = {
   manifest: HeroSequenceManifest | null;
   variant: "desktop" | "mobile" | null;
   heroRequired: boolean;
+  /** Shared playhead — ScrollHero writes, sliding-window preload reads. */
+  playheadRef: MutableRefObject<number>;
 };
 
 const HeroPreloadContext = createContext<HeroPreloadContextValue | null>(null);
@@ -32,35 +36,39 @@ export function HeroPreloadProvider({ children }: { children: ReactNode }) {
   const useMobile = useHeroMobileVideo();
   const [manifest, setManifest] = useState<HeroSequenceManifest | null>(null);
   const [variant, setVariant] = useState<"desktop" | "mobile" | null>(null);
+  const playheadRef = useRef(0);
 
-  const basePath = useMobile ? HERO_SEQUENCE_PATHS.mobile : HERO_SEQUENCE_PATHS.desktop;
-  const nextVariant = useMobile ? "mobile" : "desktop";
+  // null until viewport is measured — avoids mobile→desktop double decode.
+  const variantReady = useMobile !== null;
+  const basePath = useMobile
+    ? HERO_SEQUENCE_PATHS.mobile
+    : HERO_SEQUENCE_PATHS.desktop;
+  const nextVariant: "desktop" | "mobile" = useMobile ? "mobile" : "desktop";
 
   useEffect(() => {
-    if (!heroRequired) {
+    if (!heroRequired || !variantReady) {
       setManifest(null);
       setVariant(null);
       return;
     }
 
-    // Hint the browser to fetch manifests + first frames before React finishes hydrating.
-    const hints: HTMLLinkElement[] = [];
-    for (const path of Object.values(HERO_SEQUENCE_PATHS)) {
-      const manifestLink = document.createElement("link");
-      manifestLink.rel = "preload";
-      manifestLink.as = "fetch";
-      manifestLink.href = `${path}/manifest.json`;
-      manifestLink.crossOrigin = "anonymous";
-      document.head.appendChild(manifestLink);
-      hints.push(manifestLink);
+    playheadRef.current = 0;
 
-      const frameLink = document.createElement("link");
-      frameLink.rel = "preload";
-      frameLink.as = "image";
-      frameLink.href = `${path}/frame-00001.webp`;
-      document.head.appendChild(frameLink);
-      hints.push(frameLink);
-    }
+    const hints: HTMLLinkElement[] = [];
+    const manifestLink = document.createElement("link");
+    manifestLink.rel = "preload";
+    manifestLink.as = "fetch";
+    manifestLink.href = `${basePath}/manifest.json`;
+    manifestLink.crossOrigin = "anonymous";
+    document.head.appendChild(manifestLink);
+    hints.push(manifestLink);
+
+    const frameLink = document.createElement("link");
+    frameLink.rel = "preload";
+    frameLink.as = "image";
+    frameLink.href = `${basePath}/frame-00001.webp`;
+    document.head.appendChild(frameLink);
+    hints.push(frameLink);
 
     let cancelled = false;
     const load = async () => {
@@ -85,9 +93,11 @@ export function HeroPreloadProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       for (const link of hints) link.remove();
     };
-  }, [heroRequired, basePath, nextVariant]);
+  }, [heroRequired, variantReady, basePath, nextVariant]);
 
-  const preload = useFramePreload(manifest, { enabled: heroRequired && !!manifest });
+  const preload = useFramePreload(manifest, playheadRef, {
+    enabled: heroRequired && !!manifest,
+  });
 
   const value = useMemo<HeroPreloadContextValue>(
     () => ({
@@ -98,6 +108,7 @@ export function HeroPreloadProvider({ children }: { children: ReactNode }) {
       manifest,
       variant,
       heroRequired,
+      playheadRef,
     }),
     [heroRequired, preload, manifest, variant],
   );
