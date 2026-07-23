@@ -2,36 +2,24 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
-export function Loader({ onComplete }: { onComplete: () => void }) {
-  const [progress, setProgress] = useState(0);
-
+export function Loader({
+  progress,
+  onComplete,
+}: {
+  progress: number;
+  onComplete: () => void;
+}) {
   useEffect(() => {
     const reduced =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    if (reduced) {
+    if (reduced && progress >= 100) {
       onComplete();
-      return;
     }
-
-    let frame = 0;
-    const id = window.setInterval(() => {
-      frame += 1;
-      setProgress((p) => {
-        const next = Math.min(100, p + (frame < 12 ? 7 : 3));
-        if (next >= 100) {
-          window.clearInterval(id);
-          window.setTimeout(onComplete, 320);
-        }
-        return next;
-      });
-    }, 40);
-
-    return () => window.clearInterval(id);
-  }, [onComplete]);
+  }, [progress, onComplete]);
 
   return (
     <motion.div

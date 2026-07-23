@@ -3,7 +3,14 @@
 import { Button } from "@/components/ui/Button";
 import { ContactModal } from "@/components/ui/ContactModal";
 import { Magnetic } from "@/components/ui/Magnetic";
-import { useHeroMobileVideo, useIsMobile, useResponsiveBubbleScale } from "@/hooks/useIsMobile";
+import { ScrollScrubCanvas } from "@/components/hero/ScrollScrubCanvas";
+import { useHeroPreload } from "@/context/HeroPreloadContext";
+import { useScrollFrameIndex } from "@/hooks/useScrollFrameIndex";
+import {
+  SCRUB_HANDOFF_START,
+  VIDEO_HANDOFF,
+} from "@/lib/hero-sequence/config";
+import { useIsMobile, useResponsiveBubbleScale } from "@/hooks/useIsMobile";
 import { SITE } from "@/lib/seo";
 import {
   motion,
@@ -991,31 +998,13 @@ function ScrollCue({
 }
 
 /** First 9s map to most of scrub; last second shares scroll with contact reveal. */
-const VIDEO_HANDOFF = 0.9;
-const SCRUB_HANDOFF_START = 0.78;
-/** Clear stuck seeks if `seeked` never fires (common on iOS under load). */
-const SEEK_WATCHDOG_MS = 40;
-/** Mobile: consecutive frames per paint when mildly behind. */
-const MOBILE_MAX_STEP = 3;
-/** Mobile: if farther than this, leap toward target so scrub never piles up. */
-const MOBILE_SNAP_DELTA = 16;
 
 export function ScrollHero() {
   const scrubRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const targetTime = useRef(0);
-  const rafRef = useRef(0);
-  const fpsRef = useRef(24);
-  const lastFrameIndex = useRef(-1);
-  const videoSeekingRef = useRef(false);
-  const seekWatchdogRef = useRef(0);
   const [contactOpen, setContactOpen] = useState(false);
   const closeContact = useCallback(() => setContactOpen(false), []);
   const isMobile = useIsMobile();
-  const useMobileVideo = useHeroMobileVideo();
-  const videoSrc = useMobileVideo
-    ? "/videos/hero-kling-mobile.mp4"
-    : "/videos/hero-kling.mp4";
+  const { images, ready: framesReady, manifest } = useHeroPreload();
 
   const { scrollYProgress } = useScroll({
     target: scrubRef,
@@ -1049,6 +1038,12 @@ export function ScrollHero() {
     restDelta: 0.00001,
     restSpeed: 0.00001,
   });
+
+  // Frame-perfect canvas scrub — direct map from scroll (no spring)
+  const targetFrameIndex = useScrollFrameIndex(
+    videoProgressRaw,
+    manifest?.frameCount ?? 240,
+  );
 
   // Hero lifts up as contact rises.
   // Mobile settles with the hero bottom at ~2/3 viewport (top of bottom third);
@@ -1162,153 +1157,6 @@ export function ScrollHero() {
     el.style.webkitMaskImage = mask;
   }, [heroMask]);
 
-  useMotionValueEvent(videoProgress, "change", (p) => {
-    const video = videoRef.current;
-    if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
-    targetTime.current = Math.min(
-      video.duration - 0.001,
-      Math.max(0, p) * video.duration,
-    );
-  });
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    video.pause();
-    video.playsInline = true;
-    video.setAttribute("playsinline", "true");
-    video.setAttribute("webkit-playsinline", "true");
-    try {
-      video.disableRemotePlayback = true;
-    } catch {
-      /* ignore */
-    }
-
-    const clearSeekLock = () => {
-      videoSeekingRef.current = false;
-      if (seekWatchdogRef.current) {
-        window.clearTimeout(seekWatchdogRef.current);
-        seekWatchdogRef.current = 0;
-      }
-    };
-
-    /**
-     * Both assets are 24fps all-intra H.264. Scroll moves the *target*;
-     * each display refresh walks consecutive frames toward it.
-     * Mobile allows a few frames/tick and leaps when far behind so scrub
-     * never freezes or piles into endless catch-up. A seek watchdog clears
-     * stuck `seeked` waits (iOS often drops the event under load).
-     */
-    const applyTime = (t: number) => {
-      const v = videoRef.current;
-      if (!v || !Number.isFinite(v.duration) || v.duration <= 0) return;
-      if (isMobile && videoSeekingRef.current) return;
-
-      const fps = fpsRef.current;
-      const maxFrame = Math.max(0, Math.round(v.duration * fps) - 1);
-      const targetFrame = Math.min(maxFrame, Math.max(0, Math.round(t * fps)));
-
-      let frameIndex = targetFrame;
-      const prev = lastFrameIndex.current;
-      let absDelta = 0;
-      if (prev >= 0) {
-        const delta = targetFrame - prev;
-        if (delta === 0) return;
-        absDelta = Math.abs(delta);
-        if (isMobile) {
-          if (absDelta > MOBILE_SNAP_DELTA) {
-            // Leap near the target, then fine-walk — keeps scrub alive on flicks
-            frameIndex = targetFrame - Math.sign(delta) * Math.min(2, absDelta - 1);
-          } else {
-            const step = Math.min(absDelta, MOBILE_MAX_STEP);
-            frameIndex = prev + Math.sign(delta) * step;
-          }
-        } else {
-          const step = Math.min(absDelta, 10);
-          frameIndex = prev + Math.sign(delta) * step;
-        }
-      }
-
-      if (frameIndex === lastFrameIndex.current) return;
-      lastFrameIndex.current = frameIndex;
-
-      const framed = Math.min(v.duration - 0.001, frameIndex / fps);
-      const leap = isMobile && absDelta > MOBILE_MAX_STEP;
-
-      try {
-        if (isMobile) {
-          videoSeekingRef.current = true;
-          if (seekWatchdogRef.current) window.clearTimeout(seekWatchdogRef.current);
-          seekWatchdogRef.current = window.setTimeout(
-            clearSeekLock,
-            SEEK_WATCHDOG_MS,
-          );
-          const fastSeek = (v as HTMLVideoElement & { fastSeek?: (time: number) => void })
-            .fastSeek;
-          if (leap && typeof fastSeek === "function") {
-            fastSeek.call(v, framed);
-          } else {
-            v.currentTime = framed;
-          }
-        } else {
-          v.currentTime = framed;
-        }
-      } catch {
-        clearSeekLock();
-      }
-    };
-
-    const onSeeked = () => {
-      clearSeekLock();
-    };
-    video.addEventListener("seeked", onSeeked);
-
-    const detectFps = () => {
-      const d = video.duration;
-      if (!(d > 0)) return;
-      // Prefer exact 24fps when duration aligns (hero-kling*), else 30, else 24 fallback
-      if (Math.abs(d * 24 - Math.round(d * 24)) < 0.08) {
-        fpsRef.current = 24;
-      } else if (Math.abs(d * 30 - Math.round(d * 30)) < 0.08) {
-        fpsRef.current = 30;
-      } else {
-        fpsRef.current = 24;
-      }
-    };
-
-    const onMeta = () => {
-      detectFps();
-      lastFrameIndex.current = -1;
-      const t = Math.min(
-        video.duration - 0.001,
-        Math.max(0, videoProgress.get()) * video.duration,
-      );
-      targetTime.current = t;
-      applyTime(targetTime.current);
-    };
-    if (video.readyState >= 1) onMeta();
-    video.addEventListener("loadedmetadata", onMeta);
-
-    const onCanPlay = () => applyTime(targetTime.current);
-    video.addEventListener("canplay", onCanPlay);
-
-    const tick = () => {
-      applyTime(targetTime.current);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      video.removeEventListener("loadedmetadata", onMeta);
-      video.removeEventListener("seeked", onSeeked);
-      video.removeEventListener("canplay", onCanPlay);
-      cancelAnimationFrame(rafRef.current);
-      clearSeekLock();
-      lastFrameIndex.current = -1;
-    };
-  }, [videoProgress, videoSrc, isMobile]);
-
   return (
     <>
       <div className="pointer-events-auto fixed top-8 left-7 z-50 sm:top-8 sm:left-8 md:top-14 md:left-14">
@@ -1376,16 +1224,12 @@ export function ScrollHero() {
               y: stickyLift,
             }}
           >
-            <motion.video
-              key={videoSrc}
-              ref={videoRef}
-              className="absolute inset-0 h-full w-full object-cover object-center will-change-[opacity]"
-              src={videoSrc}
-              muted
-              playsInline
-              preload="auto"
-              aria-hidden
-              style={{ opacity: videoFade }}
+            <ScrollScrubCanvas
+              images={images}
+              targetFrameIndex={targetFrameIndex}
+              opacity={videoFade}
+              scrollProgress={driveProgress}
+              enabled={framesReady}
             />
 
             {BEATS.map((beat) => (

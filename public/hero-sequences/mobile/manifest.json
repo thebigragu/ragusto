@@ -1,0 +1,9 @@
+{
+  "id": "mobile",
+  "source": "public/videos/hero-kling-mobile.mp4",
+  "frameCount": 240,
+  "width": 1080,
+  "height": 1920,
+  "fps": 24,
+  "pattern": "/hero-sequences/mobile/frame-%05d.webp"
+}

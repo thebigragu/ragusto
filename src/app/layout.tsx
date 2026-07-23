@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono, Syne } from "next/font/google";
 import { AppShell } from "@/components/layout/AppShell";
+import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { Providers } from "@/components/motion/Providers";
 import { defaultMetadata, organizationSchema } from "@/lib/seo";
@@ -50,6 +51,7 @@ export default function RootLayout({
         <Providers>
           <SmoothScroll>
             <AppShell>
+              <ScrollProgress />
               <a
                 href="#main"
                 className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[120] focus:rounded-full focus:bg-fg focus:px-4 focus:py-2 focus:text-bg"
