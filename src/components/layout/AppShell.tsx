@@ -13,13 +13,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const complete = useCallback(() => setLoading(false), []);
   const preload = useHeroPreloadOptional();
 
-  const progress = preload ? Math.round(preload.progress * 100) : 100;
+  const progress = preload
+    ? Math.round((preload.ready ? 1 : preload.progress) * 100)
+    : 100;
   const ready = preload ? preload.ready : true;
   const failed = Boolean(preload?.error);
 
   useEffect(() => {
     if (!ready && !failed) return;
-    const t = window.setTimeout(complete, 320);
+    const t = window.setTimeout(complete, 120);
     return () => window.clearTimeout(t);
   }, [ready, failed, complete]);
 

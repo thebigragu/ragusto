@@ -43,6 +43,25 @@ export function HeroPreloadProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Hint the browser to fetch manifests + first frames before React finishes hydrating.
+    const hints: HTMLLinkElement[] = [];
+    for (const path of Object.values(HERO_SEQUENCE_PATHS)) {
+      const manifestLink = document.createElement("link");
+      manifestLink.rel = "preload";
+      manifestLink.as = "fetch";
+      manifestLink.href = `${path}/manifest.json`;
+      manifestLink.crossOrigin = "anonymous";
+      document.head.appendChild(manifestLink);
+      hints.push(manifestLink);
+
+      const frameLink = document.createElement("link");
+      frameLink.rel = "preload";
+      frameLink.as = "image";
+      frameLink.href = `${path}/frame-00001.webp`;
+      document.head.appendChild(frameLink);
+      hints.push(frameLink);
+    }
+
     let cancelled = false;
     const load = async () => {
       try {
@@ -64,6 +83,7 @@ export function HeroPreloadProvider({ children }: { children: ReactNode }) {
     void load();
     return () => {
       cancelled = true;
+      for (const link of hints) link.remove();
     };
   }, [heroRequired, basePath, nextVariant]);
 

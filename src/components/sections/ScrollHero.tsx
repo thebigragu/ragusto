@@ -1064,22 +1064,6 @@ export function ScrollHero() {
     const t = smoothstep((p - b) / (1 - b));
     return midLift + (endLift - midLift) * t;
   });
-  // Dark join wash — taller + denser so contact copy sits on a dark field
-  // Input offsets MUST be strictly increasing (mobile WAAPI crashes otherwise)
-  // Mobile intensity kept softer than desktop
-  const featherOpacity = useTransform(
-    driveProgress,
-    [
-      SCRUB_HANDOFF_START + 0.06,
-      SCRUB_HANDOFF_START + 0.12,
-      0.92,
-      0.96,
-      1,
-    ],
-    isMobile
-      ? [0, 0.00225, 0.0061875, 0.0135, 0.0163125]
-      : [0, 0.08, 0.22, 0.48, 0.58],
-  );
   // Mask dissolves only the tip at first, then slowly opens — no hard step
   const heroMask = useTransform(
     driveProgress,
@@ -1100,11 +1084,7 @@ export function ScrollHero() {
       "linear-gradient(to bottom, #000 0%, #000 50%, rgba(0,0,0,0.82) 68%, rgba(0,0,0,0.4) 82%, rgba(0,0,0,0.1) 94%, transparent 100%)",
     ],
   );
-  const videoFade = useTransform(
-    driveProgress,
-    [SCRUB_HANDOFF_START + 0.08, SCRUB_HANDOFF_START + 0.2, 1],
-    [1, 0.92, 0.8],
-  );
+  const videoFade = useTransform(driveProgress, [0, 1], [1, 1]);
   // Contact parallax: rises into the lower half only (never into the upper hero band)
   // Mobile settles a bit higher so copy sits nearer mid-viewport
   const contactParallax = useTransform(driveProgress, (p) => {
@@ -1127,18 +1107,6 @@ export function ScrollHero() {
     driveProgress,
     [SCRUB_HANDOFF_START, SCRUB_HANDOFF_START + 0.12, SCRUB_HANDOFF_START + 0.2, 1],
     [0, 0.45, 1, 1],
-  );
-  // Contact dark backdrop fades separately — slower than the copy.
-  // Mobile stays lighter so the video reads through behind the headline.
-  const contactBgOpacity = useTransform(
-    driveProgress,
-    [
-      SCRUB_HANDOFF_START + 0.06,
-      SCRUB_HANDOFF_START + 0.14,
-      SCRUB_HANDOFF_START + 0.2,
-      1,
-    ],
-    isMobile ? [0, 0.18, 0.4, 0.55] : [0, 0.3, 0.7, 1],
   );
 
   const heroFrameRef = useRef<HTMLDivElement>(null);
@@ -1245,17 +1213,6 @@ export function ScrollHero() {
               scrollProgress={driveProgress}
               isMobile={isMobile}
             />
-
-            {/* Soft darkening toward the join — taller field behind contact / Begin */}
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-30 h-[49%] md:h-[74%]"
-              style={{
-                opacity: featherOpacity,
-                background: isMobile
-                  ? "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.0017) 24%, rgba(8,9,11,0.0057) 42%, rgba(8,9,11,0.012) 58%, rgba(8,9,11,0.02) 76%, rgba(8,9,11,0.025) 90%, rgba(8,9,11,0.027) 100%)"
-                  : "linear-gradient(to bottom, transparent 0%, transparent 10%, rgba(8,9,11,0.06) 24%, rgba(8,9,11,0.2) 42%, rgba(8,9,11,0.45) 58%, rgba(8,9,11,0.7) 76%, rgba(8,9,11,0.88) 90%, rgba(8,9,11,0.96) 100%)",
-              }}
-            />
           </motion.div>
 
           {/*
@@ -1269,26 +1226,6 @@ export function ScrollHero() {
             className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex max-h-[78dvh] flex-col justify-center px-5 pb-10 pt-4 md:max-h-[58dvh] md:justify-end md:px-6 md:pb-12 md:pt-0"
             style={{ y: contactParallax, opacity: contactOpacity }}
           >
-            {/* Tall dark backdrop behind Begin / headline — softer on mobile so video peeks through */}
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 bottom-0 top-0"
-              style={{
-                opacity: contactBgOpacity,
-                background: isMobile
-                  ? "linear-gradient(to bottom, transparent 0%, transparent 14%, rgba(8,9,11,0.06) 30%, rgba(8,9,11,0.18) 48%, rgba(8,9,11,0.32) 68%, rgba(8,9,11,0.42) 100%)"
-                  : "linear-gradient(to bottom, transparent 0%, transparent 8%, rgba(8,9,11,0.12) 22%, rgba(8,9,11,0.45) 38%, rgba(8,9,11,0.78) 52%, #08090b 68%, #08090b 100%)",
-              }}
-            />
-            <motion.div
-              className="pointer-events-none absolute inset-x-0 top-0 h-full"
-              style={{
-                opacity: contactBgOpacity,
-                background: isMobile
-                  ? "radial-gradient(ellipse 100% 50% at 50% 35%, rgba(196,165,116,0.04) 0%, rgba(196,165,116,0.01) 45%, transparent 70%)"
-                  : "radial-gradient(ellipse 100% 50% at 50% 35%, rgba(196,165,116,0.07) 0%, rgba(196,165,116,0.02) 45%, transparent 70%)",
-              }}
-            />
-
             <div className="pointer-events-auto relative mx-auto w-full max-w-3xl pb-1 text-center md:pb-2">
               <p className="text-[10.5pt] tracking-[0.28em] text-[#c4a574]/90 uppercase md:text-[13pt]">
                 Begin

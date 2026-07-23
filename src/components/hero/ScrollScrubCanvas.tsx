@@ -58,14 +58,6 @@ export function ScrollScrubCanvas({
           className="absolute inset-0 h-full w-full"
         />
       </motion.div>
-      {/* Soft vignette — keeps focus on center content */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 88% 78% at 50% 48%, transparent 42%, rgba(8,9,11,0.22) 72%, rgba(8,9,11,0.55) 100%)",
-        }}
-      />
     </motion.div>
   );
 }

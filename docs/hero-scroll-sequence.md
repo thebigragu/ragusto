@@ -73,12 +73,13 @@ Edit [`src/lib/hero-sequence/config.ts`](../src/lib/hero-sequence/config.ts):
 |---|---|
 | `SCROLL_HEIGHT_MOBILE` / `SCROLL_HEIGHT_DESKTOP` | Total scroll distance (must match Tailwind classes on the scrub section in `ScrollHero`) |
 | `VIDEO_HANDOFF` / `SCRUB_HANDOFF_START` | How much of scroll maps to frames vs contact reveal |
-| `PRELOAD_BATCH_SIZE` | Concurrent image loads |
+| `PRELOAD_MAX_CONCURRENT` | Parallel frame fetches |
+| `PRELOAD_READY_FRAMES` | Dismiss loader after this many frames (rest load in background) |
 | `CANVAS_MAX_DPR` | Retina backing-store cap |
 | `CANVAS_ROTATE_MAX` / `CANVAS_SCALE_DEPTH` | Subtle scroll-linked canvas polish |
 
 ## Deploy notes
 
 - Frame sequences are ~25–30 MB total (240 frames × 2 variants). They are committed to `public/` for simple Vercel static hosting.
-- First visit downloads all frames for the active variant before the hero appears.
+- First visit preloads the first ~40 frames, then reveals the hero while the rest load in the background.
 - `prefers-reduced-motion` loads only frame 0.
