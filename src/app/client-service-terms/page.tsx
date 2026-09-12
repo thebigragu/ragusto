@@ -1,5 +1,5 @@
 import { ClientServiceTermsContent } from "@/components/legal/ClientServiceTermsContent";
-import { PageTransition } from "@/components/motion/PageTransition";
+import { LegalPageLayout } from "@/components/legal/LegalPageLayout";
 import { SITE } from "@/lib/seo";
 import type { Metadata } from "next";
 
@@ -10,12 +10,8 @@ export const metadata: Metadata = {
 
 export default function ClientServiceTermsPage() {
   return (
-    <PageTransition>
-      <section className="section-pad pt-[calc(var(--nav-height)+3rem)]">
-        <div className="container-shell max-w-3xl">
-          <ClientServiceTermsContent />
-        </div>
-      </section>
-    </PageTransition>
+    <LegalPageLayout>
+      <ClientServiceTermsContent />
+    </LegalPageLayout>
   );
 }

@@ -8,6 +8,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/privacy",
     "/privacy-policy",
     "/client-service-terms",
+    "/referral-program-terms",
     "/public-terms-of-use",
   ];
   return routes.map((route) => ({
