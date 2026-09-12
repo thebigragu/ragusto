@@ -1,5 +1,5 @@
 export const CLIENT_SERVICE_TERMS_CURRENT = {
-  version: "1.6",
+  version: "1.7",
   effectiveDate: "September 12, 2026",
   path: "/client-service-terms",
 } as const;
@@ -10,5 +10,11 @@ export const CLIENT_SERVICE_TERMS_ARCHIVES = [
     slug: "v1-5",
     path: "/client-service-terms/v1-5",
     effectiveDate: "August 6, 2026",
+  },
+  {
+    version: "1.6",
+    slug: "v1-6",
+    path: "/client-service-terms/v1-6",
+    effectiveDate: "September 12, 2026",
   },
 ] as const;

@@ -2,7 +2,8 @@ import { legalLinkClass as linkClass } from "@/components/legal/legalStyles";
 import { SITE } from "@/lib/seo";
 import Link from "next/link";
 
-export function ReferralProgramTermsContent() {
+/** Frozen snapshot of Version 1.0 (effective September 12, 2026). Do not edit except to correct a transcription error. */
+export function ReferralProgramTermsV1_0() {
   return (
     <div className="space-y-8">
       <header className="legal-page-header space-y-4 border-b border-border pb-8 overflow-visible">
@@ -11,7 +12,7 @@ export function ReferralProgramTermsContent() {
           Eligibility, attribution, and credits for customer referrals
         </p>
         <p className="text-sm text-fg-muted">Effective date: September 12, 2026</p>
-        <p className="text-sm text-fg-muted">Version: 1.1</p>
+        <p className="text-sm text-fg-muted">Version: 1.0</p>
         <p className="text-sm text-fg-muted">Operator: Ragusto</p>
         <p className="text-sm font-medium tracking-wide text-fg-muted">
           FOR ELIGIBLE RAGUSTO BUSINESS AND COMMERCIAL CUSTOMERS
@@ -79,17 +80,6 @@ export function ReferralProgramTermsContent() {
           credit is applied.
         </p>
         <p className="text-fg-muted leading-relaxed">
-          An otherwise eligible Customer may participate during the Initial Term of an active
-          Website Subscription, during the month-to-month renewal period following the Initial Term,
-          or during the active term or renewal period of an eligible recurring Application
-          subscription. Moving from the Initial Term into month-to-month renewal does not end
-          referral eligibility. A credit applied during month-to-month renewal is applied to the
-          next eligible renewal invoice. It does not create, restart, or extend an Initial Term or
-          impose a new minimum commitment. The Customer must still satisfy the other eligibility
-          requirements when the credit is applied, including having an active eligible recurring
-          Service, an upcoming eligible invoice, and being current on undisputed amounts.
-        </p>
-        <p className="text-fg-muted leading-relaxed">
           A person with only a completed one-time purchase and no active recurring Service does not
           have an eligible monthly invoice to credit. Ragusto may separately offer a different
           written reward to such a customer, but no cash or alternative reward is automatically owed.
@@ -139,24 +129,10 @@ export function ReferralProgramTermsContent() {
           whether the prospect was already known or previously referred.
         </p>
         <p className="text-fg-muted leading-relaxed">
-          Each distinct referred customer can generate no more than one Referral Credit under this
-          Referral Program, regardless of how many Services that referred customer purchases. The
-          referred customer&apos;s first qualifying Website, Application, or eligible Application
-          engagement may establish the Successful Referral. If that same referred customer purchases
-          both a Website and an Application, the referrer receives only one Referral Credit. If the
-          referred customer later purchases another Website, Application, subscription, add-on,
-          upgrade, expansion, redesign, domain service, or other Service, no additional Referral
-          Credit is earned. Renewals, additional locations, additional projects, added
-          functionality, subscription upgrades, and later purchases by the same referred customer
-          do not create new referrals. The rule applies regardless of whether the additional
-          purchase occurs immediately or months or years later. The reward is based on successfully
-          referring one new customer, not on the number of products or Services that customer
-          eventually purchases.
-        </p>
-        <p className="text-fg-muted leading-relaxed">
-          Ragusto may establish a genuinely separate future promotion in writing, but that
-          promotion would be outside this Referral Program and does not create an automatic
-          entitlement under these Referral Program Terms.
+          A referred customer purchasing both a Website and one or more Applications counts as one
+          referred customer and earns one Referral Credit, unless Ragusto expressly offers otherwise
+          in writing. A later purchase by the same referred customer does not create another
+          Referral Credit unless Ragusto expressly establishes a different offer.
         </p>
       </section>
 
@@ -176,8 +152,7 @@ export function ReferralProgramTermsContent() {
         <p className="text-fg-muted leading-relaxed">
           A Project Reservation Payment by itself does not complete a Successful Referral if the
           referred customer withdraws before the qualifying Website Subscription or Application
-          activates. Later purchases by that referred customer do not create additional referral
-          rewards under this Referral Program.
+          activates.
         </p>
         <p className="text-fg-muted leading-relaxed">
           Once Ragusto can verify that all Successful Referral conditions have been met, the
@@ -217,22 +192,9 @@ export function ReferralProgramTermsContent() {
           that has already been paid or entered active payment processing.
         </p>
         <p className="text-fg-muted leading-relaxed">
-          If the referring Customer has both an active Website Subscription and an active recurring
-          Application subscription, or otherwise has more than one eligible recurring Service,
-          Ragusto has discretion to determine which eligible base recurring Service receives each
-          Referral Credit. Ragusto may apply the credit to either the referring Customer&apos;s
-          Website Subscription or recurring Application subscription and is not required to apply
-          the credit to the same type of Service purchased by the referred customer. For example, if
-          the referred customer purchases an Application, Ragusto may still apply the referring
-          Customer&apos;s credit to the referring Customer&apos;s Website Subscription, and vice
-          versa. The value of the credit is one base monthly recurring charge for the eligible
-          Service Ragusto selects. The credit does not automatically cover the referring
-          Customer&apos;s most expensive subscription, entire combined invoice, add-ons, usage
-          charges, domains, one-time charges, taxes beyond the platform&apos;s treatment, or every
-          active Service. Ragusto should record or communicate which Service received the credit
-          and must exercise this administrative discretion honestly and consistently with these
-          Referral Program Terms. No more than one Referral Credit may be applied to one invoice or
-          monthly service period.
+          If the referring Customer has more than one eligible recurring Service, Ragusto may
+          reasonably designate which base recurring Service receives the credit and should record or
+          communicate that designation.
         </p>
       </section>
 
@@ -267,17 +229,14 @@ export function ReferralProgramTermsContent() {
       <section className="space-y-4">
         <h2 className="legal-section-title">9. Multiple Successful Referrals</h2>
         <p className="text-fg-muted leading-relaxed">
-          Each Successful Referral of a distinct qualifying new customer earns one free base
-          subscription month. Separate Successful Referrals involving different qualifying new
-          customers can each generate a credit. No more than one Referral Credit may be applied to
-          a single monthly service period or invoice.
+          Each Successful Referral earns one free base subscription month. No more than one Referral
+          Credit may be applied to a single monthly service period or invoice.
         </p>
         <p className="text-fg-muted leading-relaxed">
-          If more than one referral of distinct new customers becomes successful before the next
-          eligible invoice, each earned credit is automatically assigned in chronological order to
-          the earliest successive eligible monthly invoices. A valid additional referral of a
-          different qualifying new customer is not forfeited merely because another credit is
-          already assigned to the next invoice.
+          If more than one referral becomes successful before the next eligible invoice, each earned
+          credit is automatically assigned in chronological order to the earliest successive eligible
+          monthly invoices. A valid additional referral is not forfeited merely because another
+          credit is already assigned to the next invoice.
         </p>
         <p className="text-fg-muted leading-relaxed">
           The Customer cannot choose different application dates, combine multiple credits into
@@ -304,10 +263,8 @@ export function ReferralProgramTermsContent() {
         </p>
         <p className="text-fg-muted leading-relaxed">
           The credit does not pause, restart, or extend the Initial Term and does not create an
-          additional free service period after the Initial Term. A Referral Credit applied after the
-          Initial Term applies to the next eligible month-to-month invoice and does not create,
-          restart, or extend an Initial Term or impose a new minimum commitment. The credit is an
-          authorized promotional adjustment granted by Ragusto.
+          additional free service period after the Initial Term. The credit is an authorized
+          promotional adjustment granted by Ragusto.
         </p>
         <p className="text-fg-muted leading-relaxed">
           The Initial Term and Minimum Committed Fees remain calculated before referral credits, but
