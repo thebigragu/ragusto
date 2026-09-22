@@ -2,8 +2,8 @@ import { legalLinkClass as linkClass } from "@/components/legal/legalStyles";
 import { SITE } from "@/lib/seo";
 import Link from "next/link";
 
-/** Current live Client Service Terms (Version 1.8). Do not edit archived snapshots in client-service-terms/. */
-export function ClientServiceTermsContent() {
+/** Frozen snapshot of Version 1.7 (effective September 12, 2026). Do not edit except to correct a transcription error. */
+export function ClientServiceTermsV1_7() {
   return (
     <div className="space-y-8">
       <header className="legal-page-header space-y-4 border-b border-border pb-8 overflow-visible">
@@ -11,8 +11,8 @@ export function ClientServiceTermsContent() {
           Website and Application Services Agreement
         </h1>
         <p className="text-lg text-fg-muted leading-relaxed">Managed websites, hosted applications, domains, maintenance, and related digital services</p>
-        <p className="text-sm text-fg-muted">Effective date: September 22, 2026</p>
-        <p className="text-sm text-fg-muted">Version: 1.8</p>
+        <p className="text-sm text-fg-muted">Effective date: September 12, 2026</p>
+        <p className="text-sm text-fg-muted">Version: 1.7</p>
         <p className="text-sm text-fg-muted">Operator: Ragusto</p>
         <p className="text-sm font-medium tracking-wide text-fg-muted">FOR BUSINESS AND COMMERCIAL CUSTOMERS ONLY</p>
         <p className="text-xs tracking-[0.3em] text-fg-muted uppercase">RAGUSTO</p>
@@ -287,10 +287,6 @@ export function ClientServiceTermsContent() {
         <h2 className="legal-section-title">19. Portfolio and Publicity</h2>
         <p className="text-fg-muted leading-relaxed">Ragusto may identify the Customer as a client and display public screenshots, recordings, links, or a general description of completed work only where the Customer provides written approval.</p>
         <p className="text-fg-muted leading-relaxed">Ragusto will not knowingly disclose confidential information or private Customer Service Data for portfolio purposes.</p>
-        <h3 className="legal-subsection-title">19.1 Website footer credit</h3>
-        <p className="text-fg-muted leading-relaxed">Ragusto may include a discreet text credit and link in the Website footer identifying Ragusto as the Website&apos;s designer, developer, or managed-service provider, such as &quot;Website by Ragusto&quot; or &quot;Powered by Ragusto.&quot; Ragusto may add, modify, remove, or restore the credit at any time in its discretion and without notice, including in response to a Customer request. Ragusto is not obligated to approve a request to modify or remove the credit. The credit is managed exclusively by Ragusto and is not Customer Content or a customer-editable field within any Customer Editing Portal.</p>
-        <p className="text-fg-muted leading-relaxed">The footer credit in this Section 19.1 is separate from the written-approval requirement in this Section 19. Displaying that discreet credit on the Customer&apos;s own Website does not, by itself, authorize Ragusto to publicly identify the Customer as a client, display screenshots or recordings of the Customer&apos;s Website, use the Customer&apos;s name, logo, or marks in a portfolio or marketing material, or make a statement that could imply that the Customer endorses Ragusto.</p>
-        <p className="text-fg-muted leading-relaxed">Adding, modifying, removing, or restoring the footer credit does not affect ownership of the Website or other Ragusto intellectual property, the licence granted under Section 10.4, subscription fees, the Initial Term, Minimum Committed Fees, or any other Customer obligation.</p>
       </section>
       <section className="space-y-4">
         <h2 className="legal-section-title">20. Confidentiality</h2>
