@@ -5,12 +5,8 @@ import { SITE } from "@/lib/seo";
 import { FormEvent, useState } from "react";
 
 const projectTypes = [
-  "Bespoke application",
-  "Custom software",
   "Website / brand site",
-  "SaaS product",
-  "Automation / integrations",
-  "UI/UX & branding",
+  "Custom software",
   "Not sure yet",
 ];
 
@@ -120,7 +116,6 @@ export function ContactForm() {
               name="name"
               required
               className={inputClass}
-              placeholder="Alex Rivera"
               autoComplete="name"
             />
           </Field>
@@ -130,7 +125,6 @@ export function ContactForm() {
               type="email"
               required
               className={inputClass}
-              placeholder="alex@company.com"
               autoComplete="email"
               inputMode="email"
             />
@@ -142,12 +136,15 @@ export function ContactForm() {
             <input
               name="company"
               className={inputClass}
-              placeholder="Optional"
               autoComplete="organization"
             />
           </Field>
           <Field label="Project type">
-            <select name="projectType" className={inputClass} defaultValue={projectTypes[0]}>
+            <select
+              name="projectType"
+              className={inputClass}
+              defaultValue="Website / brand site"
+            >
               {projectTypes.map((t) => (
                 <option key={t} value={t}>
                   {t}
@@ -192,7 +189,7 @@ export function ContactForm() {
 }
 
 const inputClass =
-  "w-full rounded-2xl border border-border bg-bg-elevated/60 px-3.5 py-2.5 text-base text-fg outline-none transition focus:border-accent-blue/50 sm:px-4 sm:py-3 sm:text-lg";
+  "w-full rounded-2xl border border-[color-mix(in_oklab,var(--accent-teal)_32%,var(--border))] bg-[color-mix(in_oklab,var(--fg)_12%,var(--bg-muted))] px-3.5 py-2.5 text-base text-fg outline-none transition focus:border-accent-teal/60 sm:px-4 sm:py-3 sm:text-lg";
 
 function Field({
   label,

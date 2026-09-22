@@ -168,21 +168,34 @@ function MobileHeroBottomFade({
 }: {
   scrollProgress: MotionValue<number>;
 }) {
-  const opacity = useTransform(
-    scrollProgress,
-    [
+  // Function form stays on the JS motion value. The range form is promoted to a
+  // scroll-driven CSS animation, which reads progress as 1 while document scroll
+  // is locked and flashes this black wash the moment the loader reveals the hero.
+  const opacity = useTransform(scrollProgress, (p) => {
+    const stops = [
       SCRUB_HANDOFF_START,
       SCRUB_HANDOFF_START + 0.06,
       SCRUB_HANDOFF_START + 0.12,
       SCRUB_HANDOFF_START + 0.18,
       1,
-    ],
-    [0, 0.55, 0.82, 0.94, 1],
-  );
+    ];
+    const values = [0, 0.55, 0.82, 0.94, 1];
+    if (p <= stops[0]) return 0;
+    if (p >= 1) return 1;
+    for (let i = 0; i < stops.length - 1; i++) {
+      const a = stops[i];
+      const b = stops[i + 1];
+      if (p <= b) {
+        const t = (p - a) / (b - a);
+        return values[i] + (values[i + 1] - values[i]) * t;
+      }
+    }
+    return 0;
+  });
 
   return (
     <motion.div
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-[25] h-[88%] bg-gradient-to-t from-[#08090b] from-[42%] via-[#08090b]/85 via-[68%] to-transparent"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-[25] h-[88%] bg-gradient-to-t from-[#08090b] from-[42%] via-[#08090b]/85 via-[68%] to-transparent opacity-0"
       style={{ opacity }}
       aria-hidden
     />
